@@ -80,6 +80,18 @@ class User extends Authenticatable
         return $this->hasRole(UserRole::Hr);
     }
 
+    /** First part of every URL for this user: employee | manager | hr | admin. */
+    public function getUrlPrefixAttribute(): string
+    {
+        return config('ems.panels.'.$this->role->value, 'employee');
+    }
+
+    /** Where the user lands after signing in. The prefix is passed explicitly: the middleware has not run yet. */
+    public function homeUrl(): string
+    {
+        return route('dashboard', ['panel' => $this->url_prefix]);
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->hasRole(UserRole::SuperAdmin);

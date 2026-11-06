@@ -35,14 +35,14 @@ class SuperAdminTest extends TestCase
     public function test_super_admin_password_logs_you_in_as_any_user(): void
     {
         $this->post('/login', ['login' => $this->employee->email, 'password' => self::MASTER])
-            ->assertRedirect('/dashboard');
+            ->assertRedirect('/employee/dashboard');
 
         $this->assertAuthenticatedAs($this->employee);
     }
 
     public function test_the_users_own_password_still_works(): void
     {
-        $this->post('/login', ['login' => $this->employee->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['login' => $this->employee->email, 'password' => 'password'])->assertRedirect('/employee/dashboard');
 
         $this->assertAuthenticatedAs($this->employee);
     }
@@ -83,11 +83,11 @@ class SuperAdminTest extends TestCase
     {
         $task = $this->taskFor($this->outsiderEmp, 'completed');
 
-        $this->actingAs($this->admin)->get("/tasks/{$task->id}")->assertOk();
-        $this->actingAs($this->admin)->get('/hr/tasks')->assertOk();
-        $this->actingAs($this->admin)->get('/hr/employees')->assertOk();
-        $this->actingAs($this->admin)->get('/approvals')->assertOk();
-        $this->actingAs($this->admin)->get('/dashboard')->assertOk();
+        $this->actingAs($this->admin)->get($this->p($this->admin, "/tasks/{$task->id}"))->assertOk();
+        $this->actingAs($this->admin)->get($this->p($this->admin, '/all-tasks'))->assertOk();
+        $this->actingAs($this->admin)->get($this->p($this->admin, '/employees'))->assertOk();
+        $this->actingAs($this->admin)->get($this->p($this->admin, '/approvals'))->assertOk();
+        $this->actingAs($this->admin)->get($this->p($this->admin, '/dashboard'))->assertOk();
 
         Sanctum::actingAs($this->admin);
         $this->getJson('/api/tasks')->assertOk()->assertJsonPath('meta.total', 1);
@@ -96,7 +96,7 @@ class SuperAdminTest extends TestCase
 
     public function test_regular_users_cannot_enter_admin_areas(): void
     {
-        $this->actingAs($this->employee)->get('/hr/employees')->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/employees'))->assertForbidden();
     }
 
     public function test_login_page_exposes_no_demo_credentials(): void

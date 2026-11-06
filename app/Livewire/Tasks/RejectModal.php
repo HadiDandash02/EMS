@@ -30,7 +30,7 @@ class RejectModal extends Component
 
     protected function messages(): array
     {
-        return ['reason.required' => 'Please explain why this task is being rejected.'];
+        return ['reason.required' => __('Please explain why this task is being rejected.')];
     }
 
     #[On('open-reject-modal')]
@@ -54,13 +54,13 @@ class RejectModal extends Component
             $workflow->reject(Task::findOrFail($this->taskId), auth()->user(), $this->reason);
         } catch (AuthorizationException|InvalidTaskTransitionException $e) {
             $this->open = false;
-            $this->dispatch('notify', type: 'error', message: $e->getMessage() ?: 'Not allowed.');
+            $this->dispatch('notify', type: 'error', message: $e->getMessage() ?: __('Not allowed.'));
 
             return;
         }
 
         $this->open = false;
-        $this->dispatch('notify', type: 'success', message: 'Task rejected.');
+        $this->dispatch('notify', type: 'success', message: __('Task rejected.'));
         $this->dispatch('task-updated');
     }
 

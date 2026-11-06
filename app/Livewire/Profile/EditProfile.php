@@ -53,13 +53,13 @@ class EditProfile extends Component
             'email' => ['required', 'email', 'max:191', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]*$/'],
         ], [
-            'username.regex' => 'Use 3-30 letters, numbers, dots or underscores.',
-            'phone.regex' => 'Use digits, spaces, + - ( ) only.',
+            'username.regex' => __('Use 3-30 letters, numbers, dots or underscores.'),
+            'phone.regex' => __('Use digits, spaces, + - ( ) only.'),
         ]);
 
         $user->update([...$data, 'phone' => $data['phone'] ?: null]);
 
-        $this->dispatch('notify', type: 'success', message: 'Profile updated.');
+        $this->dispatch('notify', type: 'success', message: __('Profile updated.'));
     }
 
     private const PHOTO_RULES = ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'];
@@ -87,7 +87,7 @@ class EditProfile extends Component
         $user->save();
 
         $this->reset('photo');
-        $this->dispatch('notify', type: 'success', message: 'Profile picture updated.');
+        $this->dispatch('notify', type: 'success', message: __('Profile picture updated.'));
     }
 
     public function removePhoto(): void
@@ -98,7 +98,7 @@ class EditProfile extends Component
         $user->save();
 
         $this->reset('photo');
-        $this->dispatch('notify', type: 'success', message: 'Profile picture removed.');
+        $this->dispatch('notify', type: 'success', message: __('Profile picture removed.'));
     }
 
     public function updatePassword(): void
@@ -107,14 +107,14 @@ class EditProfile extends Component
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers(), 'different:current_password'],
         ], [
-            'current_password.current_password' => 'The current password is incorrect.',
-            'password.different' => 'The new password must be different from the current one.',
+            'current_password.current_password' => __('The current password is incorrect.'),
+            'password.different' => __('The new password must be different from the current one.'),
         ]);
 
         auth()->user()->update(['password' => $this->password]); // 'hashed' cast
 
         $this->reset('current_password', 'password', 'password_confirmation');
-        $this->dispatch('notify', type: 'success', message: 'Password changed.');
+        $this->dispatch('notify', type: 'success', message: __('Password changed.'));
     }
 
     private function deleteStoredPhoto(User $user): void

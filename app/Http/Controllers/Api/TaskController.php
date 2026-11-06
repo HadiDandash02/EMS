@@ -56,6 +56,13 @@ class TaskController extends Controller
         return new TaskResource($this->fresh($this->workflow->update($task, $request->user(), $request->validated())));
     }
 
+    public function destroy(Request $request, Task $task): \Illuminate\Http\Response
+    {
+        $this->workflow->delete($task, $request->user());
+
+        return response()->noContent();
+    }
+
     public function start(Request $request, Task $task): TaskResource
     {
         return new TaskResource($this->fresh($this->workflow->start($task, $request->user())));

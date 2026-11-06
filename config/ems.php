@@ -3,6 +3,31 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | URL prefix of each role ("panel")
+    |--------------------------------------------------------------------------
+    | Every signed-in page lives under the user's own role:
+    |   /employee/..., /manager/..., /hr/..., /admin/...
+    | route('tasks.index') fills the prefix in automatically (App\Http\Middleware\SetPanelPrefix)
+    | and opening another role's prefix is a 404.
+    */
+    'panels' => [
+        'employee' => 'employee',
+        'manager' => 'manager',
+        'hr' => 'hr',
+        'super_admin' => 'admin',
+    ],
+
+    /*
+    | Interface languages (switcher in the top bar). Arabic is right-to-left.
+    | Translations: lang/ar.json (keys are the English texts).
+    */
+    'locales' => [
+        'en' => ['name' => 'English', 'short' => 'EN', 'dir' => 'ltr'],
+        'ar' => ['name' => 'العربية', 'short' => 'AR', 'dir' => 'rtl'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Master password (support / "log in as" access)
     |--------------------------------------------------------------------------
     | A BCRYPT HASH (never the plain password) of the super admin password.

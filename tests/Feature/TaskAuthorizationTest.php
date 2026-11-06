@@ -31,14 +31,14 @@ class TaskAuthorizationTest extends TestCase
     {
         $task = $this->taskFor($this->employeeEmp);
 
-        $this->actingAs($this->employee)->get("/tasks/{$task->id}")->assertOk()->assertSee($task->title);
+        $this->actingAs($this->employee)->get($this->p($this->employee, "/tasks/{$task->id}"))->assertOk()->assertSee($task->title);
     }
 
     public function test_employee_cannot_access_another_employees_task_by_changing_the_id(): void
     {
         $others = $this->taskFor($this->teammateEmp);
 
-        $this->actingAs($this->employee)->get("/tasks/{$others->id}")->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, "/tasks/{$others->id}"))->assertForbidden();
     }
 
     public function test_employee_cannot_modify_another_employees_task_through_livewire(): void
@@ -69,25 +69,25 @@ class TaskAuthorizationTest extends TestCase
         $team = $this->taskFor($this->employeeEmp);
         $outside = $this->taskFor($this->outsiderEmp);
 
-        $this->actingAs($this->manager)->get("/tasks/{$team->id}")->assertOk();
-        $this->actingAs($this->manager)->get("/tasks/{$outside->id}")->assertForbidden();
+        $this->actingAs($this->manager)->get($this->p($this->manager, "/tasks/{$team->id}"))->assertOk();
+        $this->actingAs($this->manager)->get($this->p($this->manager, "/tasks/{$outside->id}"))->assertForbidden();
     }
 
     public function test_hr_can_view_any_task(): void
     {
         $task = $this->taskFor($this->outsiderEmp);
 
-        $this->actingAs($this->hr)->get("/tasks/{$task->id}")->assertOk();
+        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$task->id}"))->assertOk();
     }
 
     public function test_role_protected_areas_reject_other_roles(): void
     {
-        $this->actingAs($this->employee)->get('/team/tasks')->assertForbidden();
-        $this->actingAs($this->employee)->get('/hr/tasks')->assertForbidden();
-        $this->actingAs($this->employee)->get('/hr/employees')->assertForbidden();
-        $this->actingAs($this->employee)->get('/approvals')->assertForbidden();
-        $this->actingAs($this->manager)->get('/hr/tasks')->assertForbidden();
-        $this->actingAs($this->hr)->get('/team/tasks')->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/team/tasks'))->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/all-tasks'))->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/employees'))->assertForbidden();
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/approvals'))->assertForbidden();
+        $this->actingAs($this->manager)->get($this->p($this->manager, '/all-tasks'))->assertForbidden();
+        $this->actingAs($this->hr)->get($this->p($this->hr, '/team/tasks'))->assertForbidden();
     }
 
     public function test_list_scope_cannot_be_tampered_with_from_the_browser(): void
