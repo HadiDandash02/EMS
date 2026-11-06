@@ -4,45 +4,54 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign in · {{ config('app.name') }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans text-slate-800 antialiased">
 <div class="grid min-h-full lg:grid-cols-2">
-    <div class="hidden flex-col justify-between bg-slate-900 p-12 text-white lg:flex">
-        <div class="flex items-center gap-3">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 font-bold">EM</span>
-            <span class="text-lg font-semibold">EMS</span>
+    {{-- Brand panel --}}
+    <div class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-900 p-12 text-white lg:flex">
+        <div class="relative z-10 flex items-center gap-3">
+            <img src="{{ asset('favicon.svg') }}" alt="" class="h-10 w-10">
+            <span class="text-lg font-semibold tracking-tight">EMS</span>
         </div>
-        <div>
-            <h2 class="text-3xl font-semibold leading-tight">Employee Task &amp;<br>Approval Management</h2>
-            <p class="mt-4 max-w-md text-slate-400">Track work, submit it for review and keep a complete audit trail of every approval decision.</p>
+        <div class="relative z-10">
+            <x-illustration class="mx-auto w-full max-w-md drop-shadow-2xl" />
+            <h2 class="mt-8 text-3xl font-semibold leading-tight">Employee Task &amp;<br>Approval Management</h2>
+            <p class="mt-3 max-w-md text-indigo-200/80">Track work, submit it for review and keep a complete audit trail of every approval decision.</p>
         </div>
-        <p class="text-sm text-slate-500">Built with Laravel · Livewire · Tailwind CSS</p>
+        <p class="relative z-10 text-sm text-indigo-300/60">Built with Laravel · Livewire · Tailwind CSS</p>
     </div>
 
-    <div class="flex items-center justify-center px-6 py-12" x-data="{ email: '{{ old('email') }}', password: '' }">
+    {{-- Form --}}
+    <div class="flex items-center justify-center px-6 py-12">
         <div class="w-full max-w-sm">
+            <div class="mb-8 flex items-center gap-3 lg:hidden">
+                <img src="{{ asset('favicon.svg') }}" alt="" class="h-10 w-10"><span class="text-lg font-semibold">EMS</span>
+            </div>
             <h1 class="text-2xl font-semibold text-slate-900">Welcome back</h1>
-            <p class="mt-1 text-sm text-slate-500">Sign in to your account to continue.</p>
+            <p class="mt-1 text-sm text-slate-500">Sign in with your <strong class="font-medium text-slate-700">username or email</strong>.</p>
 
             <form method="POST" action="{{ url('/login') }}" class="mt-8 space-y-5">
                 @csrf
                 <div>
-                    <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
-                    <input id="email" name="email" type="email" x-model="email" required autofocus autocomplete="username"
-                           class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500 @error('email') ring-rose-400 @enderror">
-                    @error('email')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                    <label for="login" class="block text-sm font-medium text-slate-700">Username or email</label>
+                    <div class="relative mt-1">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.1a7.5 7.5 0 0115 0"/></svg>
+                        </span>
+                        <input id="login" name="login" type="text" value="{{ old('login') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
+                               class="block w-full rounded-lg border-0 py-2.5 pl-10 pr-3 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 {{ $errors->has('login') ? 'ring-rose-400' : 'ring-slate-300' }}">
+                    </div>
+                    @error('login')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                    <input id="password" name="password" type="password" x-model="password" required autocomplete="current-password"
-                           class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                    @error('password')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
-                </div>
+
+                <x-password-input id="password" name="password" label="Password" required :error="$errors->first('password')" />
+
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                     <input type="checkbox" name="remember" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"> Remember me
                 </label>
-                <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Sign in</button>
+                <button type="submit" class="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Sign in</button>
             </form>
         </div>
     </div>

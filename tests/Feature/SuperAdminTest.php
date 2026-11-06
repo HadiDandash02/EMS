@@ -27,14 +27,14 @@ class SuperAdminTest extends TestCase
 
         config(['ems.master_password_hash' => Hash::make(self::MASTER)]);
 
-        $this->admin = new User(['name' => 'Super Admin', 'email' => 'superadmin@x.test', 'password' => self::MASTER]);
+        $this->admin = new User(['name' => 'Super Admin', 'username' => 'superadmin', 'email' => 'superadmin@x.test', 'password' => self::MASTER]);
         $this->admin->role = UserRole::SuperAdmin;
         $this->admin->save();
     }
 
     public function test_super_admin_password_logs_you_in_as_any_user(): void
     {
-        $this->post('/login', ['email' => $this->employee->email, 'password' => self::MASTER])
+        $this->post('/login', ['login' => $this->employee->email, 'password' => self::MASTER])
             ->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($this->employee);
@@ -42,15 +42,15 @@ class SuperAdminTest extends TestCase
 
     public function test_the_users_own_password_still_works(): void
     {
-        $this->post('/login', ['email' => $this->employee->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['login' => $this->employee->email, 'password' => 'password'])->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($this->employee);
     }
 
     public function test_wrong_password_and_unknown_email_fail(): void
     {
-        $this->post('/login', ['email' => $this->employee->email, 'password' => 'nope'])->assertSessionHasErrors('email');
-        $this->post('/login', ['email' => 'ghost@x.test', 'password' => self::MASTER])->assertSessionHasErrors('email');
+        $this->post('/login', ['login' => $this->employee->email, 'password' => 'nope'])->assertSessionHasErrors('login');
+        $this->post('/login', ['login' => 'ghost@x.test', 'password' => self::MASTER])->assertSessionHasErrors('login');
 
         $this->assertGuest();
     }
@@ -59,7 +59,7 @@ class SuperAdminTest extends TestCase
     {
         Log::spy();
 
-        $this->post('/login', ['email' => $this->manager->email, 'password' => self::MASTER]);
+        $this->post('/login', ['login' => $this->manager->email, 'password' => self::MASTER]);
 
         Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message, $ctx) => $message === 'Master password login' && $ctx['as_user_id'] === $this->manager->id);
     }
@@ -68,13 +68,13 @@ class SuperAdminTest extends TestCase
     {
         config(['ems.master_password_hash' => null]);
 
-        $this->post('/login', ['email' => $this->employee->email, 'password' => self::MASTER])->assertSessionHasErrors('email');
+        $this->post('/login', ['login' => $this->employee->email, 'password' => self::MASTER])->assertSessionHasErrors('login');
         $this->assertGuest();
     }
 
     public function test_master_password_works_through_the_api_too(): void
     {
-        $this->postJson('/api/login', ['email' => $this->manager->email, 'password' => self::MASTER])
+        $this->postJson('/api/login', ['login' => $this->manager->username, 'password' => self::MASTER])
             ->assertOk()
             ->assertJsonPath('user.id', $this->manager->id);
     }

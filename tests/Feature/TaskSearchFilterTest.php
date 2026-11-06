@@ -91,7 +91,7 @@ class TaskSearchFilterTest extends TestCase
         $component = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
 
         DB::enableQueryLog();
-        $component->call('resetFilters');
+        $component->call('clearFilters');
         $queries = count(DB::getQueryLog());
 
         // Eager loading keeps this flat (about 10 queries) regardless of row count; N+1 would be 30+.
