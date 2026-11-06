@@ -28,6 +28,12 @@ class TaskShow extends Component
         $this->task->refresh();
     }
 
+    protected function afterTaskDeleted(): void
+    {
+        // The task no longer exists: go back to a list the user may open.
+        $this->redirect(auth()->user()->canSeeAll() ? route('tasks.all') : route('tasks.index'), navigate: true);
+    }
+
     public function render()
     {
         $this->task->load(['employee.user', 'employee.department', 'employee.manager.user', 'reviewer', 'histories.actor']);

@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->whereNumber('task');
     Route::match(['put', 'patch'], '/tasks/{task}', [TaskController::class, 'update'])->whereNumber('task');
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->whereNumber('task');
 
     // State transitions are explicit actions, never a free-form "status" field.
     Route::post('/tasks/{task}/start', [TaskController::class, 'start'])->whereNumber('task');

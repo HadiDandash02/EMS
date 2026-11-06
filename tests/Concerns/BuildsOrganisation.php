@@ -62,6 +62,12 @@ trait BuildsOrganisation
         $this->outsider = $this->outsiderEmp->user;
     }
 
+    /** URL of a signed-in page for the given user's role: p($manager, '/tasks') => /manager/tasks */
+    protected function p(User $user, string $path): string
+    {
+        return '/'.$user->url_prefix.$path;
+    }
+
     protected function taskFor(Employee $employee, string $state = 'pending'): Task
     {
         return Task::factory()->forEmployee($employee)->{$state}()->create();

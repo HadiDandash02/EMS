@@ -15,12 +15,12 @@ class InvalidTaskTransitionException extends Exception
 {
     public static function between(TaskStatus $from, TaskStatus $to): self
     {
-        return new self("A {$from->label()} task cannot be changed to {$to->label()}.");
+        return new self(__('A :from task cannot be changed to :to.', ['from' => $from->label(), 'to' => $to->label()]));
     }
 
     public static function notEditable(TaskStatus $status): self
     {
-        return new self("Only pending tasks can be edited (this task is {$status->label()}).");
+        return new self(__('Only pending tasks can be edited (this task is :status).', ['status' => $status->label()]));
     }
 
     public function render(Request $request): JsonResponse|false

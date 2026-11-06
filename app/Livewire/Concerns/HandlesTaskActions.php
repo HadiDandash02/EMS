@@ -20,22 +20,48 @@ trait HandlesTaskActions
 {
     public function startTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->start($t, auth()->user()), 'Task started.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->start($t, auth()->user()), __('Task started.'));
     }
 
     public function completeTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->complete($t, auth()->user()), 'Task marked as completed.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->complete($t, auth()->user()), __('Task marked as completed.'));
     }
 
     public function cancelTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->cancel($t, auth()->user()), 'Task cancelled.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->cancel($t, auth()->user()), __('Task cancelled.'));
     }
 
     public function approveTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), 'Task approved.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), __('Task approved.'));
+    }
+
+    public function deleteTask(int $taskId): void
+    {
+        $task = Task::findOrFail($taskId);
+
+        try {
+            app(TaskWorkflowService::class)->delete($task, auth()->user());
+        } catch (AuthorizationException $e) {
+            $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
+
+            return;
+        } catch (InvalidTaskTransitionException $e) {
+            $this->notify($e->getMessage(), 'error');
+
+            return;
+        }
+
+        $this->notify(__('Task deleted.'));
+        $this->afterTaskDeleted();
+    }
+
+    /** Lists just refresh; the detail page overrides this to leave the (now missing) task. */
+    protected function afterTaskDeleted(): void
+    {
+        $this->dispatch('task-updated');
     }
 
     /** @param  Closure(TaskWorkflowService, Task): mixed  $action */
@@ -48,7 +74,7 @@ trait HandlesTaskActions
             $this->notify($successMessage);
             $this->dispatch('task-updated');
         } catch (AuthorizationException $e) {
-            $this->notify($e->getMessage() ?: 'You are not allowed to do that.', 'error');
+            $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
         } catch (InvalidTaskTransitionException $e) {
             $this->notify($e->getMessage(), 'error');
         }

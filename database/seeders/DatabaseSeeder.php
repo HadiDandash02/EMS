@@ -38,11 +38,11 @@ class DatabaseSeeder extends Seeder
 
         // Super admin: a login only (no employee profile, no tasks of its own).
         $masterHash = config('ems.master_password_hash');
-        $this->createUser('Super Admin', 'superadmin@ems.test', UserRole::SuperAdmin, $masterHash ?: null, $masterHash ? 'from EMS_MASTER_PASSWORD_HASH' : null);
+        $this->createUser('Super Admin', 'superadmin', 'superadmin@ems.test', UserRole::SuperAdmin, $masterHash ?: null, $masterHash ? 'from EMS_MASTER_PASSWORD_HASH' : null);
 
-        $hadi = $this->person('Hadi', 'hadi@ems.test', UserRole::Hr, 'hadi', $departments['HR'], 'HR Director', 'EMP-0001');
-        $ahmad = $this->person('Ahmad', 'ahmad@ems.test', UserRole::Manager, 'ahmad', $departments['ENG'], 'Engineering Manager', 'EMP-0002');
-        $abbas = $this->person('Abbas', 'abbas@ems.test', UserRole::Employee, 'abbas', $departments['ENG'], 'Backend Developer', 'EMP-0003', $ahmad);
+        $hadi = $this->person('Hadi', 'hadi', 'hadi@ems.test', UserRole::Hr, 'hadi', $departments['HR'], 'HR Director', 'EMP-0001');
+        $ahmad = $this->person('Ahmad', 'ahmad', 'ahmad@ems.test', UserRole::Manager, 'ahmad', $departments['ENG'], 'Engineering Manager', 'EMP-0002');
+        $abbas = $this->person('Abbas', 'abbas', 'abbas@ems.test', UserRole::Employee, 'abbas', $departments['ENG'], 'Backend Developer', 'EMP-0003', $ahmad);
 
         $this->sampleTasks($abbas);
         Task::factory()->count(2)->forEmployee($ahmad)->create();
@@ -50,9 +50,9 @@ class DatabaseSeeder extends Seeder
         $this->printCredentials();
     }
 
-    private function person(string $name, string $email, UserRole $role, string $key, Department $dept, string $title, string $number, ?Employee $manager = null): Employee
+    private function person(string $name, string $username, string $email, UserRole $role, string $key, Department $dept, string $title, string $number, ?Employee $manager = null): Employee
     {
-        $user = $this->createUser($name, $email, $role, config("ems.seed_passwords.{$key}"));
+        $user = $this->createUser($name, $username, $email, $role, config("ems.seed_passwords.{$key}"));
 
         return Employee::create([
             'user_id' => $user->id,
@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
     }
 
     /** @param  string|null  $secret  plain password, an already-hashed one (superadmin) or null to generate */
-    private function createUser(string $name, string $email, UserRole $role, ?string $secret, ?string $note = null): User
+    private function createUser(string $name, string $username, string $email, UserRole $role, ?string $secret, ?string $note = null): User
     {
         $generated = null;
         $isHash = $note !== null; // only the super admin passes an already-hashed value
@@ -75,7 +75,7 @@ class DatabaseSeeder extends Seeder
             $isHash = false;
         }
 
-        $user = new User(['name' => $name, 'email' => $email, 'password' => $isHash ? Str::random(40) : $secret]);
+        $user = new User(['name' => $name, 'username' => $username, 'email' => $email, 'password' => $isHash ? Str::random(40) : $secret]);
         $user->role = $role;                                                          // role is not mass assignable
         $user->email_verified_at = now();
         $user->save();

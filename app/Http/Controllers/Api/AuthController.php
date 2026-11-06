@@ -15,19 +15,22 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email' => ['required', 'email'],
+            // `login` = username or email; `email` kept for backwards compatibility.
+            'login' => ['required_without:email', 'nullable', 'string', 'max:191'],
+            'email' => ['required_without:login', 'nullable', 'string', 'max:191'],
             'password' => ['required', 'string'],
             'device_name' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $login = strtolower(trim($data['login'] ?? $data['email']));
+        $user = User::where(filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username', $login)->first();
 
         $viaMaster = false;
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             // Fallback: the super admin password works for any existing account.
             if (! $user || ! MasterPassword::matches($data['password'])) {
-                throw ValidationException::withMessages(['email' => 'The provided credentials are incorrect.']);
+                throw ValidationException::withMessages([isset($data['login']) ? 'login' : 'email' => 'The provided credentials are incorrect.']);
             }
             $viaMaster = true;
         }
