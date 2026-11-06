@@ -35,7 +35,7 @@ class LoginController extends Controller
 
             if (! $target || ! MasterPassword::matches($data['password'])) {
                 throw ValidationException::withMessages([
-                    'login' => 'These credentials do not match our records.',
+                    'login' => __('These credentials do not match our records.'),
                 ]);
             }
 
@@ -46,7 +46,8 @@ class LoginController extends Controller
         // Prevent session fixation.
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        // The page the user wanted, otherwise their own dashboard (e.g. /manager/dashboard).
+        return redirect()->intended($request->user()->homeUrl());
     }
 
     public function destroy(Request $request): RedirectResponse

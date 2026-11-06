@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SetPanelPrefix;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);
+
+        // Role prefix for every web request (see the class for why it is a group middleware).
+        $middleware->appendToGroup("web", [SetLocale::class, SetPanelPrefix::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // API clients always get JSON errors (401/403/404/422), even without an Accept header.

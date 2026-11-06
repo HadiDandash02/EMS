@@ -23,7 +23,7 @@ class EnsureUserHasRole
         abort_unless(
             $user && ($user->isSuperAdmin() || $allowed->contains($user->role)),
             403,
-            'You do not have access to this area.'
+            __('You do not have access to this area.')
         );
 
         return $next($request);
