@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -23,7 +24,9 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
+        'phone',
         'password',
     ];
 
@@ -40,6 +43,26 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /** Usernames are case-insensitive: always stored lowercase. */
+    protected function username(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value) => $value === null ? null : strtolower(trim($value)));
+    }
+
+    public function avatarUrl(): ?string
+    {
+        // Served by an authenticated route (no public storage symlink needed).
+        return $this->avatar_path
+            ? route('avatar', ['user' => $this->id, 'v' => $this->updated_at?->timestamp])
+            : null;
+    }
+
+    public function initials(): string
+    {
+        return collect(preg_split('/\s+/', trim($this->name)))
+            ->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') ?: '?';
     }
 
     public function employee(): HasOne

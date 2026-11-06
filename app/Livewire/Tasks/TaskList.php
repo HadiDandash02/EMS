@@ -5,6 +5,7 @@ namespace App\Livewire\Tasks;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Livewire\Concerns\HandlesTaskActions;
+use App\Livewire\Concerns\HasFilterBar;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Task;
@@ -23,7 +24,7 @@ use Livewire\WithPagination;
  */
 class TaskList extends Component
 {
-    use HandlesTaskActions, WithPagination;
+    use HandlesTaskActions, HasFilterBar, WithPagination;
 
     /** #[Locked] = the browser cannot tamper with it (e.g. switch "mine" to "all"). */
     #[Locked]
@@ -69,18 +70,9 @@ class TaskList extends Component
         }
     }
 
-    public function updated(string $property): void
+    protected function filterProperties(): array
     {
-        // Any filter change must go back to page 1, otherwise we could land on an empty page.
-        if ($property !== 'paginators') {
-            $this->resetPage();
-        }
-    }
-
-    public function resetFilters(): void
-    {
-        $this->reset('search', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo');
-        $this->resetPage();
+        return ['search', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
     }
 
     #[On('task-saved')]

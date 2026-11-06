@@ -26,9 +26,16 @@
                 <p class="mt-1 whitespace-pre-line text-sm text-slate-600">{{ $task->description ?: 'No description provided.' }}</p>
             </div>
 
+            <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                <x-avatar :user="$task->employee->user" size="md" />
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Assigned to</p>
+                    <p class="text-sm font-medium text-slate-900">{{ $task->employee->user->name }} <span class="font-normal text-slate-400">· {{ $task->employee->job_title }}</span></p>
+                </div>
+            </div>
+
             <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ([
-                    'Employee' => $task->employee->user->name,
                     'Department' => $task->employee->department->name,
                     'Manager' => $task->employee->manager?->user->name ?? '—',
                     'Due date' => $task->due_date?->format('M j, Y') ?? '—',

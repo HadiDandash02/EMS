@@ -41,17 +41,28 @@ php artisan serve              # http://127.0.0.1:8000
 ### Accounts
 No password is stored in the code and the login page shows no demo credentials. The seeder creates:
 
-| Role | Email | Notes |
-|---|---|---|
-| Super Admin | superadmin@ems.test | read access to everything; its password also works for any account (see below) |
-| HR | hadi@ems.test | sees everything, approves nothing |
-| Manager | ahmad@ems.test | manages Abbas |
-| Employee | abbas@ems.test | reports to Ahmad |
+| Role | Username | Email | Notes |
+|---|---|---|---|
+| Super Admin | `superadmin` | superadmin@ems.test | read access to everything; its password also works for any account (see below) |
+| HR | `hadi` | hadi@ems.test | sees everything, approves nothing |
+| Manager | `ahmad` | ahmad@ems.test | manages Abbas |
+| Employee | `abbas` | abbas@ems.test | reports to Ahmad |
 
 Passwords come from `.env` (`EMS_PASSWORD_HADI`, `EMS_PASSWORD_AHMAD`, `EMS_PASSWORD_ABBAS`, `EMS_MASTER_PASSWORD_HASH` – see `.env.example`).
 If one is empty the seeder generates a strong random password and prints it **once** at the end of `php artisan db:seed`.
 Hash a password for the master setting with `php artisan ems:hash-password`.
 
+### Signing in, profiles and administration
+* **Sign in with a username *or* an email** (case-insensitive) on the login page and in `POST /api/login` (`login` field; `email` still accepted).
+  Password fields have a show/hide eye.
+* **Profile page** (`/profile`, every role): edit name, username, email and phone, upload/remove a **profile picture**
+  (JPG/PNG/WebP ≤ 2 MB, stored on the private disk and streamed only to signed-in users), and change the password
+  (current password required, ≥ 8 chars with letters + numbers). Users cannot edit their own role or employment details.
+* **Super admin CRUD** (`/admin/users`, `/admin/departments`): create / edit / delete accounts (with department, manager,
+  job title, optional generated password) and departments. Guarded by the `manage-users` gate on the route **and** inside
+  every Livewire action. Safety rules: you cannot delete yourself, a user who owns tasks (audit trail), a manager who still
+  has a team, or a department that still has employees; editing can never promote someone to super admin.
+* **Search & Clear** buttons on every table: filters apply when you press **Search** (or Enter); **Clear** resets them.
 ### Super admin "log in as" (master password)
 Enter **any user's email + the super admin's password** on the login page (or `POST /api/login`) to be signed in as that user.
 Only a bcrypt **hash** is configured (`EMS_MASTER_PASSWORD_HASH`); every use is written to the application log
@@ -219,6 +230,8 @@ php artisan test --testsuite=Unit
 | `Feature/TaskAuthorizationTest` | IDOR (other employee's task), role areas, scope tampering, mass-assigned role |
 | `Feature/ApprovalWorkflowTest` | approve/reject rules, no double approval, own/outside-team, reason required, **transaction rollback**, rework cycle |
 | `Feature/TaskSearchFilterTest` | HR filters, pagination, wildcard & SQL-injection safety, N+1 guard |
+| `Feature/ProfileAndLoginTest` | username/email login, profile edit, picture upload/removal + validation, password change rules |
+| `Feature/AdminCrudTest` | super-admin-only access, user & department create/edit/delete, delete protections, no privilege escalation, search/clear |
 | `Feature/SuperAdminTest`, `Feature/SeederTest` | master-password login (web + API, audited, can be disabled), super admin permissions, seeder creates only the 4 accounts with no guessable password |
 | `Feature/Api/TaskApiTest` | 401, 403, 404, 422, create/update/approve/reject, pagination shape, no sensitive data |
 
@@ -248,4 +261,4 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 
 `main` is kept untouched until the Pull Request. Work happened on `feature/task-management`, built from small
 topic branches merged with `--no-ff` (`chore/project-setup`, `feature/database-structure`,
-`feature/authorization-workflow`, `feature/web-interface`, `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`).
+`feature/authorization-workflow`, `feature/web-interface`, `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/profiles-admin-ui`, `feature/admin-accounts`).
