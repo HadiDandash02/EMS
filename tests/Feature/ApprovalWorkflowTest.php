@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\TaskStatus;
 use App\Exceptions\InvalidTaskTransitionException;
-use App\Livewire\Tasks\RejectModal;
-use App\Livewire\Tasks\TaskList;
+use App\Livewire\Tasks\ConfirmAction;
+use App\Livewire\Tasks\RejectTask;
 use App\Models\Task;
 use App\Models\TaskHistory;
 use App\Services\TaskWorkflowService;
@@ -34,9 +34,11 @@ class ApprovalWorkflowTest extends TestCase
         $task = $this->taskFor($this->employeeEmp, 'completed');
 
         Livewire::actingAs($this->manager)
-            ->test(TaskList::class, ['scope' => 'team'])
-            ->call('approveTask', $task->id)
-            ->assertDispatched('notify', type: 'success', message: 'Task approved.');
+            ->test(ConfirmAction::class, ['task' => $task, 'action' => 'approve'])
+            ->call('confirm')
+            ->assertRedirect(route('tasks.show', $task));
+
+        $this->assertSame('Task approved.', session('success'));
 
         $task->refresh();
         $this->assertSame(TaskStatus::Approved, $task->status);
@@ -139,8 +141,7 @@ class ApprovalWorkflowTest extends TestCase
         $task = $this->taskFor($this->employeeEmp, 'completed');
 
         Livewire::actingAs($this->manager)
-            ->test(RejectModal::class)
-            ->dispatch('open-reject-modal', taskId: $task->id)
+            ->test(RejectTask::class, ['task' => $task])
             ->set('reason', '')
             ->call('reject')
             ->assertHasErrors(['reason' => 'required']);
@@ -161,12 +162,11 @@ class ApprovalWorkflowTest extends TestCase
         $task = $this->taskFor($this->employeeEmp, 'completed');
 
         Livewire::actingAs($this->manager)
-            ->test(RejectModal::class)
-            ->dispatch('open-reject-modal', taskId: $task->id)
+            ->test(RejectTask::class, ['task' => $task])
             ->set('reason', 'Missing the supporting figures.')
             ->call('reject')
             ->assertHasNoErrors()
-            ->assertDispatched('task-updated');
+            ->assertRedirect(route('team.tasks'));
 
         $task->refresh();
         $this->assertSame(TaskStatus::Rejected, $task->status);

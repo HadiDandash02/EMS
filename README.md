@@ -1,4 +1,4 @@
-# EMS – Employee Task & Approval Management System
+# TaskFlow – Employee Task & Approval Management System
 
 A Laravel application where employees create and complete tasks, managers approve or reject
 completed work, and HR gets a company-wide, searchable view – with a complete audit trail of every
@@ -86,12 +86,44 @@ user may open are offered) · **language switcher** (English / العربية) �
 
 **Languages.** English and Arabic. The choice is remembered in the session (`GET /language/{en|ar}`, also on the login page).
 Arabic switches the whole interface to **right-to-left** (logical Tailwind classes `ps-`/`pe-`/`start-`/`end-`), translates labels,
-statuses, validation messages, toasts and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
+statuses, validation messages, inline messages and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
 `lang/ar/validation.php`; a test fails if a `__('...')` key is missing from the Arabic file.
 
 **Tables.** Row actions are in a **"⋮" menu** (View details · Edit · Start/Rework · Complete · Cancel task · Approve · Reject ·
 Delete) that only lists what the signed-in user may do; every action is re-checked on the server. Filters have a **Search** and a
 **Clear** button, searchable dropdowns (type to filter) and **dd/mm/yyyy** date pickers.
+
+---
+## 0c. Pages instead of popups, pagination, branding, buttons and passwords
+
+**No popups.** Nothing opens in a modal or a browser `confirm()` box. Every form and every "are you sure?" is its own page,
+reached from the "⋮" menu or a button, and messages appear **inline** at the top of the page (green = saved, red = problem):
+
+| Action | Page |
+|---|---|
+| New / edit task | `/{role}/tasks/create`, `/{role}/tasks/{id}/edit` |
+| Complete · Approve · Cancel · Delete a task | `/{role}/tasks/{id}/confirm/{complete\|approve\|cancel\|delete}` |
+| Reject a task (reason required) | `/{role}/tasks/{id}/reject` |
+| New / edit user | `/admin/users/create`, `/admin/users/{id}/edit` · delete: `/admin/users/{id}/delete` |
+| New / edit department | `/admin/departments/create`, `/admin/departments/{id}/edit` · delete: `/admin/departments/{id}/delete` |
+
+Each page checks the policy **when it opens** (403 if you may not do it, or a message if the task is in the wrong state) and the
+workflow service checks **again** when you confirm, so pasting a URL or calling the action directly changes nothing.
+
+**Pagination on every table** (tasks, employees, approvals, users, departments): the footer is always visible and shows
+*Showing 1 to 10 of 25*, a **Rows per page** choice (10 / 25 / 50 / 100, validated on the server) and numbered page buttons.
+Clearing the filters keeps the chosen page size.
+
+**Logo and brand.** *TaskFlow*: a gradient tile with a check leaving a progress ring ("work flows to done") – `public/logo.svg`,
+`public/favicon.svg`, `<x-logo>` (sidebar and login page). The sidebar subtitle shows the role panel ("Super Admin panel").
+
+**Buttons.** One style for the whole system (`resources/css/app.css`, `<x-button variant="primary|secondary|success|danger|warning|soft">`):
+gradient primary buttons with a glow, hover lift, icons and loading text.
+
+**Strong passwords.** When a password is typed – a new user, a changed profile password, or editing a user (blank = keep the old one) –
+it must be **at least 10 characters with upper and lower case letters, a number and a symbol**
+(`App\Support\PasswordPolicy`). A live strength bar and checklist (Too weak → Strong) shows what is still missing, there is a
+show/hide eye, and the admin form has a "Generate a strong password" button. Messages are available in Arabic too.
 
 ---
 ## 1. Project setup
@@ -142,7 +174,7 @@ Hash a password for the master setting with `php artisan ems:hash-password`.
   Password fields have a show/hide eye.
 * **Profile page** (`/{role}/profile`, every role): edit name, username, email and phone, upload/remove a **profile picture**
   (JPG/PNG/WebP ≤ 2 MB, stored on the private disk and streamed only to signed-in users), and change the password
-  (current password required, ≥ 8 chars with letters + numbers). Users cannot edit their own role or employment details.
+  (current password required; 10+ characters with upper and lower case letters, a number and a symbol). Users cannot edit their own role or employment details.
 * **Super admin CRUD** (`/admin/users`, `/admin/departments`): create / edit / delete accounts (with department, manager,
   job title, optional generated password) and departments. Guarded by the `manage-users` gate on the route **and** inside
   every Livewire action. Safety rules: you cannot delete yourself, a user who owns tasks (audit trail), a manager who still
@@ -176,7 +208,7 @@ Browser ──► Routes ──► Middleware (auth, role) ──► Livewire co
 | **Policy for "who", service for "what state"** | Authorisation is a property of user + resource; state validity must be re-checked *inside* the DB transaction. |
 | **One query scope for visibility** (`Task::visibleTo`) | Lists (Livewire + API) and the policy agree on what a user may see. |
 | **Shared validation rules** (`app/Support/TaskRules.php`) | Livewire form and API Form Requests use identical rules. |
-| **Livewire where it adds value** | Live search/filter, pagination, modal create/edit/reject, inline actions with loading states, events between components. Login and dashboard are plain Blade (no interactivity needed). |
+| **Livewire where it adds value** | Live search/filter, pagination, separate pages for forms and confirmations, inline actions with loading states. Login and dashboard are plain Blade (no interactivity needed). |
 | **Sanctum bearer tokens for the API** | Stateless, revocable, no CSRF needed for token clients. |
 
 Main folders: `app/Enums`, `app/Models`, `app/Policies`, `app/Services`, `app/Livewire`,
@@ -339,7 +371,6 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * No email/in-app notifications when a task is approved or rejected.
 * Employees cannot attach files or comments to tasks.
 * Only a direct manager can approve (no delegation/backup approver or multi-level approval).
-* Confirmations use the browser `confirm()` dialog instead of a custom modal.
 * There is no bulk import of employees (CSV) and no "forgot password" e-mail flow; the super admin resets passwords from the Users page.
 * The master password is a deliberate support feature: anyone who knows it can act as any user (actions are attributed to that user). Treat it like a root password, keep only its hash in `.env`, and disable it in production if not needed.
 * The API is token-only; no refresh/expiry policy for tokens beyond Sanctum defaults.
@@ -351,7 +382,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
-  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`.
+  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding`.
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
 * Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
 

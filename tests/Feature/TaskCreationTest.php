@@ -10,6 +10,7 @@ use Livewire\Livewire;
 use Tests\Concerns\BuildsOrganisation;
 use Tests\TestCase;
 
+/** Creating and editing a task now happens on its own pages (no popups). */
 class TaskCreationTest extends TestCase
 {
     use BuildsOrganisation, RefreshDatabase;
@@ -20,21 +21,29 @@ class TaskCreationTest extends TestCase
         $this->buildOrganisation();
     }
 
+    public function test_the_create_and_edit_forms_are_their_own_pages(): void
+    {
+        $task = $this->taskFor($this->employeeEmp);
+
+        $this->actingAs($this->employee)->get('/employee/tasks/create')->assertOk()->assertSee('Create task');
+        $this->actingAs($this->employee)->get("/employee/tasks/{$task->id}/edit")->assertOk()->assertSee('Save changes');
+    }
+
     public function test_employee_can_create_a_task(): void
     {
         Livewire::actingAs($this->employee)
             ->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->set('title', 'Prepare quarterly report')
             ->set('description', 'Collect numbers.')
             ->set('priority', 'high')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertDispatched('task-saved');
+            ->assertRedirect(route('tasks.index'));
 
         $task = Task::firstOrFail();
         $this->assertSame($this->employeeEmp->id, $task->employee_id);
         $this->assertSame(TaskStatus::Pending, $task->status);
+        $this->assertSame('Task created.', session('success'));
         $this->assertDatabaseHas('task_histories', ['task_id' => $task->id, 'action' => 'created', 'actor_id' => $this->employee->id]);
     }
 
@@ -42,7 +51,6 @@ class TaskCreationTest extends TestCase
     {
         Livewire::actingAs($this->employee)
             ->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->set('title', 'ab')                       // too short
             ->set('priority', 'urgent')                // not a valid priority
             ->set('due_date', now()->subDay()->toDateString()) // in the past
@@ -56,7 +64,6 @@ class TaskCreationTest extends TestCase
     {
         Livewire::actingAs($this->employee)
             ->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->call('save')
             ->assertHasErrors(['title' => 'required']);
     }
@@ -66,11 +73,12 @@ class TaskCreationTest extends TestCase
         $task = $this->taskFor($this->employeeEmp);
 
         Livewire::actingAs($this->employee)
-            ->test(TaskForm::class)
-            ->dispatch('open-task-form', taskId: $task->id)
+            ->test(TaskForm::class, ['task' => $task])
+            ->assertSet('title', $task->title)           // the form is pre-filled
             ->set('title', 'Renamed task')
             ->call('save')
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertRedirect(route('tasks.show', $task));
 
         $this->assertSame('Renamed task', $task->fresh()->title);
     }
@@ -80,22 +88,20 @@ class TaskCreationTest extends TestCase
         $task = $this->taskFor($this->employeeEmp, 'inProgress');
 
         Livewire::actingAs($this->employee)
-            ->test(TaskForm::class)
-            ->dispatch('open-task-form', taskId: $task->id)
+            ->test(TaskForm::class, ['task' => $task])
             ->set('title', 'Sneaky rename')
             ->call('save')
-            ->assertDispatched('notify');
+            ->assertRedirect();                           // refused: back to the list with an error message
 
         $this->assertNotSame('Sneaky rename', $task->fresh()->title);
+        $this->assertStringContainsString('Only pending tasks can be edited', session('error'));
     }
 
-    public function test_employee_cannot_open_the_edit_form_for_someone_elses_task(): void
+    public function test_employee_cannot_open_the_edit_page_for_someone_elses_task(): void
     {
         $task = $this->taskFor($this->teammateEmp);
 
-        Livewire::actingAs($this->employee)
-            ->test(TaskForm::class)
-            ->dispatch('open-task-form', taskId: $task->id)
-            ->assertForbidden();
+        Livewire::actingAs($this->employee)->test(TaskForm::class, ['task' => $task])->assertForbidden();
+        $this->actingAs($this->employee)->get("/employee/tasks/{$task->id}/edit")->assertForbidden();
     }
 }
