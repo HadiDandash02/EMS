@@ -2,14 +2,7 @@
     <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? 'Every approval and rejection decision in the company.' : 'The approval and rejection decisions you have made.' }}</p>
 
     <x-filter-bar placeholder="Search by task title…" label="Search title" :total="$records->total()" noun="decision">
-        <div class="sm:col-span-2 lg:col-span-1">
-            <label for="decision" class="mb-1 block text-xs font-medium text-slate-600">Decision</label>
-            <select id="decision" wire:model="decision" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All decisions</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-            </select>
-        </div>
+        <x-searchable-select id="decision" label="Decision" wire:model="decision" placeholder="All decisions" all-label="All decisions" :options="['approved' => 'Approved', 'rejected' => 'Rejected']" />
     </x-filter-bar>
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200" wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage">
@@ -34,7 +27,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-slate-600">{{ $r->actor?->name ?? '—' }}</td>
                                 <td class="max-w-xs px-4 py-3 text-slate-600">{{ $r->reason ?: '—' }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $r->created_at->format('M j, Y H:i') }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $r->created_at->format('d/m/Y H:i') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

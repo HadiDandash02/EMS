@@ -7,7 +7,7 @@
             @else Every task in the company. Use the filters to narrow down.
             @endif
         </p>
-        @if ($scope === 'mine')
+        @if ($scope === 'mine' || ($scope === 'all' && auth()->user()->isSuperAdmin()))
             <button type="button" x-on:click="Livewire.dispatch('open-task-form')"
                     class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -18,46 +18,20 @@
 
     {{-- Filters --}}
     <x-filter-bar placeholder="Search by task title…" label="Search title" :total="$tasks->total()" noun="task">
-        <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="status">Status</label>
-            <select id="status" wire:model="status" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All statuses</option>
-                @foreach ($statuses as $s)<option value="{{ $s->value }}">{{ $s->label() }}</option>@endforeach
-            </select>
-        </div>
-        <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="priority">Priority</label>
-            <select id="priority" wire:model="priority" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All priorities</option>
-                @foreach ($priorities as $p)<option value="{{ $p->value }}">{{ $p->label() }}</option>@endforeach
-            </select>
-        </div>
+        <x-searchable-select id="status" label="Status" wire:model="status" placeholder="All statuses" all-label="All statuses"
+            :options="collect($statuses)->mapWithKeys(fn ($s) => [$s->value => $s->label()])" />
+        <x-searchable-select id="priority" label="Priority" wire:model="priority" placeholder="All priorities" all-label="All priorities"
+            :options="collect($priorities)->mapWithKeys(fn ($p) => [$p->value => $p->label()])" />
         @if ($scope !== 'mine')
-            <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600" for="employee">Employee</label>
-                <select id="employee" wire:model="employeeId" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All employees</option>
-                    @foreach ($employees as $e)<option value="{{ $e->id }}">{{ $e->user->name }}</option>@endforeach
-                </select>
-            </div>
+            <x-searchable-select id="employee" label="Employee" wire:model="employeeId" placeholder="All employees" all-label="All employees"
+                :options="$employees->mapWithKeys(fn ($e) => [$e->id => $e->user->name])" />
         @endif
         @if ($scope === 'all')
-            <div>
-                <label class="mb-1 block text-xs font-medium text-slate-600" for="department">Department</label>
-                <select id="department" wire:model="departmentId" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All departments</option>
-                    @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
-                </select>
-            </div>
+            <x-searchable-select id="department" label="Department" wire:model="departmentId" placeholder="All departments" all-label="All departments"
+                :options="$departments->pluck('name', 'id')" />
         @endif
-        <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="from">Created from</label>
-            <input id="from" type="date" wire:model="dateFrom" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="to">Created to</label>
-            <input id="to" type="date" wire:model="dateTo" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-        </div>
+        <x-date-input id="from" label="Created from" wire:model="dateFrom" compact />
+        <x-date-input id="to" label="Created to" wire:model="dateTo" compact />
     </x-filter-bar>
 
     {{-- Table (desktop) / cards (mobile) --}}
@@ -102,7 +76,7 @@
                                 @endif
                                 <td class="px-4 py-3"><x-status-badge :status="$task->status" /></td>
                                 <td class="px-4 py-3"><x-priority-badge :priority="$task->priority" /></td>
-                                <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $task->due_date?->format('M j, Y') ?? '—' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $task->due_date?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
                                         @include('livewire.tasks.partials.actions', ['task' => $task])
@@ -127,7 +101,7 @@
                             @if ($scope !== 'mine')
                                 <span class="inline-flex items-center gap-1.5"><x-avatar :user="$task->employee->user" size="xs" />{{ $task->employee->user->name }}</span>
                             @endif
-                            <span>Due {{ $task->due_date?->format('M j') ?? '—' }}</span>
+                            <span>Due {{ $task->due_date?->format('d/m') ?? '—' }}</span>
                         </div>
                         @include('livewire.tasks.partials.actions', ['task' => $task])
                     </li>

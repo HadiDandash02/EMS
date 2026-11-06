@@ -9,20 +9,8 @@
     </div>
 
     <x-filter-bar placeholder="Name, username, email or employee number…" label="Search users" :total="$users->total()" noun="user">
-        <div>
-            <label for="uf-role" class="mb-1 block text-xs font-medium text-slate-600">Role</label>
-            <select id="uf-role" wire:model="roleFilter" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All roles</option>
-                @foreach ($roles as $r)<option value="{{ $r->value }}">{{ $r->label() }}</option>@endforeach
-            </select>
-        </div>
-        <div>
-            <label for="uf-dept" class="mb-1 block text-xs font-medium text-slate-600">Department</label>
-            <select id="uf-dept" wire:model="departmentFilter" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All departments</option>
-                @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
-            </select>
-        </div>
+        <x-searchable-select id="uf-role" label="Role" wire:model="roleFilter" placeholder="All roles" all-label="All roles" :options="collect($roles)->mapWithKeys(fn ($r) => [$r->value => $r->label()])" />
+        <x-searchable-select id="uf-dept" label="Department" wire:model="departmentFilter" placeholder="All departments" all-label="All departments" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200" wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage">
@@ -110,12 +98,8 @@
 
                 @if ($role !== 'super_admin')
                     <div>
-                        <label for="um-dept" class="block text-sm font-medium text-slate-700">Department *</label>
-                        <select id="um-dept" wire:model="department_id"
-                                class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('department_id') ring-rose-400 @else ring-slate-300 @enderror">
-                            <option value="">Select…</option>
-                            @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
-                        </select>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Department *</label>
+                        <x-searchable-select id="um-dept" wire:model="department_id" placeholder="Select…" :options="$departments->pluck('name', 'id')" :error="$errors->has('department_id')" />
                         @error('department_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -125,12 +109,8 @@
                         @error('job_title')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label for="um-manager" class="block text-sm font-medium text-slate-700">Reports to (manager)</label>
-                        <select id="um-manager" wire:model="manager_id"
-                                class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('manager_id') ring-rose-400 @else ring-slate-300 @enderror">
-                            <option value="">No manager</option>
-                            @foreach ($managers as $m)<option value="{{ $m->id }}">{{ $m->user->name }}</option>@endforeach
-                        </select>
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Reports to (manager)</label>
+                        <x-searchable-select id="um-manager" wire:model="manager_id" placeholder="No manager" all-label="No manager" :options="$managers->mapWithKeys(fn ($m) => [$m->id => $m->user->name])" :error="$errors->has('manager_id')" />
                         @error('manager_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -140,9 +120,7 @@
                         @error('employee_number')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label for="um-hired" class="block text-sm font-medium text-slate-700">Hired on</label>
-                        <input id="um-hired" type="date" wire:model="hired_at" max="{{ now()->toDateString() }}"
-                               class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('hired_at') ring-rose-400 @else ring-slate-300 @enderror">
+                        <x-date-input id="um-hired" label="Hired on" wire:model="hired_at" :max="now()->toDateString()" :error="$errors->has('hired_at')" />
                         @error('hired_at')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                 @else

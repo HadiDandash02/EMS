@@ -7,7 +7,7 @@
             <div class="relative flex flex-wrap items-center gap-5">
                 <x-avatar :user="$user" size="lg" class="!ring-4 !ring-white/30" />
                 <div>
-                    <p class="text-sm text-indigo-100">{{ now()->format('l, F j') }}</p>
+                    <p class="text-sm text-indigo-100">{{ now()->format('l, d/m/Y') }}</p>
                     <h2 class="text-2xl font-semibold">Hello, {{ $user->name }}</h2>
                     <p class="text-sm text-indigo-100">
                         {{ $user->role->label() }}@if ($user->employee) · {{ $user->employee->job_title }} · {{ $user->employee->department->name }}@endif

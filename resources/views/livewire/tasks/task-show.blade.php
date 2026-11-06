@@ -38,11 +38,11 @@
                 @foreach ([
                     'Department' => $task->employee->department->name,
                     'Manager' => $task->employee->manager?->user->name ?? '—',
-                    'Due date' => $task->due_date?->format('M j, Y') ?? '—',
-                    'Created' => $task->created_at->format('M j, Y H:i'),
-                    'Completed' => $task->completed_at?->format('M j, Y H:i') ?? '—',
+                    'Due date' => $task->due_date?->format('d/m/Y') ?? '—',
+                    'Created' => $task->created_at->format('d/m/Y H:i'),
+                    'Completed' => $task->completed_at?->format('d/m/Y H:i') ?? '—',
                     'Reviewed by' => $task->reviewer?->name ?? '—',
-                    'Reviewed at' => $task->reviewed_at?->format('M j, Y H:i') ?? '—',
+                    'Reviewed at' => $task->reviewed_at?->format('d/m/Y H:i') ?? '—',
                 ] as $label => $value)
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-slate-400">{{ $label }}</dt>
@@ -68,7 +68,7 @@
                         @endif
                     </p>
                     @if ($h->reason)<p class="mt-1 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">“{{ $h->reason }}”</p>@endif
-                    <p class="mt-0.5 text-xs text-slate-400">{{ $h->created_at->format('M j, Y H:i') }}</p>
+                    <p class="mt-0.5 text-xs text-slate-400">{{ $h->created_at->format('d/m/Y H:i') }}</p>
                 </li>
             @endforeach
         </ol>

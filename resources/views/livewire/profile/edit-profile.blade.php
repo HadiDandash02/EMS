@@ -44,7 +44,7 @@
                         'Job title' => $user->employee->job_title,
                         'Department' => $user->employee->department->name,
                         'Manager' => $user->employee->manager?->user->name ?? '—',
-                        'Hired' => $user->employee->hired_at?->format('M j, Y') ?? '—',
+                        'Hired' => $user->employee->hired_at?->format('d/m/Y') ?? '—',
                     ] as $label => $value)
                         <div class="flex justify-between gap-4"><dt class="text-slate-500">{{ $label }}</dt><dd class="text-right font-medium text-slate-800">{{ $value }}</dd></div>
                     @endforeach

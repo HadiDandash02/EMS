@@ -1,12 +1,6 @@
 <div class="space-y-5">
     <x-filter-bar placeholder="Name, email, number or job title…" label="Search employees" :total="$employees->total()" noun="employee">
-        <div class="sm:col-span-2 lg:col-span-1">
-            <label for="emp-dept" class="mb-1 block text-xs font-medium text-slate-600">Department</label>
-            <select id="emp-dept" wire:model="departmentId" class="block w-full rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                <option value="">All departments</option>
-                @foreach ($departments as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach
-            </select>
-        </div>
+        <x-searchable-select id="emp-dept" label="Department" wire:model="departmentId" placeholder="All departments" all-label="All departments" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200" wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage">

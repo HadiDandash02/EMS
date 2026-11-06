@@ -9,6 +9,13 @@
                     </div>
 
                     <div class="space-y-4 px-6 py-5">
+                        @if ($isAdmin && ! $taskId)
+                            <div>
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Employee <span class="text-rose-500">*</span></label>
+                                <x-searchable-select id="tf-owner" wire:model="employee_id" placeholder="Select an employee…" :options="$owners" :error="$errors->has('employee_id')" />
+                                @error('employee_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
                         <div>
                             <label for="tf-title" class="block text-sm font-medium text-slate-700">Title <span class="text-rose-500">*</span></label>
                             <input id="tf-title" type="text" wire:model="title" maxlength="150" autofocus
@@ -31,9 +38,7 @@
                                 @error('priority')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <label for="tf-due" class="block text-sm font-medium text-slate-700">Due date</label>
-                                <input id="tf-due" type="date" wire:model="due_date" min="{{ now()->toDateString() }}"
-                                       class="mt-1 block w-full rounded-lg border-0 px-3 py-2 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('due_date') ring-rose-400 @else ring-slate-300 @enderror">
+                                <x-date-input id="tf-due" label="Due date" wire:model="due_date" :min="now()->toDateString()" :error="$errors->has('due_date')" />
                                 @error('due_date')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                             </div>
                         </div>
