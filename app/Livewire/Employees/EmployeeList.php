@@ -43,7 +43,7 @@ class EmployeeList extends Component
             }))
             ->when((int) $this->departmentId, fn (Builder $q, int $id) => $q->where('department_id', $id))
             ->orderBy('employee_number')
-            ->paginate(10);
+            ->paginate($this->rowsPerPage());
 
         return view('livewire.employees.employee-list', [
             'employees' => $employees,

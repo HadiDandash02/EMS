@@ -18,10 +18,7 @@
 <div class="grid min-h-full lg:grid-cols-2">
     {{-- Brand panel --}}
     <div class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-900 p-12 text-white lg:flex">
-        <div class="relative z-10 flex items-center gap-3">
-            <img src="{{ asset('favicon.svg') }}" alt="" class="h-10 w-10">
-            <span class="text-lg font-semibold tracking-tight">EMS</span>
-        </div>
+        <x-logo size="lg" dark class="relative z-10" />
         <div class="relative z-10">
             <x-illustration class="mx-auto w-full max-w-md drop-shadow-2xl" />
             <h2 class="mt-8 text-3xl font-semibold leading-tight">{{ __('Employee Task & Approval Management') }}</h2>
@@ -40,9 +37,7 @@
         </div>
 
         <div class="w-full max-w-sm">
-            <div class="mb-8 flex items-center gap-3 lg:hidden">
-                <img src="{{ asset('favicon.svg') }}" alt="" class="h-10 w-10"><span class="text-lg font-semibold">EMS</span>
-            </div>
+            <x-logo class="mb-8 lg:hidden" />
             <h1 class="text-2xl font-semibold text-slate-900">{{ __('Welcome back') }}</h1>
             <p class="mt-1 text-sm text-slate-500">{{ __('Sign in with your username or email.') }}</p>
 
@@ -65,7 +60,7 @@
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                     <input type="checkbox" name="remember" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"> {{ __('Remember me') }}
                 </label>
-                <button type="submit" class="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ __('Sign in') }}</button>
+                <x-button type="submit" variant="primary" size="lg" class="w-full">{{ __('Sign in') }}</x-button>
             </form>
         </div>
     </div>

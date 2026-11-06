@@ -8,11 +8,7 @@
             @endif
         </p>
         @if ($scope === 'mine' || ($scope === 'all' && auth()->user()->isSuperAdmin()))
-            <button type="button" x-on:click="Livewire.dispatch('open-task-form')"
-                    class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-500 hover:to-violet-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
-                {{ __('New task') }}
-            </button>
+            <x-button :href="route('tasks.create')" variant="primary" icon="plus">{{ __('New task') }}</x-button>
         @endif
     </div>
 
@@ -40,7 +36,7 @@
         @if ($tasks->isEmpty())
             <x-empty-state :title="__('No tasks found')" :text="$search || $status || $priority || $employeeId || $departmentId || $dateFrom || $dateTo ? __('Try changing your filters or press Clear.') : __('Nothing here yet.')">
                 @if ($scope === 'mine')
-                    <button type="button" x-on:click="Livewire.dispatch('open-task-form')" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Create your first task') }}</button>
+                    <x-button :href="route('tasks.create')" variant="primary" icon="plus">{{ __('Create your first task') }}</x-button>
                 @endif
             </x-empty-state>
         @else
@@ -107,9 +103,7 @@
                 @endforeach
             </ul>
 
-            @if ($tasks->hasPages())
-                <div class="border-t border-slate-200 px-4 py-3">{{ $tasks->links() }}</div>
-            @endif
+            <x-table-footer :paginator="$tasks" />
         @endif
     </div>
 </div>

@@ -3,11 +3,18 @@
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Livewire\Admin\DeleteDepartment;
+use App\Livewire\Admin\DeleteUser;
+use App\Livewire\Admin\DepartmentForm;
 use App\Livewire\Admin\DepartmentManager;
+use App\Livewire\Admin\UserForm;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\Approvals\ApprovalHistory;
 use App\Livewire\Employees\EmployeeList;
 use App\Livewire\Profile\EditProfile;
+use App\Livewire\Tasks\ConfirmAction;
+use App\Livewire\Tasks\RejectTask;
+use App\Livewire\Tasks\TaskForm;
 use App\Livewire\Tasks\TaskList;
 use App\Livewire\Tasks\TaskShow;
 use Illuminate\Http\Request;
@@ -49,7 +56,12 @@ Route::middleware('auth')->prefix('{panel}')->where(['panel' => $prefixes])->gro
 
     // My tasks + task detail (per-task access is enforced by TaskPolicy::view)
     Route::get('/tasks', TaskList::class)->defaults('scope', 'mine')->name('tasks.index');
+    Route::get('/tasks/create', TaskForm::class)->name('tasks.create');
     Route::get('/tasks/{task}', TaskShow::class)->whereNumber('task')->name('tasks.show');
+    // Every form and confirmation is its own page (no popups)
+    Route::get('/tasks/{task}/edit', TaskForm::class)->whereNumber('task')->name('tasks.edit');
+    Route::get('/tasks/{task}/reject', RejectTask::class)->whereNumber('task')->name('tasks.reject');
+    Route::get('/tasks/{task}/confirm/{action}', ConfirmAction::class)->whereNumber('task')->whereIn('action', ['complete', 'approve', 'cancel', 'delete'])->name('tasks.confirm');
 
     // Manager: the team's tasks
     Route::get('/team/tasks', TaskList::class)->defaults('scope', 'team')
@@ -68,7 +80,14 @@ Route::middleware('auth')->prefix('{panel}')->where(['panel' => $prefixes])->gro
     // Super admin only: accounts and departments (CRUD)
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/users', UserManager::class)->name('admin.users');
+        Route::get('/users/create', UserForm::class)->name('admin.users.create');
+        Route::get('/users/{user}/edit', UserForm::class)->whereNumber('user')->name('admin.users.edit');
+        Route::get('/users/{user}/delete', DeleteUser::class)->whereNumber('user')->name('admin.users.delete');
+
         Route::get('/departments', DepartmentManager::class)->name('admin.departments');
+        Route::get('/departments/create', DepartmentForm::class)->name('admin.departments.create');
+        Route::get('/departments/{department}/edit', DepartmentForm::class)->whereNumber('department')->name('admin.departments.edit');
+        Route::get('/departments/{department}/delete', DeleteDepartment::class)->whereNumber('department')->name('admin.departments.delete');
     });
 });
 

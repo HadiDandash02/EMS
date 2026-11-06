@@ -28,16 +28,8 @@
             </span>
         </p>
         <div class="flex items-center gap-2">
-            <button type="button" wire:click="clearFilters"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
-                {{ __('Clear') }}
-            </button>
-            <button type="submit"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                {{ __('Search') }}
-            </button>
+            <x-button type="button" variant="secondary" icon="x" wire:click="clearFilters">{{ __('Clear') }}</x-button>
+            <x-button type="submit" variant="primary" icon="search">{{ __('Search') }}</x-button>
         </div>
     </div>
 </form>

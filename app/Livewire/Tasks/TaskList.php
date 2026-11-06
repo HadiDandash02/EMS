@@ -75,7 +75,6 @@ class TaskList extends Component
         return ['search', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
     }
 
-    #[On('task-saved')]
     #[On('task-updated')]
     public function refreshList(): void
     {
@@ -121,7 +120,7 @@ class TaskList extends Component
         };
 
         return view('livewire.tasks.task-list', [
-            'tasks' => $this->query()->paginate(10),
+            'tasks' => $this->query()->paginate($this->rowsPerPage()),
             'employees' => $employees,
             'departments' => $this->scope === 'all' ? Department::orderBy('name')->get() : collect(),
             'statuses' => TaskStatus::cases(),

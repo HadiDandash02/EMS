@@ -34,12 +34,10 @@
 
                         <div class="mt-3 flex gap-2">
                             @if ($photo)
-                                <button type="button" wire:click="savePhoto" wire:loading.attr="disabled" wire:target="savePhoto"
-                                        class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60">{{ __('Save picture') }}</button>
+                                <x-button type="button" variant="primary" size="sm" icon="save" wire:click="savePhoto" wire:loading.attr="disabled" wire:target="savePhoto">{{ __('Save picture') }}</x-button>
                             @endif
                             @if ($user->avatar_path)
-                                <button type="button" wire:click="removePhoto" wire:confirm="{{ __('Remove your profile picture?') }}"
-                                        class="rounded-lg px-3 py-2 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50">{{ __('Remove') }}</button>
+                                <x-button type="button" variant="soft-danger" size="sm" icon="trash" wire:click="removePhoto">{{ __('Remove') }}</x-button>
                             @endif
                         </div>
                     </div>
@@ -92,32 +90,30 @@
                     @endforeach
                 </div>
                 <div class="flex justify-end rounded-b-2xl bg-slate-50 px-6 py-4">
-                    <button type="submit" wire:loading.attr="disabled" wire:target="saveProfile"
-                            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60">
+                    <x-button type="submit" variant="primary" icon="save" wire:loading.attr="disabled" wire:target="saveProfile">
                         <span wire:loading.remove wire:target="saveProfile">{{ __('Save changes') }}</span>
                         <span wire:loading wire:target="saveProfile">{{ __('Saving…') }}</span>
-                    </button>
+                    </x-button>
                 </div>
             </form>
 
             <form wire:submit="updatePassword" id="change-password" class="scroll-mt-24 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Change password') }}</h3>
-                    <p class="text-sm text-slate-500">{{ __('At least 8 characters, with letters and numbers.') }}</p>
+                    <p class="text-sm text-slate-500">{{ __('At least 10 characters, with upper and lower case letters, a number and a symbol.') }}</p>
                 </div>
                 <div class="grid gap-5 p-6 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <x-password-input id="current_password" name="current_password" :label="__('Current password')" wire:model="current_password" :error="$errors->first('current_password')" />
                     </div>
-                    <x-password-input id="new_password" name="password" :label="__('New password')" autocomplete="new-password" wire:model="password" :error="$errors->first('password')" />
+                    <x-password-input id="new_password" name="password" :label="__('New password')" autocomplete="new-password" meter wire:model="password" :error="$errors->first('password')" />
                     <x-password-input id="password_confirmation" name="password_confirmation" :label="__('Confirm new password')" autocomplete="new-password" wire:model="password_confirmation" />
                 </div>
                 <div class="flex justify-end rounded-b-2xl bg-slate-50 px-6 py-4">
-                    <button type="submit" wire:loading.attr="disabled" wire:target="updatePassword"
-                            class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60">
+                    <x-button type="submit" variant="primary" icon="key" wire:loading.attr="disabled" wire:target="updatePassword">
                         <span wire:loading.remove wire:target="updatePassword">{{ __('Update password') }}</span>
                         <span wire:loading wire:target="updatePassword">{{ __('Updating…') }}</span>
-                    </button>
+                    </x-button>
                 </div>
             </form>
         </div>

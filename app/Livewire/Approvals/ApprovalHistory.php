@@ -39,7 +39,7 @@ class ApprovalHistory extends Component
             ->when(TaskAction::tryFrom($this->decision), fn ($q, $a) => $q->where('action', $a))
             ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)))
             ->latest('id')
-            ->paginate(10);
+            ->paginate($this->rowsPerPage());
 
         return view('livewire.approvals.approval-history', ['records' => $records])
             ->layout('components.layouts.app', ['title' => 'Approval history']);

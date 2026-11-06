@@ -22,16 +22,9 @@ class TaskShow extends Component
     }
 
     #[On('task-updated')]
-    #[On('task-saved')]
     public function refreshTask(): void
     {
         $this->task->refresh();
-    }
-
-    protected function afterTaskDeleted(): void
-    {
-        // The task no longer exists: go back to a list the user may open.
-        $this->redirect(auth()->user()->canSeeAll() ? route('tasks.all') : route('tasks.index'), navigate: true);
     }
 
     public function render()

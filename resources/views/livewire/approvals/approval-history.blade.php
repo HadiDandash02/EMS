@@ -34,7 +34,7 @@
                     </tbody>
                 </table>
             </div>
-            @if ($records->hasPages())<div class="border-t border-slate-200 px-4 py-3">{{ $records->links() }}</div>@endif
+            <x-table-footer :paginator="$records" />
         @endif
     </div>
 </div>

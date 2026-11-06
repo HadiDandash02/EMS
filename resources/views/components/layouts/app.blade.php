@@ -46,12 +46,8 @@
     {{-- Sidebar (light, like the Employee Management project) --}}
     <aside class="fixed inset-y-0 start-0 z-40 flex w-64 flex-col border-e border-slate-200 bg-white transition-transform"
            :class="sidebar ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'">
-        <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 border-b border-slate-100 px-5 py-5 text-slate-900 hover:text-indigo-600">
-            <img src="{{ asset('favicon.svg') }}" alt="" class="h-9 w-9 rounded-[10px] shadow-md shadow-indigo-500/30">
-            <span class="leading-tight">
-                <span class="block text-sm font-bold">{{ __('Task Management') }}</span>
-                <span class="block text-[11px] text-slate-500">{{ __(':role panel', ['role' => $user->role->label()]) }}</span>
-            </span>
+        <a href="{{ route('dashboard') }}" wire:navigate class="block border-b border-slate-100 px-5 py-4" aria-label="TaskFlow">
+            <x-logo :subtitle="__(':role panel', ['role' => $user->role->label()])" />
         </a>
 
         <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
@@ -198,6 +194,28 @@
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8">
+            {{-- Messages appear INSIDE the page (no floating popups): saved / error after a form, or from a component --}}
+            @php
+                $flash = collect(['success', 'error'])->filter(fn ($k) => session()->has($k))
+                    ->map(fn ($k) => ['type' => $k, 'message' => session($k)])->values();
+            @endphp
+            <div x-data="{ items: @js($flash), add(d) { this.items = [{ type: d.type ?? 'success', message: d.message }]; this.$nextTick(() => this.$el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })); } }"
+                 @notify.window="add($event.detail)" x-show="items.length" x-cloak class="mb-5">
+                <template x-for="(a, i) in items" :key="i">
+                    <div role="alert" class="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm"
+                         :class="a.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path x-show="a.type !== 'error'" stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path x-show="a.type === 'error'" stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.01"/>
+                        </svg>
+                        <p class="flex-1 font-medium" x-text="a.message"></p>
+                        <button type="button" @click="items = []" class="-m-1 rounded p-1 opacity-60 transition hover:opacity-100" aria-label="{{ __('Close') }}">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
             {{ $slot }}
         </main>
 
@@ -205,21 +223,6 @@
     </div>
 </div>
 
-{{-- Toasts: any component can fire $this->dispatch('notify', type: 'success', message: '...') --}}
-<div x-data="{ toasts: [], add(d) { const t = { id: Date.now() + Math.random(), type: d.type ?? 'success', message: d.message }; this.toasts.push(t); setTimeout(() => this.toasts = this.toasts.filter(x => x.id !== t.id), 5000); } }"
-     @notify.window="add($event.detail)"
-     class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex flex-col items-center gap-2 px-4 sm:items-end sm:px-6">
-    <template x-for="t in toasts" :key="t.id">
-        <div x-transition class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 text-sm shadow-lg"
-             :class="t.type === 'error' ? 'border-rose-200' : 'border-emerald-200'" role="status">
-            <span class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" :class="t.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'"></span>
-            <span class="text-slate-700" x-text="t.message"></span>
-        </div>
-    </template>
-</div>
-
-@livewire('tasks.task-form')
-@livewire('tasks.reject-modal')
 @livewireScripts
 </body>
 </html>
