@@ -4,6 +4,7 @@ namespace App\Livewire\Tasks;
 
 use App\Enums\TaskPriority;
 use App\Exceptions\InvalidTaskTransitionException;
+use App\Models\Employee;
 use App\Models\Task;
 use App\Services\TaskWorkflowService;
 use App\Support\TaskRules;
@@ -31,16 +32,26 @@ class TaskForm extends Component
 
     public ?string $due_date = null;
 
+    /** Only used by the super admin, who creates tasks on behalf of an employee. */
+    public string $employee_id = '';
+
     protected function rules(): array
     {
-        return TaskRules::fields();
+        $rules = TaskRules::fields();
+
+        // Editing keeps the owner; only a NEW task made by the super admin needs one picked.
+        if (! $this->taskId && auth()->user()->isSuperAdmin()) {
+            $rules['employee_id'] = ['required', 'exists:employees,id'];
+        }
+
+        return $rules;
     }
 
     #[On('open-task-form')]
     public function openForm(?int $taskId = null): void
     {
         $this->resetValidation();
-        $this->reset('title', 'description', 'due_date');
+        $this->reset('title', 'description', 'due_date', 'employee_id');
         $this->priority = TaskPriority::Medium->value;
         $this->taskId = $taskId;
 
@@ -53,7 +64,7 @@ class TaskForm extends Component
             $this->priority = $task->priority->value;
             $this->due_date = $task->due_date?->toDateString();
         } else {
-            $this->authorize('create', Task::class);
+            $this->authorize(auth()->user()->isSuperAdmin() ? 'createFor' : 'create', Task::class);
         }
 
         $this->open = true;
@@ -66,6 +77,7 @@ class TaskForm extends Component
         $data['due_date'] = $data['due_date'] ?: null;
 
         try {
+            // (employee_id is only present for the super admin; the service ignores it for everyone else)
             if ($this->taskId) {
                 $workflow->update(Task::findOrFail($this->taskId), auth()->user(), $data);
                 $message = 'Task updated.';
@@ -92,6 +104,14 @@ class TaskForm extends Component
 
     public function render()
     {
-        return view('livewire.tasks.task-form', ['priorities' => TaskPriority::cases()]);
+        $isAdmin = auth()->check() && auth()->user()->isSuperAdmin();
+
+        return view('livewire.tasks.task-form', [
+            'priorities' => TaskPriority::cases(),
+            'owners' => $isAdmin && $this->open && ! $this->taskId
+                ? Employee::with('user')->get()->sortBy('user.name')->mapWithKeys(fn ($e) => [$e->id => $e->user->name.' · '.$e->employee_number])
+                : collect(),
+            'isAdmin' => $isAdmin,
+        ]);
     }
 }

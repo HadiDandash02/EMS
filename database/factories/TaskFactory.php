@@ -13,12 +13,27 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TaskFactory extends Factory
 {
+    /** Realistic English sample tasks (no Lorem Ipsum / foreign-language filler). */
+    private const SAMPLES = [
+        ['title' => 'Prepare the monthly sales report', 'description' => 'Collect the figures from every region, check them against the finance system and publish the summary.'],
+        ['title' => 'Update the employee handbook', 'description' => 'Review the leave and remote-work policies and add the changes approved last quarter.'],
+        ['title' => 'Fix the login page bug', 'description' => 'Users report an error when the session expires. Reproduce it, fix it and add a regression test.'],
+        ['title' => 'Organise the team meeting', 'description' => 'Book a room, send the agenda and share the notes with the whole team afterwards.'],
+        ['title' => 'Review the new vendor contract', 'description' => 'Check the pricing, delivery terms and cancellation clauses, then send comments to legal.'],
+        ['title' => 'Design the onboarding checklist', 'description' => 'List everything a new hire needs in the first week: accounts, equipment and introductions.'],
+        ['title' => 'Back up the customer database', 'description' => 'Run the weekly backup, verify that it restores correctly and store a copy offsite.'],
+        ['title' => 'Write the project status update', 'description' => 'Summarise progress, risks and next steps for the management meeting on Thursday.'],
+        ['title' => 'Test the mobile app release', 'description' => 'Go through the release checklist on Android and iOS and report any blocking issues.'],
+        ['title' => 'Train the support team on the new tool', 'description' => 'Prepare a short workshop with practical examples and share the recording afterwards.'],
+        ['title' => 'Reconcile the expense reports', 'description' => 'Match submitted receipts with the card statements and flag anything that is missing.'],
+        ['title' => 'Plan the quarterly budget', 'description' => 'Collect requests from each department and prepare a draft budget for approval.'],
+    ];
+
     public function definition(): array
     {
         return [
             'employee_id' => Employee::factory(),
-            'title' => fake()->sentence(4),
-            'description' => fake()->paragraph(),
+            ...fake()->randomElement(self::SAMPLES),
             'priority' => fake()->randomElement(TaskPriority::cases()),
             'status' => TaskStatus::Pending,
             'due_date' => fake()->dateTimeBetween('now', '+30 days'),

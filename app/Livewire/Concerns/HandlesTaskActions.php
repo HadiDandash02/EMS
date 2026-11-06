@@ -38,6 +38,32 @@ trait HandlesTaskActions
         $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), 'Task approved.');
     }
 
+    public function deleteTask(int $taskId): void
+    {
+        $task = Task::findOrFail($taskId);
+
+        try {
+            app(TaskWorkflowService::class)->delete($task, auth()->user());
+        } catch (AuthorizationException $e) {
+            $this->notify($e->getMessage() ?: 'You are not allowed to do that.', 'error');
+
+            return;
+        } catch (InvalidTaskTransitionException $e) {
+            $this->notify($e->getMessage(), 'error');
+
+            return;
+        }
+
+        $this->notify('Task deleted.');
+        $this->afterTaskDeleted();
+    }
+
+    /** Lists just refresh; the detail page overrides this to leave the (now missing) task. */
+    protected function afterTaskDeleted(): void
+    {
+        $this->dispatch('task-updated');
+    }
+
     /** @param  Closure(TaskWorkflowService, Task): mixed  $action */
     private function performTaskAction(int $taskId, Closure $action, string $successMessage): void
     {

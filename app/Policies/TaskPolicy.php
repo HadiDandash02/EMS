@@ -33,9 +33,24 @@ class TaskPolicy
         return $user->employee !== null;
     }
 
+    /** The super admin may create a task on behalf of any employee. */
+    public function createFor(User $user): bool
+    {
+        return $user->isSuperAdmin();
+    }
+
     public function update(User $user, Task $task): Response
     {
-        return $this->ownerOnly($user, $task, 'You can only edit your own tasks.');
+        return $user->isSuperAdmin() || $task->isOwnedBy($user)
+            ? Response::allow()
+            : Response::deny('You can only edit your own tasks.');
+    }
+
+    public function delete(User $user, Task $task): Response
+    {
+        return $user->isSuperAdmin() || $task->isOwnedBy($user)
+            ? Response::allow()
+            : Response::deny('You can only delete your own tasks.');
     }
 
     public function start(User $user, Task $task): Response

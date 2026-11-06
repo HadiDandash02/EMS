@@ -7,7 +7,9 @@ use App\Enums\TaskStatus;
 use App\Exceptions\InvalidTaskTransitionException;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -29,14 +31,30 @@ use Illuminate\Validation\ValidationException;
  */
 class TaskWorkflowService
 {
-    /** @param  array{title:string,description?:?string,priority:string,due_date?:?string}  $data */
+    /**
+     * @param  array{title:string,description?:?string,priority:string,due_date?:?string,employee_id?:int|string|null}  $data
+     */
     public function create(User $actor, array $data): Task
     {
-        Gate::forUser($actor)->authorize('create', Task::class);
+        // Employees/managers/HR always create for THEMSELVES; any employee_id they send is ignored.
+        // Only the super admin may pick the owner.
+        $ownerId = null;
+        if ($actor->isSuperAdmin()) {
+            Gate::forUser($actor)->authorize('createFor', Task::class);
 
-        return DB::transaction(function () use ($actor, $data) {
+            if (blank($data['employee_id'] ?? null)) {
+                throw ValidationException::withMessages(['employee_id' => 'Choose the employee this task is for.']);
+            }
+            $ownerId = (int) $data['employee_id'];
+        } else {
+            Gate::forUser($actor)->authorize('create', Task::class);
+            $ownerId = $actor->employee->id;
+        }
+        unset($data['employee_id']);
+
+        return DB::transaction(function () use ($actor, $data, $ownerId) {
             $task = new Task($data);                       // only whitelisted fields (mass assignment safe)
-            $task->employee_id = $actor->employee->id;     // ALWAYS the logged-in user, never from input
+            $task->employee_id = $ownerId;
             $task->status = TaskStatus::Pending;
             $task->save();
 
@@ -50,12 +68,34 @@ class TaskWorkflowService
     public function update(Task $task, User $actor, array $data): Task
     {
         return $this->locked($task, $actor, 'update', function (Task $locked) use ($actor, $data) {
-            if ($locked->status !== TaskStatus::Pending) {
+            // Owners may edit only PENDING tasks; the super admin may correct any task's details.
+            if ($locked->status !== TaskStatus::Pending && ! $actor->isSuperAdmin()) {
                 throw InvalidTaskTransitionException::notEditable($locked->status);
             }
 
-            $locked->fill($data)->save();
+            $locked->fill(Arr::except($data, ['employee_id']))->save();
             $this->log($locked, $actor, TaskAction::Updated, $locked->status, $locked->status);
+        });
+    }
+
+    /**
+     * Delete a task (its history goes with it).
+     * Owners may delete only tasks nobody has worked on or reviewed yet (PENDING or CANCELLED);
+     * the super admin may delete any task. Logged because it removes audit data.
+     */
+    public function delete(Task $task, User $actor): void
+    {
+        DB::transaction(function () use ($task, $actor) {
+            $fresh = Task::query()->whereKey($task->getKey())->lockForUpdate()->firstOrFail();
+
+            Gate::forUser($actor)->authorize('delete', $fresh);
+
+            if (! $actor->isSuperAdmin() && ! in_array($fresh->status, [TaskStatus::Pending, TaskStatus::Cancelled], true)) {
+                throw new InvalidTaskTransitionException("Only pending or cancelled tasks can be deleted (this task is {$fresh->status->label()}).");
+            }
+
+            Log::info('Task deleted', ['task_id' => $fresh->id, 'title' => $fresh->title, 'status' => $fresh->status->value, 'by_user_id' => $actor->id]);
+            $fresh->delete();
         });
     }
 

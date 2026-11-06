@@ -6,7 +6,7 @@
 
 <div class="flex flex-wrap items-center gap-1.5">
     @can('update', $task)
-        @if ($task->status === TaskStatus::Pending)
+        @if ($task->status === TaskStatus::Pending || auth()->user()->isSuperAdmin())
             <button type="button" x-on:click="Livewire.dispatch('open-task-form', { taskId: {{ $task->id }} })"
                     class="{{ $btn }} bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:ring-slate-400">Edit</button>
         @endif
@@ -48,4 +48,12 @@
                     class="{{ $btn }} bg-white text-rose-600 ring-1 ring-inset ring-rose-200 hover:bg-rose-50 focus:ring-rose-400">Reject</button>
         @endcan
     @endif
+
+    @can('delete', $task)
+        @if (auth()->user()->isSuperAdmin() || in_array($task->status, [TaskStatus::Pending, TaskStatus::Cancelled], true))
+            <button type="button" wire:click="deleteTask({{ $task->id }})" wire:loading.attr="disabled" wire:target="deleteTask({{ $task->id }})"
+                    wire:confirm="Delete this task permanently? Its history will be deleted too."
+                    class="{{ $btn }} bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-500">Delete</button>
+        @endif
+    @endcan
 </div>
