@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Employees;
 
+use App\Livewire\Concerns\HasFilterBar;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Support\Sql;
@@ -12,7 +13,7 @@ use Livewire\WithPagination;
 
 class EmployeeList extends Component
 {
-    use WithPagination;
+    use HasFilterBar, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -20,9 +21,9 @@ class EmployeeList extends Component
     #[Url(except: '')]
     public string $departmentId = '';
 
-    public function updated(string $property): void
+    protected function filterProperties(): array
     {
-        $this->resetPage();
+        return ['search', 'departmentId'];
     }
 
     public function render()
