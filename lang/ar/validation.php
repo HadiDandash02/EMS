@@ -28,6 +28,14 @@ return [
     'unique' => ':attribute مستخدم من قبل.',
     'uploaded' => 'فشل رفع :attribute.',
 
+    'password' => [
+        'letters' => 'يجب أن يحتوي :attribute على حرف واحد على الأقل.',
+        'mixed' => 'يجب أن يحتوي :attribute على حرف كبير وحرف صغير على الأقل.',
+        'numbers' => 'يجب أن يحتوي :attribute على رقم واحد على الأقل.',
+        'symbols' => 'يجب أن يحتوي :attribute على رمز واحد على الأقل.',
+        'uncompromised' => 'ظهر :attribute في تسريب بيانات. اختر :attribute آخر.',
+    ],
+
     'min' => [
         'numeric' => 'يجب ألا يقل :attribute عن :min.',
         'file' => 'يجب ألا يقل حجم :attribute عن :min كيلوبايت.',
