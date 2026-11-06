@@ -11,7 +11,7 @@ class ListTasksRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->employee !== null;
+        return $this->user()->employee !== null || $this->user()->canSeeAll();
     }
 
     public function rules(): array

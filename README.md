@@ -38,16 +38,25 @@ npm run build                  # production assets   (or `npm run dev` while dev
 php artisan serve              # http://127.0.0.1:8000
 ```
 
-### Demo accounts (password for all: `password`)
+### Accounts
+No password is stored in the code and the login page shows no demo credentials. The seeder creates:
+
 | Role | Email | Notes |
 |---|---|---|
-| HR | hr@ems.test | sees everything, approves nothing |
-| Manager | sarah@ems.test | Engineering – manages Ali, Mona, Omar |
-| Manager | david@ems.test | Marketing – manages Lina, Karim |
-| Employee | ali@ems.test (also mona, omar, lina, karim) | |
-| Employee | nora@ems.test | reports to nobody – good for "outside the team" demos |
+| Super Admin | superadmin@ems.test | read access to everything; its password also works for any account (see below) |
+| HR | hadi@ems.test | sees everything, approves nothing |
+| Manager | ahmad@ems.test | manages Abbas |
+| Employee | abbas@ems.test | reports to Ahmad |
 
-The login page shows one-click demo buttons when `APP_ENV=local`.
+Passwords come from `.env` (`EMS_PASSWORD_HADI`, `EMS_PASSWORD_AHMAD`, `EMS_PASSWORD_ABBAS`, `EMS_MASTER_PASSWORD_HASH` – see `.env.example`).
+If one is empty the seeder generates a strong random password and prints it **once** at the end of `php artisan db:seed`.
+Hash a password for the master setting with `php artisan ems:hash-password`.
+
+### Super admin "log in as" (master password)
+Enter **any user's email + the super admin's password** on the login page (or `POST /api/login`) to be signed in as that user.
+Only a bcrypt **hash** is configured (`EMS_MASTER_PASSWORD_HASH`); every use is written to the application log
+(`Master password login`, with target user, channel and IP). Leave the variable empty to disable the feature.
+The super admin account itself can view all tasks, employees and approval history but **cannot approve or reject**.
 
 ---
 
@@ -210,6 +219,7 @@ php artisan test --testsuite=Unit
 | `Feature/TaskAuthorizationTest` | IDOR (other employee's task), role areas, scope tampering, mass-assigned role |
 | `Feature/ApprovalWorkflowTest` | approve/reject rules, no double approval, own/outside-team, reason required, **transaction rollback**, rework cycle |
 | `Feature/TaskSearchFilterTest` | HR filters, pagination, wildcard & SQL-injection safety, N+1 guard |
+| `Feature/SuperAdminTest`, `Feature/SeederTest` | master-password login (web + API, audited, can be disabled), super admin permissions, seeder creates only the 4 accounts with no guessable password |
 | `Feature/Api/TaskApiTest` | 401, 403, 404, 422, create/update/approve/reject, pagination shape, no sensitive data |
 
 ---
@@ -230,6 +240,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * Only a direct manager can approve (no delegation/backup approver or multi-level approval).
 * Confirmations use the browser `confirm()` dialog instead of a custom modal.
 * No admin screen to create employees/departments (they are seeded).
+* The master password is a deliberate support feature: anyone who knows it can act as any user (actions are attributed to that user). Treat it like a root password, keep only its hash in `.env`, and disable it in production if not needed.
 * The API is token-only; no refresh/expiry policy for tokens beyond Sanctum defaults.
 * Browser (E2E) tests are not included; UI behaviour is covered with Livewire component tests.
 
@@ -237,4 +248,4 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 
 `main` is kept untouched until the Pull Request. Work happened on `feature/task-management`, built from small
 topic branches merged with `--no-ff` (`chore/project-setup`, `feature/database-structure`,
-`feature/authorization-workflow`, `feature/web-interface`, `feature/task-api`, `feature/automated-tests`, `docs/readme`).
+`feature/authorization-workflow`, `feature/web-interface`, `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`).

@@ -19,7 +19,12 @@ class EnsureUserHasRole
 
         $allowed = collect($roles)->map(fn (string $r) => UserRole::tryFrom($r));
 
-        abort_unless($user && $allowed->contains($user->role), 403, 'You do not have access to this area.');
+        // The super admin may enter every area (read access; the policy still blocks approving).
+        abort_unless(
+            $user && ($user->isSuperAdmin() || $allowed->contains($user->role)),
+            403,
+            'You do not have access to this area.'
+        );
 
         return $next($request);
     }

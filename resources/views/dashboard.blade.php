@@ -31,6 +31,7 @@
             </a>
         @endif
 
+        @if ($user->employee)
         <section>
             <div class="mb-3 flex items-center justify-between">
                 <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">My tasks</h3>
@@ -45,5 +46,6 @@
                 @endforeach
             </div>
         </section>
+        @endif
     </div>
 </x-layouts.app>
