@@ -43,7 +43,7 @@ class TaskWorkflowService
             Gate::forUser($actor)->authorize('createFor', Task::class);
 
             if (blank($data['employee_id'] ?? null)) {
-                throw ValidationException::withMessages(['employee_id' => 'Choose the employee this task is for.']);
+                throw ValidationException::withMessages(['employee_id' => __('Choose the employee this task is for.')]);
             }
             $ownerId = (int) $data['employee_id'];
         } else {
@@ -91,7 +91,7 @@ class TaskWorkflowService
             Gate::forUser($actor)->authorize('delete', $fresh);
 
             if (! $actor->isSuperAdmin() && ! in_array($fresh->status, [TaskStatus::Pending, TaskStatus::Cancelled], true)) {
-                throw new InvalidTaskTransitionException("Only pending or cancelled tasks can be deleted (this task is {$fresh->status->label()}).");
+                throw new InvalidTaskTransitionException(__('Only pending or cancelled tasks can be deleted (this task is :status).', ['status' => $fresh->status->label()]));
             }
 
             Log::info('Task deleted', ['task_id' => $fresh->id, 'title' => $fresh->title, 'status' => $fresh->status->value, 'by_user_id' => $actor->id]);
@@ -120,7 +120,7 @@ class TaskWorkflowService
         return $this->locked($task, $actor, 'cancel', function (Task $t) use ($actor) {
             // Business rule: only PENDING tasks may be cancelled.
             if ($t->status !== TaskStatus::Pending) {
-                throw new InvalidTaskTransitionException("Only pending tasks can be cancelled (this task is {$t->status->label()}).");
+                throw new InvalidTaskTransitionException(__('Only pending tasks can be cancelled (this task is :status).', ['status' => $t->status->label()]));
             }
             $this->transition($t, $actor, TaskStatus::Cancelled, TaskAction::Cancelled);
         });
@@ -143,7 +143,7 @@ class TaskWorkflowService
         // Business rule: a rejection MUST be explained. Enforced here too, not only in the form.
         if (mb_strlen($reason) < 5) {
             throw ValidationException::withMessages([
-                'reason' => 'A rejection reason of at least 5 characters is required.',
+                'reason' => __('A rejection reason of at least 5 characters is required.'),
             ]);
         }
 

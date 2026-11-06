@@ -80,13 +80,13 @@ class TaskForm extends Component
             // (employee_id is only present for the super admin; the service ignores it for everyone else)
             if ($this->taskId) {
                 $workflow->update(Task::findOrFail($this->taskId), auth()->user(), $data);
-                $message = 'Task updated.';
+                $message = __('Task updated.');
             } else {
                 $workflow->create(auth()->user(), $data);
-                $message = 'Task created.';
+                $message = __('Task created.');
             }
         } catch (AuthorizationException|InvalidTaskTransitionException $e) {
-            $this->dispatch('notify', type: 'error', message: $e->getMessage() ?: 'Not allowed.');
+            $this->dispatch('notify', type: 'error', message: $e->getMessage() ?: __('Not allowed.'));
             $this->open = false;
 
             return;

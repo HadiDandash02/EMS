@@ -24,7 +24,7 @@ class TaskPolicy
             $user->canSeeAll() => Response::allow(),
             $task->isOwnedBy($user) => Response::allow(),
             $this->managesOwnerOf($user, $task) => Response::allow(),
-            default => Response::deny('You are not allowed to view this task.'),
+            default => Response::deny(__('You are not allowed to view this task.')),
         };
     }
 
@@ -43,29 +43,29 @@ class TaskPolicy
     {
         return $user->isSuperAdmin() || $task->isOwnedBy($user)
             ? Response::allow()
-            : Response::deny('You can only edit your own tasks.');
+            : Response::deny(__('You can only edit your own tasks.'));
     }
 
     public function delete(User $user, Task $task): Response
     {
         return $user->isSuperAdmin() || $task->isOwnedBy($user)
             ? Response::allow()
-            : Response::deny('You can only delete your own tasks.');
+            : Response::deny(__('You can only delete your own tasks.'));
     }
 
     public function start(User $user, Task $task): Response
     {
-        return $this->ownerOnly($user, $task, 'You can only start your own tasks.');
+        return $this->ownerOnly($user, $task, __('You can only start your own tasks.'));
     }
 
     public function complete(User $user, Task $task): Response
     {
-        return $this->ownerOnly($user, $task, 'You can only complete your own tasks.');
+        return $this->ownerOnly($user, $task, __('You can only complete your own tasks.'));
     }
 
     public function cancel(User $user, Task $task): Response
     {
-        return $this->ownerOnly($user, $task, 'You can only cancel your own tasks.');
+        return $this->ownerOnly($user, $task, __('You can only cancel your own tasks.'));
     }
 
     public function approve(User $user, Task $task): Response
@@ -86,15 +86,15 @@ class TaskPolicy
     private function review(User $user, Task $task): Response
     {
         if ($user->role !== UserRole::Manager) {
-            return Response::deny('Only managers can approve or reject tasks.');
+            return Response::deny(__('Only managers can approve or reject tasks.'));
         }
 
         if ($task->isOwnedBy($user)) {
-            return Response::deny('You cannot review your own task.');
+            return Response::deny(__('You cannot review your own task.'));
         }
 
         if (! $this->managesOwnerOf($user, $task)) {
-            return Response::deny('This task belongs to an employee outside your team.');
+            return Response::deny(__('This task belongs to an employee outside your team.'));
         }
 
         return Response::allow();

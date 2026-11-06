@@ -76,11 +76,11 @@ class DepartmentManager extends Component
         $data = $this->validate([
             'name' => ['required', 'string', 'min:2', 'max:100', Rule::unique('departments', 'name')->ignore($this->departmentId)],
             'code' => ['required', 'regex:/^[A-Z0-9]{2,10}$/', Rule::unique('departments', 'code')->ignore($this->departmentId)],
-        ], ['code.regex' => 'Use 2-10 letters or numbers (no spaces).']);
+        ], ['code.regex' => __('Use 2-10 letters or numbers (no spaces).')]);
 
         Department::updateOrCreate(['id' => $this->departmentId], $data);
 
-        $this->dispatch('notify', type: 'success', message: $this->departmentId ? 'Department updated.' : 'Department created.');
+        $this->dispatch('notify', type: 'success', message: $this->departmentId ? __('Department updated.') : __('Department created.'));
         $this->formOpen = false;
         $this->resetForm();
     }
@@ -106,13 +106,13 @@ class DepartmentManager extends Component
         $this->deleteId = null;
 
         if ($department->employees_count > 0) {
-            $this->dispatch('notify', type: 'error', message: "{$department->name} still has {$department->employees_count} employee(s). Move them first.");
+            $this->dispatch('notify', type: 'error', message: __(':name still has :count employee(s). Move them first.', ['name' => $department->name, 'count' => $department->employees_count]));
 
             return;
         }
 
         $department->delete();
-        $this->dispatch('notify', type: 'success', message: "{$department->name} was deleted.");
+        $this->dispatch('notify', type: 'success', message: __(':name was deleted.', ['name' => $department->name]));
     }
 
     public function close(): void

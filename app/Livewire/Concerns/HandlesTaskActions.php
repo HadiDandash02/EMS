@@ -20,22 +20,22 @@ trait HandlesTaskActions
 {
     public function startTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->start($t, auth()->user()), 'Task started.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->start($t, auth()->user()), __('Task started.'));
     }
 
     public function completeTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->complete($t, auth()->user()), 'Task marked as completed.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->complete($t, auth()->user()), __('Task marked as completed.'));
     }
 
     public function cancelTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->cancel($t, auth()->user()), 'Task cancelled.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->cancel($t, auth()->user()), __('Task cancelled.'));
     }
 
     public function approveTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), 'Task approved.');
+        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), __('Task approved.'));
     }
 
     public function deleteTask(int $taskId): void
@@ -45,7 +45,7 @@ trait HandlesTaskActions
         try {
             app(TaskWorkflowService::class)->delete($task, auth()->user());
         } catch (AuthorizationException $e) {
-            $this->notify($e->getMessage() ?: 'You are not allowed to do that.', 'error');
+            $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
 
             return;
         } catch (InvalidTaskTransitionException $e) {
@@ -54,7 +54,7 @@ trait HandlesTaskActions
             return;
         }
 
-        $this->notify('Task deleted.');
+        $this->notify(__('Task deleted.'));
         $this->afterTaskDeleted();
     }
 
@@ -74,7 +74,7 @@ trait HandlesTaskActions
             $this->notify($successMessage);
             $this->dispatch('task-updated');
         } catch (AuthorizationException $e) {
-            $this->notify($e->getMessage() ?: 'You are not allowed to do that.', 'error');
+            $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
         } catch (InvalidTaskTransitionException $e) {
             $this->notify($e->getMessage(), 'error');
         }

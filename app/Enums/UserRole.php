@@ -18,10 +18,10 @@ enum UserRole: string
     public function label(): string
     {
         return match ($this) {
-            self::Employee => 'Employee',
-            self::Manager => 'Manager',
-            self::Hr => 'HR',
-            self::SuperAdmin => 'Super Admin',
+            self::Employee => __('Employee'),
+            self::Manager => __('Manager'),
+            self::Hr => __('HR'),
+            self::SuperAdmin => __('Super Admin'),
         };
     }
 }

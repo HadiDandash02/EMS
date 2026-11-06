@@ -133,9 +133,9 @@ class UserManager extends Component
         $isAdminAccount = $editing ? $editing->isSuperAdmin() : $this->role === UserRole::SuperAdmin->value;
 
         $this->validate($this->rules($editing, $isAdminAccount), [
-            'username.regex' => 'Use 3-30 letters, numbers, dots or underscores.',
-            'department_id.required_unless' => 'Choose a department.',
-            'job_title.required_unless' => 'Enter a job title.',
+            'username.regex' => __('Use 3-30 letters, numbers, dots or underscores.'),
+            'department_id.required_unless' => __('Choose a department.'),
+            'job_title.required_unless' => __('Enter a job title.'),
         ]);
 
         if ($editing) {
@@ -143,7 +143,7 @@ class UserManager extends Component
         }
 
         if ($this->manager_id !== '' && $editing?->employee && (int) $this->manager_id === $editing->employee->id) {
-            throw ValidationException::withMessages(['manager_id' => 'A person cannot be their own manager.']);
+            throw ValidationException::withMessages(['manager_id' => __('A person cannot be their own manager.')]);
         }
 
         DB::transaction(function () use ($editing, $isAdminAccount) {
@@ -175,7 +175,7 @@ class UserManager extends Component
         });
 
         $this->formOpen = false;
-        $this->dispatch('notify', type: 'success', message: $editing ? 'User updated.' : 'User created.');
+        $this->dispatch('notify', type: 'success', message: $editing ? __('User updated.') : __('User created.'));
         $this->resetForm();
     }
 
@@ -212,7 +212,7 @@ class UserManager extends Component
 
         if ($editing->role === UserRole::Manager && $editing->employee?->directReports()->exists()) {
             throw ValidationException::withMessages([
-                'role' => 'This manager still has people reporting to them. Reassign their team first.',
+                'role' => __('This manager still has people reporting to them. Reassign their team first.'),
             ]);
         }
     }
@@ -251,20 +251,20 @@ class UserManager extends Component
         $user = User::with('employee')->findOrFail($this->deleteId);
 
         if ($user->is(auth()->user())) {
-            $this->failDelete('You cannot delete your own account.');
+            $this->failDelete(__('You cannot delete your own account.'));
 
             return;
         }
 
         $tasks = $user->employee?->tasks()->count() ?? 0;
         if ($tasks > 0) {
-            $this->failDelete("{$user->name} owns {$tasks} task(s). Tasks are part of the approval audit trail, so this account cannot be deleted.");
+            $this->failDelete(__(':name owns :count task(s). Tasks are part of the approval audit trail, so this account cannot be deleted.', ['name' => $user->name, 'count' => $tasks]));
 
             return;
         }
 
         if ($user->employee?->directReports()->exists()) {
-            $this->failDelete("{$user->name} still manages other employees. Reassign their team first.");
+            $this->failDelete(__(':name still manages other employees. Reassign their team first.', ['name' => $user->name]));
 
             return;
         }
@@ -277,7 +277,7 @@ class UserManager extends Component
         });
 
         $this->deleteId = null;
-        $this->dispatch('notify', type: 'success', message: "{$user->name} was deleted.");
+        $this->dispatch('notify', type: 'success', message: __(':name was deleted.', ['name' => $user->name]));
     }
 
     private function failDelete(string $message): void
