@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Livewire\Admin\DepartmentManager;
+use App\Livewire\Admin\UserManager;
+use App\Livewire\Profile\EditProfile;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Approvals\ApprovalHistory;
 use App\Livewire\Employees\EmployeeList;
@@ -18,6 +22,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    // Own profile (everyone) + profile pictures
+    Route::get('/profile', EditProfile::class)->name('profile');
+    Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user')->name('avatar');
+
+    // Super admin: accounts and departments (CRUD)
+    Route::middleware('role:super_admin')->prefix('admin')->group(function () {
+        Route::get('/users', UserManager::class)->name('admin.users');
+        Route::get('/departments', DepartmentManager::class)->name('admin.departments');
+    });
 
     // Everyone: their own tasks + task detail (per-task access is enforced by TaskPolicy::view)
     Route::get('/tasks', TaskList::class)->defaults('scope', 'mine')->name('tasks.index');
