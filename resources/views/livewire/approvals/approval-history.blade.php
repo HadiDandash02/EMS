@@ -1,20 +1,21 @@
 <div class="space-y-5">
-    <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? 'Every approval and rejection decision in the company.' : 'The approval and rejection decisions you have made.' }}</p>
+    <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? __('Every approval and rejection decision in the company.') : __('The approval and rejection decisions you have made.') }}</p>
 
-    <x-filter-bar placeholder="Search by task title…" label="Search title" :total="$records->total()" noun="decision">
-        <x-searchable-select id="decision" label="Decision" wire:model="decision" placeholder="All decisions" all-label="All decisions" :options="['approved' => 'Approved', 'rejected' => 'Rejected']" />
+    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$records->total()" noun="decision">
+        <x-searchable-select id="decision" :label="__('Decision')" wire:model="decision" :placeholder="__('All decisions')" :all-label="__('All decisions')"
+            :options="['approved' => __('Approved'), 'rejected' => __('Rejected')]" />
     </x-filter-bar>
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200" wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage">
         @if ($records->isEmpty())
-            <x-empty-state title="No decisions found" text="Approved and rejected tasks will show up here." />
+            <x-empty-state :title="__('No decisions found')" :text="__('Approved and rejected tasks will show up here.')" />
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <thead class="bg-slate-100/70 text-xs font-semibold uppercase tracking-wide text-slate-600">
                         <tr>
-                            <th class="px-4 py-3">Decision</th><th class="px-4 py-3">Task</th><th class="px-4 py-3">Employee</th>
-                            <th class="px-4 py-3">Decided by</th><th class="px-4 py-3">Reason</th><th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3 text-start">{{ __('Decision') }}</th><th class="px-4 py-3 text-start">{{ __('Task') }}</th><th class="px-4 py-3 text-start">{{ __('Employee') }}</th>
+                            <th class="px-4 py-3 text-start">{{ __('Decided by') }}</th><th class="px-4 py-3 text-start">{{ __('Reason') }}</th><th class="px-4 py-3 text-start">{{ __('Date') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
