@@ -57,7 +57,7 @@ class TaskList extends Component
         abort_unless(match ($scope) {
             'mine' => $user->employee !== null,
             'team' => $user->isManager(),
-            'all' => $user->isHr(),
+            'all' => $user->canSeeAll(),
             default => false,
         }, 403);
 

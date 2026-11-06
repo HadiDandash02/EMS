@@ -44,26 +44,6 @@
                 </label>
                 <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Sign in</button>
             </form>
-
-            @if (app()->environment('local'))
-                <div class="mt-8 rounded-lg border border-dashed border-slate-300 bg-white p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Demo accounts <span class="font-normal normal-case">(password: password)</span></p>
-                    <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        @foreach ([
-                            ['HR', 'hr@ems.test'],
-                            ['Manager · Engineering', 'sarah@ems.test'],
-                            ['Manager · Marketing', 'david@ems.test'],
-                            ['Employee · Ali', 'ali@ems.test'],
-                        ] as [$label, $mail])
-                            <button type="button" @click="email = '{{ $mail }}'; password = 'password'"
-                                    class="rounded-md bg-slate-50 px-3 py-2 text-left text-xs text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-indigo-50 hover:ring-indigo-200">
-                                <span class="block font-medium">{{ $label }}</span>
-                                <span class="text-slate-500">{{ $mail }}</span>
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 </div>

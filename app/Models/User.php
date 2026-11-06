@@ -57,6 +57,17 @@ class User extends Authenticatable
         return $this->hasRole(UserRole::Hr);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(UserRole::SuperAdmin);
+    }
+
+    /** Company-wide read access: HR and the super admin. */
+    public function canSeeAll(): bool
+    {
+        return $this->isHr() || $this->isSuperAdmin();
+    }
+
     public function isManager(): bool
     {
         return $this->hasRole(UserRole::Manager);

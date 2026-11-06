@@ -63,7 +63,7 @@ class Task extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        if ($user->role === UserRole::Hr) {
+        if ($user->canSeeAll()) {
             return $query;
         }
 

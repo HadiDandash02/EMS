@@ -2,11 +2,11 @@
     $user = auth()->user();
     $nav = [
         ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10', 'show' => true],
-        ['route' => 'tasks.index', 'label' => 'My tasks', 'icon' => 'M9 5h10M9 12h10M9 19h10M4 5h.01M4 12h.01M4 19h.01', 'show' => true],
+        ['route' => 'tasks.index', 'label' => 'My tasks', 'icon' => 'M9 5h10M9 12h10M9 19h10M4 5h.01M4 12h.01M4 19h.01', 'show' => $user->employee !== null],
         ['route' => 'team.tasks', 'label' => 'Team tasks', 'icon' => 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-4.13a4 4 0 110-8 4 4 0 010 8zm6 2a3 3 0 100-6M3 10a3 3 0 106 0', 'show' => $user->isManager()],
-        ['route' => 'approvals.history', 'label' => 'Approval history', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'show' => $user->isManager() || $user->isHr()],
-        ['route' => 'hr.tasks', 'label' => 'All tasks', 'icon' => 'M4 6h16M4 10h16M4 14h16M4 18h16', 'show' => $user->isHr()],
-        ['route' => 'hr.employees', 'label' => 'Employees', 'icon' => 'M12 14a4 4 0 100-8 4 4 0 000 8zm-7 7a7 7 0 0114 0', 'show' => $user->isHr()],
+        ['route' => 'approvals.history', 'label' => 'Approval history', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'show' => $user->isManager() || $user->canSeeAll()],
+        ['route' => 'hr.tasks', 'label' => 'All tasks', 'icon' => 'M4 6h16M4 10h16M4 14h16M4 18h16', 'show' => $user->canSeeAll()],
+        ['route' => 'hr.employees', 'label' => 'Employees', 'icon' => 'M12 14a4 4 0 100-8 4 4 0 000 8zm-7 7a7 7 0 0114 0', 'show' => $user->canSeeAll()],
     ];
 @endphp
 <!DOCTYPE html>

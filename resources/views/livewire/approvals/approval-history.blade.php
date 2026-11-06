@@ -1,6 +1,6 @@
 <div class="space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-500">{{ auth()->user()->isHr() ? 'Every approval and rejection decision in the company.' : 'The approval and rejection decisions you have made.' }}</p>
+        <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? 'Every approval and rejection decision in the company.' : 'The approval and rejection decisions you have made.' }}</p>
         <select wire:model.live="decision" aria-label="Decision" class="rounded-lg border-0 py-2 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
             <option value="">All decisions</option>
             <option value="approved">Approved</option>

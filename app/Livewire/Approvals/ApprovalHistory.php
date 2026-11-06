@@ -28,7 +28,7 @@ class ApprovalHistory extends Component
         $records = TaskHistory::query()
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
-            ->when(! $user->isHr(), fn ($q) => $q->where('actor_id', $user->id))
+            ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
             ->when(TaskAction::tryFrom($this->decision), fn ($q, $a) => $q->where('action', $a))
             ->latest('id')
             ->paginate(10);

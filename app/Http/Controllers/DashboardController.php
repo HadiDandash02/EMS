@@ -24,7 +24,7 @@ class DashboardController extends Controller
             ? Task::forTeamOf($user)->where('status', TaskStatus::Completed)->count()
             : null;
 
-        $company = $user->isHr()
+        $company = $user->canSeeAll()
             ? [
                 'employees' => Employee::count(),
                 'tasks' => Task::count(),

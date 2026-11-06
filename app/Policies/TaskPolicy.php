@@ -21,7 +21,7 @@ class TaskPolicy
     public function view(User $user, Task $task): Response
     {
         return match (true) {
-            $user->role === UserRole::Hr => Response::allow(),
+            $user->canSeeAll() => Response::allow(),
             $task->isOwnedBy($user) => Response::allow(),
             $this->managesOwnerOf($user, $task) => Response::allow(),
             default => Response::deny('You are not allowed to view this task.'),
