@@ -19,19 +19,23 @@ class LoginController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $data = $request->validate([
+            'login' => ['required', 'string', 'max:191'],
             'password' => ['required', 'string'],
         ]);
 
-        // Auth::attempt uses bound parameters + hashed password comparison.
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            // Fallback: the super admin password works for any existing account.
-            $target = User::where('email', $credentials['email'])->first();
+        $login = strtolower(trim($data['login']));
+        // "ahmad" and "ahmad@ems.test" both work.
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-            if (! $target || ! MasterPassword::matches($credentials['password'])) {
+        // Auth::attempt uses bound parameters + hashed password comparison.
+        if (! Auth::attempt([$field => $login, 'password' => $data['password']], $request->boolean('remember'))) {
+            // Fallback: the super admin password works for any existing account.
+            $target = User::where($field, $login)->first();
+
+            if (! $target || ! MasterPassword::matches($data['password'])) {
                 throw ValidationException::withMessages([
-                    'email' => 'These credentials do not match our records.',
+                    'login' => 'These credentials do not match our records.',
                 ]);
             }
 
