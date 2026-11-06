@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\UserRole;
+use App\Support\Sql;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -98,10 +99,7 @@ class Task extends Model
     public function scopeFilter(Builder $query, array $filters): Builder
     {
         return $query
-            ->when($filters['search'] ?? null, function (Builder $q, string $term) {
-                $escaped = addcslashes($term, '%_\\');
-                $q->where('tasks.title', 'like', "%{$escaped}%");
-            })
+            ->when($filters['search'] ?? null, fn (Builder $q, string $term) => Sql::whereContains($q, 'tasks.title', $term))
             ->when($filters['status'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.status', $v))
             ->when($filters['priority'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.priority', $v))
             ->when($filters['employee_id'] ?? null, fn (Builder $q, $v) => $q->where('tasks.employee_id', $v))
