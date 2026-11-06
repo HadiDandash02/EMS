@@ -11,3 +11,46 @@
 }
 
 [x-cloak] { display: none !important; }
+
+/* ---------------------------------------------------------------------------------------------
+   Buttons: one look for the whole system (use <x-button variant="primary|secondary|success|danger|soft">)
+   --------------------------------------------------------------------------------------------- */
+@layer components {
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold
+               transition duration-150 ease-out select-none
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+               active:scale-[.98] disabled:pointer-events-none disabled:opacity-60;
+    }
+    .btn-sm { @apply rounded-lg px-3 py-1.5 text-xs; }
+    .btn-lg { @apply rounded-2xl px-6 py-3 text-base; }
+
+    .btn-primary {
+        @apply bg-linear-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-md shadow-indigo-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-500/40 hover:brightness-110 focus-visible:ring-indigo-500;
+    }
+    .btn-success {
+        @apply bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-emerald-500/40 hover:brightness-105 focus-visible:ring-emerald-500;
+    }
+    .btn-danger {
+        @apply bg-linear-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-rose-500/40 hover:brightness-105 focus-visible:ring-rose-500;
+    }
+    .btn-warning {
+        @apply bg-linear-to-r from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/30
+               hover:-translate-y-px hover:shadow-lg hover:brightness-105 focus-visible:ring-amber-500;
+    }
+    .btn-secondary {
+        @apply bg-white text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300
+               hover:bg-slate-50 hover:text-slate-900 hover:ring-slate-400 focus-visible:ring-slate-400;
+    }
+    .btn-soft {
+        @apply bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100
+               hover:bg-indigo-100 hover:ring-indigo-200 focus-visible:ring-indigo-400;
+    }
+    .btn-soft-danger {
+        @apply bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-100
+               hover:bg-rose-100 hover:ring-rose-200 focus-visible:ring-rose-400;
+    }
+}
