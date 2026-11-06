@@ -189,7 +189,7 @@ class TaskCrudTest extends TestCase
     {
         $task = Task::factory()->forEmployee($this->employeeEmp)->create(['due_date' => '2027-03-09']);
 
-        $this->actingAs($this->employee)->get("/tasks/{$task->id}")->assertOk()->assertSee('09/03/2027');
+        $this->actingAs($this->employee)->get($this->p($this->employee, "/tasks/{$task->id}"))->assertOk()->assertSee('09/03/2027');
         Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine'])->assertSee('09/03/2027')->assertDontSee('Mar 9');
     }
 
@@ -204,7 +204,7 @@ class TaskCrudTest extends TestCase
 
     public function test_filters_render_searchable_selects_and_the_date_picker(): void
     {
-        $this->actingAs($this->hr)->get('/hr/tasks')->assertOk()
+        $this->actingAs($this->hr)->get($this->p($this->hr, '/all-tasks'))->assertOk()
             ->assertSee('Type to search…')
             ->assertSee('dd/mm/yyyy', false);
     }

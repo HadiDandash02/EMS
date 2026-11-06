@@ -52,16 +52,16 @@ class AdminCrudTest extends TestCase
 
     public function test_only_the_super_admin_can_open_the_admin_pages(): void
     {
-        $urls = ['/admin/users', '/admin/departments'];
+        $urls = ['/users', '/departments'];
 
         foreach ($urls as $url) {
             $this->get($url)->assertRedirect('/login');   // guests first: actingAs() would persist
         }
         foreach ($urls as $url) {
             foreach ([$this->employee, $this->manager, $this->hr] as $user) {
-                $this->actingAs($user)->get($url)->assertForbidden();
+                $this->actingAs($user)->get($this->p($user, $url))->assertForbidden();
             }
-            $this->actingAs($this->admin)->get($url)->assertOk();
+            $this->actingAs($this->admin)->get($this->p($this->admin, $url))->assertOk();
         }
     }
 

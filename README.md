@@ -17,11 +17,11 @@ Section numbers follow the brief.
 | # | Requirement from the brief | Status | Where |
 |---|---|---|---|
 | 1 | PHP, Laravel, MySQL, Livewire, Tailwind CSS, Git | ✅ | PHP 8.2 · Laravel 12 · MySQL · Livewire 3 · Tailwind 4 · Git (section 11) |
-| 2 | **Employee**: view own tasks, create, edit own *pending*, view details, mark completed, cancel pending, view history | ✅ | `/tasks`, `TaskForm`, `TaskShow` (history timeline), actions in `partials/actions.blade.php` |
+| 2 | **Employee**: view own tasks, create, edit own *pending*, view details, mark completed, cancel pending, view history | ✅ | `/employee/tasks`, `TaskForm`, `TaskShow` (history timeline), actions in `partials/actions.blade.php` |
 | 2 | Employee must **not**: see others' private tasks, modify others', approve, approve own | ✅ | `TaskPolicy`, `Task::visibleTo`, tests in `TaskAuthorizationTest`, `ApprovalWorkflowTest` |
-| 2 | **Manager**: view team tasks & details, approve/reject completed tasks, rejection reason, approval history | ✅ | `/team/tasks`, `RejectModal`, `/approvals` |
+| 2 | **Manager**: view team tasks & details, approve/reject completed tasks, rejection reason, approval history | ✅ | `/manager/team/tasks`, `RejectModal`, `/manager/approvals` |
 | 2 | Manager must **not**: approve own, approve outside team, approve already-approved, approve cancelled | ✅ | `TaskPolicy::review`, `TaskWorkflowService`, `ApprovalWorkflowTest` |
-| 2 | **HR**: view all employees & tasks, search/filter, history, details, approval/rejection info | ✅ | `/hr/employees`, `/hr/tasks`, `/approvals` |
+| 2 | **HR**: view all employees & tasks, search/filter, history, details, approval/rejection info | ✅ | `/hr/employees`, `/hr/all-tasks`, `/hr/approvals` |
 | 3 | Status workflow defined, implemented and **documented** (valid transitions) | ✅ | `TaskStatus::transitions()`, section 4 below, `Unit/TaskStatusTest` |
 | 4 | DB design: users, employees, departments, tasks, approval/history; keys, FKs, nullable, indexes, timestamps; **ERD** | ✅ | `database/migrations`, **[docs/ERD.md](docs/ERD.md)**, section 3 |
 | 5 | Routing (web + API) | ✅ | `routes/web.php`, `routes/api.php` |
@@ -58,6 +58,40 @@ Section numbers follow the brief.
 | **Own profile** | update name, username, email, phone, picture, password | same | same | same |
 
 Dates are shown as **dd/mm/yyyy** everywhere (tables, details, pickers). Sample data is plain English (no Lorem Ipsum).
+
+---
+## 0b. URLs, header, languages and tables (UI conventions)
+
+The interface follows the conventions of the *Employee Management* project (same route style, light sidebar, profile menu,
+date chip and "⋮" row menus).
+
+**Role-prefixed URLs.** Every signed-in page lives under the user's own role, exactly like the reference project:
+
+| Role | Prefix | Examples |
+|---|---|---|
+| Employee | `/employee/...` | `/employee/dashboard`, `/employee/tasks`, `/employee/tasks/12`, `/employee/profile` |
+| Manager | `/manager/...` | `/manager/team/tasks`, `/manager/approvals`, `/manager/tasks` |
+| HR | `/hr/...` | `/hr/all-tasks`, `/hr/employees`, `/hr/approvals` |
+| Super admin | `/admin/...` | `/admin/users`, `/admin/departments`, `/admin/all-tasks`, `/admin/employees` |
+
+* One `{panel}` route group (`routes/web.php`); `route('tasks.index')` needs **no argument** – `App\Http\Middleware\SetPanelPrefix`
+  and an `Authenticated` listener (`AppServiceProvider`) fill the prefix in, so links are always right (also during Livewire updates).
+* Opening **another role's prefix is a 404** (e.g. an employee opening `/admin/users`), so nobody even sees that other areas exist.
+* Old addresses without a prefix (`/tasks/5`) redirect permanently (301) to the user's own prefix. After sign-in the user lands on
+  their own dashboard (`User::homeUrl()`).
+
+**Top bar** (right side, in this order): **page search** (type a page name, `Enter` or click; `/` focuses it; only pages the
+user may open are offered) · **language switcher** (English / العربية) · **today's date** chip · **profile menu**
+(name, `@username`, e-mail, *My account & password* → *My profile* / *Change password*, *Log out*).
+
+**Languages.** English and Arabic. The choice is remembered in the session (`GET /language/{en|ar}`, also on the login page).
+Arabic switches the whole interface to **right-to-left** (logical Tailwind classes `ps-`/`pe-`/`start-`/`end-`), translates labels,
+statuses, validation messages, toasts and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
+`lang/ar/validation.php`; a test fails if a `__('...')` key is missing from the Arabic file.
+
+**Tables.** Row actions are in a **"⋮" menu** (View details · Edit · Start/Rework · Complete · Cancel task · Approve · Reject ·
+Delete) that only lists what the signed-in user may do; every action is re-checked on the server. Filters have a **Search** and a
+**Clear** button, searchable dropdowns (type to filter) and **dd/mm/yyyy** date pickers.
 
 ---
 ## 1. Project setup
@@ -106,7 +140,7 @@ Hash a password for the master setting with `php artisan ems:hash-password`.
 ### Signing in, profiles and administration
 * **Sign in with a username *or* an email** (case-insensitive) on the login page and in `POST /api/login` (`login` field; `email` still accepted).
   Password fields have a show/hide eye.
-* **Profile page** (`/profile`, every role): edit name, username, email and phone, upload/remove a **profile picture**
+* **Profile page** (`/{role}/profile`, every role): edit name, username, email and phone, upload/remove a **profile picture**
   (JPG/PNG/WebP ≤ 2 MB, stored on the private disk and streamed only to signed-in users), and change the password
   (current password required, ≥ 8 chars with letters + numbers). Users cannot edit their own role or employment details.
 * **Super admin CRUD** (`/admin/users`, `/admin/departments`): create / edit / delete accounts (with department, manager,
@@ -115,7 +149,7 @@ Hash a password for the master setting with `php artisan ems:hash-password`.
   has a team, or a department that still has employees; editing can never promote someone to super admin.
 * **Search & Clear** buttons on every table: filters apply when you press **Search** (or Enter); **Clear** resets them.
 ### Super admin "log in as" (master password)
-Enter **any user's email + the super admin's password** on the login page (or `POST /api/login`) to be signed in as that user.
+Enter **any user's username or email + the super admin's password** on the login page (or `POST /api/login`) to be signed in as that user.
 Only a bcrypt **hash** is configured (`EMS_MASTER_PASSWORD_HASH`); every use is written to the application log
 (`Master password login`, with target user, channel and IP). Leave the variable empty to disable the feature.
 The super admin account itself can view all tasks, employees and approval history but **cannot approve or reject**.
@@ -218,7 +252,7 @@ Three layers, all **server side** (hiding buttons is only a UX hint):
 
 Also: lists use `Task::visibleTo($user)`; Livewire `scope` is `#[Locked]` (browser can't switch "mine" to "all");
 `role` is not mass assignable; the API resource whitelists output (no emails/hashes); IDs in URLs are
-policy-checked (changing `/tasks/5` to someone else's task gives **403**).
+policy-checked (changing `/employee/tasks/5` to someone else's task gives **403**; using another role's prefix gives **404**).
 
 ## 6. Validation
 
@@ -317,7 +351,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
-  `feature/task-crud-dates-filters`.
+  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`.
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
 * Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
 
@@ -330,7 +364,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 2. **Employee creates a task** (Abbas) – validation errors first, then a valid task; **views their tasks**, edits a pending one, cancels/deletes one.
 3. **Employee marks a task completed** → it appears for the manager.
 4. **Manager views an authorized task** (Ahmad, *Team tasks*) → **approves** one, **rejects** another (show the required reason), open *Approval history*.
-5. **Unauthorized access blocked** – as Abbas change `/tasks/{id}` to someone else's task (403); open `/hr/tasks` (403); try the same via API.
+5. **Unauthorized access blocked** – as Abbas change `/employee/tasks/{id}` to someone else's task (403); open `/hr/all-tasks` (404 – wrong prefix) and `/employee/all-tasks` (403); try the same via API.
 6. **HR search & filtering** (Hadi) – searchable Employee/Department/Status dropdowns, dd/mm/yyyy date range, **Search** and **Clear** buttons, pagination.
 7. **Super admin** – CRUD on users, departments and tasks; "log in as" another user with the master password.
 8. **API** – `POST /api/login`, list (paginated), create, approve, an unauthorized call (401/403), a validation error (422).

@@ -26,17 +26,17 @@ class ProfileAndLoginTest extends TestCase
 
     public function test_user_can_sign_in_with_username(): void
     {
-        $this->post('/login', ['login' => 'abbas', 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['login' => 'abbas', 'password' => 'password'])->assertRedirect('/employee/dashboard');
         $this->assertAuthenticatedAs($this->employee);
     }
 
     public function test_username_is_case_insensitive_and_email_still_works(): void
     {
-        $this->post('/login', ['login' => '  ABBAS ', 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['login' => '  ABBAS ', 'password' => 'password'])->assertRedirect('/employee/dashboard');
         $this->assertAuthenticatedAs($this->employee);
 
         auth()->logout();
-        $this->post('/login', ['login' => strtoupper($this->employee->email), 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['login' => strtoupper($this->employee->email), 'password' => 'password'])->assertRedirect('/employee/dashboard');
     }
 
     public function test_wrong_credentials_show_a_generic_error(): void
@@ -63,7 +63,7 @@ class ProfileAndLoginTest extends TestCase
     public function test_profile_page_is_for_signed_in_users_only(): void
     {
         $this->get('/profile')->assertRedirect('/login');
-        $this->actingAs($this->employee)->get('/profile')->assertOk()->assertSee('Personal information');
+        $this->actingAs($this->employee)->get($this->p($this->employee, '/profile'))->assertOk()->assertSee('Personal information');
     }
 
     public function test_user_can_update_their_profile(): void
