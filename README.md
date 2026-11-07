@@ -187,6 +187,13 @@ cards, the description has a character counter, dates are dd/mm/yyyy.
 Run the fast server with `serve.bat` (or `serve.bat 8123` for another port).
 
 ---
+### 0f. Design system, full-width pages and "filters first" lists
+
+* **One standard look, one place to change it.** Buttons, cards, page width/spacing, dark mode and brand colours are all defined in [`resources/css/app.css`](resources/css/app.css); the reusable pieces are `<x-page>`, `<x-card>`, `<x-info-list>` and `<x-button>`. The table of "I want to change X -> edit Y" is in [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
+* **Every page is full width** with the same skeleton (breadcrumbs, title, cards, side summary). There is **no Back button** anywhere - the breadcrumb leads back.
+* **Filters first, table after Search.** Every list shows its filter panel first; the Results card appears only after **Search** (or when filters arrive in the URL), and then has its own Collapse / Expand button. **Clear** hides it again. Logic: `HasFilterBar` (`$searched`, `applyFilters()`).
+* The old free-text "Search title" box on task lists is now a **searchable "Task" select** that lists exactly the tasks the user may see (own / the team's / all).
+
 ## 1. Project setup
 
 ### Requirements

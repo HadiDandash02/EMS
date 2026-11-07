@@ -7,8 +7,9 @@
 --}}
 <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200"
      x-data="{
-         q: '', hidden: [], key: 'table-cols-{{ $id }}',
+         shown: $wire.entangle('searched'), open: true, q: '', hidden: [], key: 'table-cols-{{ $id }}',
          init() {
+             this.$watch('shown', v => { if (v) this.open = true; });   // a new search always reopens the table
              try { this.hidden = JSON.parse(localStorage.getItem(this.key) || '[]'); } catch (e) {}
              this.$watch('hidden', v => { try { localStorage.setItem(this.key, JSON.stringify(v)); } catch (e) {} });
              // after every Livewire refresh (sorting, paging...) re-apply the quick search to the new rows
@@ -20,8 +21,24 @@
              this.$root.querySelectorAll('tbody tr').forEach(tr => { tr.hidden = q !== '' && !tr.textContent.toLowerCase().includes(q); });
          },
      }"
+     x-show="shown" x-cloak
      :data-hide="hidden.join(' ')">
 
+    {{-- Results card: hidden until Search is pressed (shown = Livewire "searched"); the button then collapses/expands the table (open) --}}
+    <div class="flex items-center justify-between gap-3 px-4 py-3" :class="open ? 'border-b border-slate-100' : ''">
+        <div class="flex items-center gap-2.5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"/></svg>
+            </span>
+            <h2 class="text-sm font-semibold text-slate-900">{{ __('Results') }}</h2>
+        </div>
+        <x-button type="button" variant="secondary" size="sm" x-on:click="open = !open" ::aria-expanded="open">
+            <span x-text="open ? @js(__('Collapse')) : @js(__('Expand'))"></span>
+            <svg class="h-3.5 w-3.5 text-slate-400 transition" :class="open ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+        </x-button>
+    </div>
+
+    <div x-show="open" x-cloak>
     {{-- Toolbar --}}
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div class="flex flex-wrap items-center gap-2">
@@ -71,7 +88,8 @@
         </div>
     </div>
 
-    <div class="data-table-body" wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage,perPage,sortBy">
+    <div class="data-table-body" wire:loading.class="opacity-60" wire:target="applyFilters,clearFilters,gotoPage,nextPage,previousPage,perPage,sortBy">
         {{ $slot }}
+    </div>
     </div>
 </div>

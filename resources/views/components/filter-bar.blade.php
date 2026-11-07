@@ -1,12 +1,12 @@
-@props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0])
-@php $targets = 'search,clearFilters,gotoPage,nextPage,previousPage'; @endphp
+@props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0, 'hideSearch' => false])
+@php $targets = 'applyFilters,clearFilters,gotoPage,nextPage,previousPage'; @endphp
 {{--
     FILTER PANEL: one card. Every control (search box, dropdowns, dates) sits in an equal-width grid
     and has the same height. The whole panel collapses/expands with one button (remembered in the browser).
     Filters apply on "Search" / Enter; "Clear" resets them.
-    The Livewire component must expose public search()/clearFilters() (see Concerns\HasFilterBar).
+    The Livewire component must expose public applyFilters()/clearFilters() (see Concerns\HasFilterBar).
 --}}
-<form wire:submit="search"
+<form wire:submit="applyFilters"
       x-data="{
           open: (() => { try { return JSON.parse(localStorage.getItem('filters-open') ?? 'true'); } catch (e) { return true; } })(),
           toggle() { this.open = !this.open; try { localStorage.setItem('filters-open', JSON.stringify(this.open)); } catch (e) {} },
@@ -30,6 +30,7 @@
 
     <div x-show="open" x-cloak x-transition.opacity.duration.150ms class="border-t border-slate-100 p-4">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @unless ($hideSearch)
             <div>
                 <label for="fb-search" class="mb-1 block text-xs font-medium text-slate-600">{{ $label ?? __('Search') }}</label>
                 <div class="relative">
@@ -38,6 +39,7 @@
                            class="block h-10 w-full rounded-lg border-0 bg-white ps-9 pe-3 text-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
+            @endunless
 
             {{ $slot }}
         </div>

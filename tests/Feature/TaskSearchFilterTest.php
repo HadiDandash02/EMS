@@ -21,6 +21,12 @@ class TaskSearchFilterTest extends TestCase
         $this->buildOrganisation();
     }
 
+    /** Titles in the table rows (the Task picker also embeds every title in the page, so the raw HTML is not a reliable check). */
+    private function rows($list): array
+    {
+        return $list->viewData('tasks')->pluck('title')->all();
+    }
+
     public function test_hr_can_filter_by_title_status_employee_and_department(): void
     {
         $budget = Task::factory()->forEmployee($this->employeeEmp)->completed()->create(['title' => 'Budget review']);
@@ -28,12 +34,12 @@ class TaskSearchFilterTest extends TestCase
 
         $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
 
-        $list->assertSee('Budget review')->assertSee('Audit prep');
+        $this->assertEqualsCanonicalizing(['Budget review', 'Audit prep'], $this->rows($list));
 
-        $list->set('search', 'budget')->assertSee('Budget review')->assertDontSee('Audit prep');
-        $list->set('search', '')->set('status', 'PENDING')->assertSee('Audit prep')->assertDontSee('Budget review');
-        $list->set('status', '')->set('employeeId', (string) $this->employeeEmp->id)->assertSee('Budget review')->assertDontSee('Audit prep');
-        $list->set('employeeId', '')->set('departmentId', (string) $this->outsiderEmp->department_id)->assertSee('Audit prep')->assertDontSee('Budget review');
+        $this->assertSame(['Budget review'], $this->rows($list->set('search', 'budget')));
+        $this->assertSame(['Audit prep'], $this->rows($list->set('search', '')->set('status', 'PENDING')));
+        $this->assertSame(['Budget review'], $this->rows($list->set('status', '')->set('employeeId', (string) $this->employeeEmp->id)));
+        $this->assertSame(['Audit prep'], $this->rows($list->set('employeeId', '')->set('departmentId', (string) $this->outsiderEmp->department_id)));
     }
 
     public function test_hr_can_filter_by_date_range(): void
@@ -41,11 +47,9 @@ class TaskSearchFilterTest extends TestCase
         $old = Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Old task', 'created_at' => now()->subDays(30)]);
         $new = Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Fresh task']);
 
-        Livewire::actingAs($this->hr)
-            ->test(TaskList::class, ['scope' => 'all'])
-            ->set('dateFrom', now()->subDays(2)->toDateString())
-            ->assertSee('Fresh task')
-            ->assertDontSee('Old task');
+        $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])->set('dateFrom', now()->subDays(2)->toDateString());
+
+        $this->assertSame(['Fresh task'], $this->rows($list));
     }
 
     public function test_search_term_wildcards_are_treated_literally(): void
@@ -53,21 +57,18 @@ class TaskSearchFilterTest extends TestCase
         Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Plain title']);
         Task::factory()->forEmployee($this->employeeEmp)->create(['title' => '100% done']);
 
-        Livewire::actingAs($this->hr)
-            ->test(TaskList::class, ['scope' => 'all'])
-            ->set('search', '%')
-            ->assertSee('100% done')
-            ->assertDontSee('Plain title');
+        $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])->set('search', '%');
+
+        $this->assertSame(['100% done'], $this->rows($list));
     }
 
     public function test_sql_injection_attempt_is_harmless(): void
     {
         Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Safe task']);
 
-        Livewire::actingAs($this->hr)
-            ->test(TaskList::class, ['scope' => 'all'])
-            ->set('search', "' OR 1=1; DROP TABLE tasks; --")
-            ->assertDontSee('Safe task');
+        $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])->set('search', "' OR 1=1; DROP TABLE tasks; --");
+
+        $this->assertSame([], $this->rows($list));
 
         $this->assertDatabaseCount('tasks', 1);
     }
@@ -107,5 +108,49 @@ class TaskSearchFilterTest extends TestCase
             ->test(TaskList::class, ['scope' => 'team'])
             ->assertSee($mine->title)
             ->assertDontSee($theirs->title);
+    }
+
+    public function test_the_task_filter_is_a_searchable_select_listing_only_the_tasks_each_role_may_see(): void
+    {
+        Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Mine alpha']);
+        Task::factory()->forEmployee($this->teammateEmp)->create(['title' => 'Teammate bravo']);
+        Task::factory()->forEmployee($this->outsiderEmp)->create(['title' => 'Outsider charlie']);
+
+        // the old free-text "Search title" box is gone; the filter is a searchable select named "Task"
+        $this->actingAs($this->employee)->get('/employee/tasks')->assertOk()->assertSee('All tasks')->assertDontSee('Search title');
+
+        $options = fn ($user, string $scope) => Livewire::actingAs($user)->test(TaskList::class, ['scope' => $scope])->viewData('taskOptions')->values()->implode('|');
+
+        $mine = $options($this->employee, 'mine');
+        $this->assertStringContainsString('Mine alpha', $mine);
+        $this->assertStringNotContainsString('bravo', $mine);
+        $this->assertStringNotContainsString('charlie', $mine);
+
+        $team = $options($this->manager, 'team');                         // the manager sees only the team
+        $this->assertStringContainsString('Mine alpha', $team);
+        $this->assertStringContainsString('Teammate bravo', $team);
+        $this->assertStringNotContainsString('charlie', $team);
+
+        $all = $options($this->hr, 'all');                                // HR sees everything, with the employee name
+        foreach (['Mine alpha', 'Teammate bravo', 'Outsider charlie', $this->outsiderEmp->user->name] as $needle) {
+            $this->assertStringContainsString($needle, $all);
+        }
+    }
+
+    public function test_picking_a_task_shows_only_that_task_and_a_tampered_id_shows_nothing(): void
+    {
+        $mine = Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Mine alpha']);
+        Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Mine delta']);
+        $theirs = Task::factory()->forEmployee($this->teammateEmp)->create(['title' => 'Teammate bravo']);
+
+        $list = Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine']);
+        $this->assertSame(['Mine alpha'], $this->rows($list->set('taskId', (string) $mine->id)));
+
+        // someone else's id typed into the URL still cannot leak a row
+        $this->assertSame([], $this->rows($list->set('taskId', (string) $theirs->id)));
+        $list->assertSee('No tasks found');
+
+        $list->call('clearFilters')->assertSet('taskId', '');
+        $this->assertEqualsCanonicalizing(['Mine alpha', 'Mine delta'], $this->rows($list));
     }
 }

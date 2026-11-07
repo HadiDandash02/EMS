@@ -148,8 +148,8 @@ class SearchAndPagesTest extends TestCase
         $this->assertStringContainsString('Expand', $html);
         $this->assertStringContainsString("localStorage.getItem('filters-open'", $html);   // remembered between visits
         $this->assertStringContainsString('x-show="open"', $html);
-        // the search box lives INSIDE the collapsible body together with every other filter
-        $this->assertGreaterThan(strpos($html, 'x-show="open"'), strpos($html, 'id="fb-search"'));
+        // the Task picker lives INSIDE the collapsible body together with every other filter
+        $this->assertGreaterThan(strpos($html, 'x-show="open"'), strpos($html, 'id="task"'));
     }
 
     public function test_every_filter_control_has_the_same_size(): void
@@ -172,7 +172,7 @@ class SearchAndPagesTest extends TestCase
     public function test_all_tables_use_the_same_filter_panel(): void
     {
         foreach ([[$this->hr, '/all-tasks'], [$this->hr, '/employees'], [$this->hr, '/approvals'], [$this->admin, '/users'], [$this->admin, '/departments']] as [$user, $path]) {
-            $this->actingAs($user)->get($this->p($user, $path))->assertOk()->assertSee('Collapse')->assertSee('id="fb-search"', false);
+            $this->actingAs($user)->get($this->p($user, $path))->assertOk()->assertSee('Collapse')->assertSee($path === '/all-tasks' ? 'id="task"' : 'id="fb-search"', false);
         }
     }
     // ---- the actions menu is the only actions control ----------------------------------------------

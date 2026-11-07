@@ -100,6 +100,7 @@ class Task extends Model
     {
         return $query
             ->when($filters['search'] ?? null, fn (Builder $q, string $term) => Sql::whereContains($q, 'tasks.title', $term))
+            ->when($filters['task_id'] ?? null, fn (Builder $q, $v) => $q->where('tasks.id', $v))
             ->when($filters['status'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.status', $v))
             ->when($filters['priority'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.priority', $v))
             ->when($filters['employee_id'] ?? null, fn (Builder $q, $v) => $q->where('tasks.employee_id', $v))
@@ -108,6 +109,16 @@ class Task extends Model
             })
             ->when($filters['date_from'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '>=', $v))
             ->when($filters['date_to'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '<=', $v));
+    }
+
+    /** Where the breadcrumb "Tasks" leads for this user: own list, the manager's team list, or the company list. */
+    public function listUrlFor(User $user): string
+    {
+        return match (true) {
+            $this->isOwnedBy($user) => route('tasks.index'),
+            $user->canSeeAll() => route('tasks.all'),
+            default => route('team.tasks'),
+        };
     }
 
     public function isOwnedBy(User $user): bool

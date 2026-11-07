@@ -22,7 +22,8 @@
     </div>
 
     {{-- Filters --}}
-    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$tasks->total()" noun="task" :active="collect([$status, $priority, $employeeId, $departmentId, $dateFrom, $dateTo])->filter()->count()">
+    <x-filter-bar hide-search :total="$tasks->total()" noun="task" :active="collect([$taskId, $status, $priority, $employeeId, $departmentId, $dateFrom, $dateTo])->filter()->count()">
+        <x-searchable-select id="task" :label="__('Task')" wire:model="taskId" :placeholder="__('All tasks')" :all-label="__('All tasks')" :options="$taskOptions" />
         <x-searchable-select id="status" :label="__('Status')" wire:model="status" :placeholder="__('All statuses')" :all-label="__('All statuses')"
             :options="collect($statuses)->mapWithKeys(fn ($s) => [$s->value => $s->label()])" />
         <x-searchable-select id="priority" :label="__('Priority')" wire:model="priority" :placeholder="__('All priorities')" :all-label="__('All priorities')"
@@ -41,7 +42,7 @@
 
     <x-data-table id="tasks-{{ $scope }}" :columns="$columns">
         @if ($tasks->isEmpty())
-            <x-empty-state :title="__('No tasks found')" :text="$search || $status || $priority || $employeeId || $departmentId || $dateFrom || $dateTo ? __('Try changing your filters or press Clear.') : __('Nothing here yet.')">
+            <x-empty-state :title="__('No tasks found')" :text="$search || $taskId || $status || $priority || $employeeId || $departmentId || $dateFrom || $dateTo ? __('Try changing your filters or press Clear.') : __('Nothing here yet.')">
                 @if ($scope === 'mine')
                     <x-button :href="route('tasks.create')" variant="primary" icon="plus">{{ __('Create your first task') }}</x-button>
                 @endif

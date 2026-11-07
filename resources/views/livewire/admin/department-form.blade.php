@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-6xl space-y-5">
+<div class="page">
     <x-breadcrumbs :items="[[__('Departments'), route('admin.departments')], [$departmentId ? __('Edit department') : __('New department'), null]]" />
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -6,11 +6,10 @@
             <h2 class="text-2xl font-bold text-slate-900">{{ $departmentId ? __('Edit department') : __('New department') }}</h2>
             <p class="text-sm text-slate-500">{{ $departmentId ? __('Rename the department or change its code.') : __('Departments group employees and decide who reports where.') }}</p>
         </div>
-        <x-button :href="route('admin.departments')" variant="secondary" size="sm" icon="back" class="rtl:flex-row-reverse">{{ __('Back') }}</x-button>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-        <form wire:submit="save" class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+        <form wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Department details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>
@@ -43,7 +42,7 @@
 
         <aside class="space-y-5">
             @if ($department)
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-slate-900">{{ __('Employees') }}</h3>
                         <span class="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700">{{ $department->employees_count }}</span>
@@ -71,7 +70,7 @@
                     <x-button :href="route('admin.departments.delete', $department)" variant="danger" size="sm" icon="trash" class="mt-3">{{ __('Delete department') }}</x-button>
                 </section>
             @else
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('Good to know') }}</h3>
                     <ul class="mt-3 space-y-3 text-sm text-slate-600">
                         <li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500"></span>{{ __('The code is short and always upper case, for example ENG or HR.') }}</li>

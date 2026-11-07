@@ -8,7 +8,7 @@
     ];
     $dots = ['low' => 'bg-slate-400', 'medium' => 'bg-amber-500', 'high' => 'bg-rose-500'];
 @endphp
-<div class="mx-auto max-w-6xl space-y-5">
+<div class="page">
     <x-breadcrumbs :items="[[__('Tasks'), $listUrl], [$editing ? __('Edit task') : __('New task'), null]]" />
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -16,12 +16,11 @@
             <h2 class="text-2xl font-bold text-slate-900">{{ $editing ? __('Edit task') : __('New task') }}</h2>
             <p class="text-sm text-slate-500">{{ $editing ? __('Update the details of this task. Only pending tasks can be edited by their owner.') : __('Describe the work. It starts as Pending and you can begin it whenever you are ready.') }}</p>
         </div>
-        <x-button :href="$cancelUrl" variant="secondary" size="sm" icon="back" class="rtl:flex-row-reverse">{{ __('Back') }}</x-button>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- ============ Form ============ --}}
-        <form wire:submit="save" class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+        <form wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Task details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>
@@ -90,7 +89,7 @@
         {{-- ============ Side panel ============ --}}
         <aside class="space-y-5">
             @if ($task)
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('Summary') }}</h3>
                     <div class="mt-4 flex items-center gap-3">
                         <x-avatar :user="$task->employee->user" size="md" />
@@ -112,7 +111,7 @@
                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">{{ __('View details') }} →</a>
                 </section>
 
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('Recent activity') }}</h3>
                     <ol class="mt-4 space-y-4 border-s border-slate-200 ps-4">
                         @forelse ($task->histories->take(4) as $h)
@@ -137,7 +136,7 @@
                     @endif
                 @endcan
             @else
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('Assigned to') }}</h3>
                     <div class="mt-4 flex items-center gap-3">
                         @if ($isAdmin)
@@ -155,7 +154,7 @@
                     </div>
                 </section>
 
-                <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <section class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('What happens next') }}</h3>
                     <ol class="mt-4 space-y-4 text-sm">
                         @foreach ([
