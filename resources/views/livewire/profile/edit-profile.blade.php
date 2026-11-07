@@ -1,4 +1,5 @@
 <div class="page">
+    <x-form-errors />
     <div>
         <h2 class="text-xl font-bold text-slate-900">{{ __('My profile') }}</h2>
         <p class="text-sm text-slate-500">{{ __('Your profile and password.') }}</p>
@@ -65,7 +66,7 @@
 
         {{-- Forms --}}
         <div class="space-y-6 lg:col-span-2">
-            <form wire:submit="saveProfile" class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <form novalidate wire:submit="saveProfile" class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Personal information') }}</h3>
                     <p class="text-sm text-slate-500">{{ __('Update your name, username and contact details.') }}</p>
@@ -97,7 +98,7 @@
                 </div>
             </form>
 
-            <form wire:submit="updatePassword" id="change-password" class="scroll-mt-24 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <form novalidate wire:submit="updatePassword" id="change-password" class="scroll-mt-24 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Change password') }}</h3>
                     <p class="text-sm text-slate-500">{{ __('At least 10 characters, with upper and lower case letters, a number and a symbol.') }}</p>

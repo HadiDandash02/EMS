@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
 
 class Task extends Model
 {
@@ -100,12 +101,13 @@ class Task extends Model
     {
         return $query
             ->when($filters['search'] ?? null, fn (Builder $q, string $term) => Sql::whereContains($q, 'tasks.title', $term))
-            ->when($filters['task_id'] ?? null, fn (Builder $q, $v) => $q->where('tasks.id', $v))
-            ->when($filters['status'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.status', $v))
-            ->when($filters['priority'] ?? null, fn (Builder $q, string $v) => $q->where('tasks.priority', $v))
-            ->when($filters['employee_id'] ?? null, fn (Builder $q, $v) => $q->where('tasks.employee_id', $v))
-            ->when($filters['department_id'] ?? null, function (Builder $q, $v) {
-                $q->whereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $v));
+            // each of these accepts ONE value or a LIST (multi-select filters)
+            ->when(Arr::wrap($filters['task_id'] ?? []), fn (Builder $q, array $v) => $q->whereIn('tasks.id', $v))
+            ->when(Arr::wrap($filters['status'] ?? []), fn (Builder $q, array $v) => $q->whereIn('tasks.status', $v))
+            ->when(Arr::wrap($filters['priority'] ?? []), fn (Builder $q, array $v) => $q->whereIn('tasks.priority', $v))
+            ->when(Arr::wrap($filters['employee_id'] ?? []), fn (Builder $q, array $v) => $q->whereIn('tasks.employee_id', $v))
+            ->when(Arr::wrap($filters['department_id'] ?? []), function (Builder $q, array $v) {
+                $q->whereIn('tasks.employee_id', Employee::query()->select('id')->whereIn('department_id', $v));
             })
             ->when($filters['date_from'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '>=', $v))
             ->when($filters['date_to'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '<=', $v));

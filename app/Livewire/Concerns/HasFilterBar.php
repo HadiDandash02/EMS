@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Concerns;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 
 /**
@@ -22,6 +24,27 @@ trait HasFilterBar
 
     /** @return list<string> public properties that make up the filters */
     abstract protected function filterProperties(): array;
+
+    /**
+     * Multi-select filters hold a LIST of values (a single value still works). Returns clean positive ids.
+     *
+     * @return list<int>
+     */
+    protected function ids(mixed $value): array
+    {
+        return collect(Arr::wrap($value))->map(fn ($v) => (int) $v)->filter()->unique()->values()->all();
+    }
+
+    /**
+     * Same for enum-backed filters: keeps only the values that really exist in the enum.
+     *
+     * @param  class-string<\BackedEnum>  $enum
+     * @return list<string>
+     */
+    protected function enumValues(mixed $value, string $enum): array
+    {
+        return collect(Arr::wrap($value))->map(fn ($v) => $enum::tryFrom((string) $v)?->value)->filter()->unique()->values()->all();
+    }
 
     /** Rows per page, restricted to the choices the footer offers (the value comes from the browser). */
     protected function rowsPerPage(): int
@@ -53,6 +76,8 @@ trait HasFilterBar
     public function updated(string $property): void
     {
         // Programmatic/URL changes must also go back to page 1.
+        $property = Str::before($property, '.');   // "status.0" -> "status" (array filters)
+
         if ($property === 'perPage' || in_array($property, $this->filterProperties(), true)) {
             $this->resetPage();
         }

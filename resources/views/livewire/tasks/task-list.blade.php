@@ -23,17 +23,17 @@
 
     {{-- Filters --}}
     <x-filter-bar hide-search :total="$tasks->total()" noun="task" :active="collect([$taskId, $status, $priority, $employeeId, $departmentId, $dateFrom, $dateTo])->filter()->count()">
-        <x-searchable-select id="task" :label="__('Task')" wire:model.live="taskId" :placeholder="__('All tasks')" :all-label="__('All tasks')" :options="$taskOptions" />
-        <x-searchable-select id="status" :label="__('Status')" wire:model.live="status" :placeholder="__('All statuses')" :all-label="__('All statuses')"
+        <x-searchable-select id="task" :label="__('Task')" multiple wire:model.live="taskId" :placeholder="__('All tasks')" :all-label="__('All tasks')" :options="$taskOptions" />
+        <x-searchable-select id="status" :label="__('Status')" multiple wire:model.live="status" :placeholder="__('All statuses')" :all-label="__('All statuses')"
             :options="collect($statuses)->mapWithKeys(fn ($s) => [$s->value => $s->label()])" />
-        <x-searchable-select id="priority" :label="__('Priority')" wire:model.live="priority" :placeholder="__('All priorities')" :all-label="__('All priorities')"
+        <x-searchable-select id="priority" :label="__('Priority')" multiple wire:model.live="priority" :placeholder="__('All priorities')" :all-label="__('All priorities')"
             :options="collect($priorities)->mapWithKeys(fn ($p) => [$p->value => $p->label()])" />
         @if ($scope !== 'mine')
-            <x-searchable-select id="employee" :label="__('Employee')" wire:model.live="employeeId" :placeholder="__('All employees')" :all-label="__('All employees')"
+            <x-searchable-select id="employee" :label="__('Employee')" multiple wire:model.live="employeeId" :placeholder="__('All employees')" :all-label="__('All employees')"
                 :options="$employees->mapWithKeys(fn ($e) => [$e->id => $e->user->name])" />
         @endif
         @if ($scope === 'all')
-            <x-searchable-select id="department" :label="__('Department')" wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')"
+            <x-searchable-select id="department" :label="__('Department')" multiple wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')"
                 :options="$departments->pluck('name', 'id')" />
         @endif
         <x-date-input id="from" :label="__('Created from')" wire:model="dateFrom" compact />

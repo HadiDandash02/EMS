@@ -26,14 +26,14 @@ class UserManager extends Component
     public string $search = '';
 
     /** Picked from the searchable "User" filter. */
-    #[Url(as: 'user', except: '')]
-    public string $userId = '';
+    #[Url(as: 'user')]
+    public $userId = [];          // list of ids (multi-select)
 
-    #[Url(except: '')]
-    public string $roleFilter = '';
+    #[Url]
+    public $roleFilter = [];      // list of roles (multi-select)
 
-    #[Url(except: '')]
-    public string $departmentFilter = '';
+    #[Url]
+    public $departmentFilter = []; // list of ids (multi-select)
 
     public function mount(): void
     {
@@ -58,9 +58,9 @@ class UserManager extends Component
                 Sql::whereContains($q, 'users.email', $term, 'or');
                 $q->orWhereHas('employee', fn (Builder $e) => Sql::whereContains($e, 'employees.employee_number', $term));
             }))
-            ->when((int) $this->userId, fn (Builder $q, int $id) => $q->where('users.id', $id))
-            ->when(UserRole::tryFrom($this->roleFilter), fn (Builder $q, UserRole $r) => $q->where('role', $r))
-            ->when((int) $this->departmentFilter, fn (Builder $q, int $id) => $q->whereHas('employee', fn (Builder $e) => $e->where('department_id', $id)));
+            ->when($this->ids($this->userId), fn (Builder $q, array $ids) => $q->whereIn('users.id', $ids))
+            ->when($this->enumValues($this->roleFilter, UserRole::class), fn (Builder $q, array $roles) => $q->whereIn('role', $roles))
+            ->when($this->ids($this->departmentFilter), fn (Builder $q, array $ids) => $q->whereHas('employee', fn (Builder $e) => $e->whereIn('department_id', $ids)));
 
         [$field, $dir] = $this->activeSort();
 

@@ -117,6 +117,7 @@ Task *─1 User (reviewed_by)  TaskHistory *─1 User (actor_id)
 * **UI:** `resources/views/components/filter-bar.blade.php` (the panel) + `data-table.blade.php` (the results).
 * **Behaviour (same on all 5 lists):** the **filters come first**, the table appears only after **Search** (or after you pick a value in a dropdown). The Results card can be collapsed.
 * **Filters:** Task, Status, Priority, Employee, Department, date range (HR can filter by employee, department, status, date and task title ✔). Every dropdown is *searchable* and scrolls.
+* **Multi-select:** every filter dropdown lets you tick **several** values (e.g. Status = Pending + Completed, Role = HR + Manager). The component is `resources/views/components/searchable-select.blade.php` (`multiple` attribute); the Livewire property is a list, and the query uses `whereIn` (`Task::scopeFilter()`, `HasFilterBar::ids()` / `enumValues()`). The list scrolls (`.select-scroll` in `resources/css/app.css`).
 * **Pagination:** 10 / 25 / 50 / 100 rows per page (`HasFilterBar` trait, `rowsPerPage()`).
 * **No N+1:** lists use eager loading – `->with(['employee.user', 'employee.department', 'reviewer'])` in `TaskList`, `withCount('tasks')` in `EmployeeList`.
 * **SQL injection safe:** `app/Support/Sql.php::whereContains()` escapes `% _ !` and uses bindings.
@@ -241,7 +242,7 @@ Extras: dark mode, Arabic/English with right-to-left (`lang/ar.json`), full-widt
 | Unauthorized access | policy + role middleware, always **server side** | `TaskPolicy`, `EnsureUserHasRole` |
 | Changing the ID in URL / API | `authorize('view', $task)` → 403 | `TaskShow::mount`, `TaskController::show` |
 | Mass assignment | `$fillable` lists; `role` and `status` are **not** fillable | models; `test_role_cannot_be_mass_assigned` |
-| Invalid input | server-side validation everywhere | Form Requests, Livewire `rules()` |
+| Invalid input | server-side validation everywhere; browser bubbles are **off** (`<form novalidate>`), so the **back end** tells the user "please complete the required fields" (`<x-form-errors>`, messages in `lang/en/validation.php`) | Form Requests, Livewire `rules()`; `BackendValidationTest` |
 | SQL injection | Eloquent bindings + escaped LIKE | `app/Support/Sql.php`; `test_sql_injection_attempt_is_harmless` |
 | CSRF | Laravel middleware; an expired token redirects nicely instead of "419" | `bootstrap/app.php`; `SessionExpiredTest` |
 | Sensitive data | passwords hashed, `password`/`remember_token` hidden, master-password hash only in `.env` | `User` model, `config/ems.php` |
@@ -251,7 +252,7 @@ Extras: dark mode, Arabic/English with right-to-left (`lang/ar.json`), full-widt
 
 ## 12. Automated tests
 
-Run: `php artisan test` → **242 tests, all passing** (SQLite in memory, never touches your MySQL data).
+Run: `php artisan test` → **252 tests, all passing** (SQLite in memory, never touches your MySQL data).
 
 | Required scenario | Test |
 |---|---|

@@ -4,6 +4,7 @@
     $field = 'mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500';
 @endphp
 <div class="page">
+    <x-form-errors />
     <x-breadcrumbs :items="[[__('Users'), route('admin.users')], [$userId ? __('Edit user') : __('New user'), null]]" />
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -13,7 +14,7 @@
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-    <form wire:submit="save" class="space-y-6 lg:col-span-2">
+    <form novalidate wire:submit="save" class="space-y-6 lg:col-span-2">
 {{-- Account --}}
         <section class="card">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4"><h3 class="font-semibold text-slate-900">{{ __('Account') }}</h3></div>

@@ -1,4 +1,5 @@
 <div class="page">
+    <x-form-errors />
     <x-breadcrumbs :items="[[__('Departments'), route('admin.departments')], [$departmentId ? __('Edit department') : __('New department'), null]]" />
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -9,7 +10,7 @@
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-        <form wire:submit="save" class="card lg:col-span-2">
+        <form novalidate wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Department details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>

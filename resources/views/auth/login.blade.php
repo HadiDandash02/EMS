@@ -59,7 +59,8 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ url('/login') }}" class="mt-8 space-y-5">
+            <form method="POST" action="{{ url('/login') }}" novalidate class="mt-8 space-y-5">
+                <x-form-errors />
                 @csrf
                 <div>
                     <label for="login" class="block text-sm font-medium text-slate-700">{{ __('Username or email') }}</label>
