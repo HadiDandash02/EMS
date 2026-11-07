@@ -151,6 +151,42 @@ and, inside Livewire pages, reloads the page quietly instead of showing a browse
 
 ---
 
+## 0e. Search, filters, dark mode, complete forms and speed
+
+**Search box (top bar) searches the database.** Type 2+ characters: it finds **tasks, people and departments** (and menu pages)
+as you type, grouped and limited to 5 per group, with keyboard support (↑ ↓ Enter, `/` to focus, Esc to close).
+It only returns what the signed-in user may see: an employee finds their own tasks only; a manager their team's tasks and people;
+HR every task and employee; the super admin also all accounts and departments. Queries are bound, `%`/`_` typed by the user are
+treated literally, and nothing is searched before 2 characters.
+
+**Filter panel.** One card above every table: the search box and every filter (dropdowns, dates) are in an equal-width grid and
+have the **same height**; a single **Collapse / Expand** button folds the whole panel (remembered in the browser), a badge counts
+the active filters, and **Search / Clear** sit at the bottom. Same panel on every table.
+
+**Actions column** is just the "⋯" menu (View details · Edit · Start · Complete · Approve · Reject · Cancel · Delete, only what the
+user may do) – no repeated eye/pencil icons.
+
+**Light / dark mode.** The moon/sun button sits next to the language switch (also on the login page). It follows the system
+setting on the first visit, remembers the choice, and is applied before the page paints (no flash). Implemented by redefining the
+colour palette once in `resources/css/app.css` (`[data-theme="dark"]`), so every page, badge, table and form follows.
+
+**Complete create / edit pages** (tasks, users, departments): breadcrumbs, a form on the left and a side panel on the right –
+for a task: summary, recent activity, delete ("danger zone"); for a new task: who it is assigned to and what happens next; for a
+user: a live preview card, account information and delete; for a department: its employees and delete. Priority is chosen with
+cards, the description has a character counter, dates are dd/mm/yyyy.
+
+**Why pages were slow, and what was done** (measured on this machine, XAMPP PHP 8.2):
+
+| Cause | Finding | Fix |
+|---|---|---|
+| **OPcache is not enabled in XAMPP's PHP** | every request re-compiled the whole framework: ~0.65 s for a page that does nothing, 1.4–2.2 s for a signed-in page | **`serve.bat`** starts the same built-in server with OPcache switched on for that process only: ~0.1 s / ~0.5 s. (Permanent alternative: in `C:\xampp\php\php.ini` set `zend_extension=opcache`, `opcache.enable=1`, `opcache.enable_cli=1`.) |
+| Google Fonts `<link>` blocked rendering | page stayed blank while waiting for an external server | Inter and Noto Sans Arabic are **bundled** (`@fontsource`), nothing is fetched from outside |
+| Route closures | prevented `php artisan route:cache` | replaced by invokable controllers; `route:cache`/`config:cache` now work (measured: no visible gain on top of OPcache, so they are not needed locally; use `php artisan optimize` for deployment) |
+| Database | not the problem: 10 queries, ~11 ms for the tasks page | – |
+
+Run the fast server with `serve.bat` (or `serve.bat 8123` for another port).
+
+---
 ## 1. Project setup
 
 ### Requirements
@@ -178,6 +214,7 @@ Or in one go (drops everything and rebuilds): `php artisan ems:db-create && php 
 ```bash
 npm run build                  # production assets   (or `npm run dev` while developing)
 php artisan serve              # http://127.0.0.1:8000
+serve.bat                      # Windows/XAMPP: same server, ~5x faster (OPcache on) - see section 0e
 ```
 
 ### Accounts
@@ -407,7 +444,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
-  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding` (includes the table redesign and the expired-session fix).
+  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding` (includes the table redesign, the expired-session fix, database search, dark mode and the speed fixes).
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
 * Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
 

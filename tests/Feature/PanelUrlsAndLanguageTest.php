@@ -185,7 +185,7 @@ class PanelUrlsAndLanguageTest extends TestCase
     public function test_header_has_page_search_language_date_and_profile_menu(): void
     {
         $this->actingAs($this->manager)->get('/manager/dashboard')->assertOk()
-            ->assertSee('Search pages…')                                   // page search
+            ->assertSee('Search tasks, people, pages…')                       // search
             ->assertSee('English')->assertSee('العربية')                    // language switcher
             ->assertSee(now()->translatedFormat('l, d M Y'))                // date chip
             ->assertSee('My account &amp; password', false)                 // profile menu submenu
