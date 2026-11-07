@@ -54,3 +54,28 @@
                hover:bg-rose-100 hover:ring-rose-200 focus-visible:ring-rose-400;
     }
 }
+
+/* Table column chooser: <x-data-table> sets data-hide="status due"; cells carry data-col="status" */
+[data-hide~="task"] [data-col="task"],
+[data-hide~="employee"] [data-col="employee"],
+[data-hide~="status"] [data-col="status"],
+[data-hide~="priority"] [data-col="priority"],
+[data-hide~="due"] [data-col="due"],
+[data-hide~="created"] [data-col="created"],
+[data-hide~="department"] [data-col="department"],
+[data-hide~="manager"] [data-col="manager"],
+[data-hide~="role"] [data-col="role"],
+[data-hide~="email"] [data-col="email"],
+[data-hide~="username"] [data-col="username"],
+[data-hide~="user"] [data-col="user"],
+[data-hide~="tasks"] [data-col="tasks"],
+[data-hide~="number"] [data-col="number"],
+[data-hide~="code"] [data-col="code"],
+[data-hide~="employees"] [data-col="employees"],
+[data-hide~="decision"] [data-col="decision"],
+[data-hide~="by"] [data-col="by"],
+[data-hide~="reason"] [data-col="reason"],
+[data-hide~="date"] [data-col="date"],
+[data-hide~="actions"] [data-col="actions"] {
+    display: none;
+}

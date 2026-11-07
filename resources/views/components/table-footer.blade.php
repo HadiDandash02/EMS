@@ -17,13 +17,6 @@
                 {{ __('No results') }}
             @endif
         </span>
-        <label class="flex items-center gap-2">
-            <span>{{ __('Rows per page') }}</span>
-            <select wire:model.live="perPage" aria-label="{{ __('Rows per page') }}"
-                    class="rounded-lg border-0 bg-white py-1.5 ps-3 pe-8 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
-                @foreach ([10, 25, 50, 100] as $n)<option value="{{ $n }}">{{ $n }}</option>@endforeach
-            </select>
-        </label>
     </div>
 
     @if ($last > 1)

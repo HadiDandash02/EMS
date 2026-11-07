@@ -4,6 +4,7 @@ namespace App\Livewire\Approvals;
 
 use App\Enums\TaskAction;
 use App\Livewire\Concerns\HasFilterBar;
+use App\Livewire\Concerns\SortsAndExports;
 use App\Models\TaskHistory;
 use App\Support\Sql;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +15,7 @@ use Livewire\WithPagination;
 /** Managers see the decisions THEY made; HR / super admin see every decision. */
 class ApprovalHistory extends Component
 {
-    use HasFilterBar, WithPagination;
+    use HasFilterBar, SortsAndExports, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -27,21 +28,64 @@ class ApprovalHistory extends Component
         return ['search', 'decision'];
     }
 
-    public function render()
+    private function query(): Builder
     {
         $user = auth()->user();
         $term = trim($this->search);
 
-        $records = TaskHistory::query()
+        $query = TaskHistory::query()
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
             ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
             ->when(TaskAction::tryFrom($this->decision), fn ($q, $a) => $q->where('action', $a))
-            ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)))
-            ->latest('id')
-            ->paginate($this->rowsPerPage());
+            ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)));
 
-        return view('livewire.approvals.approval-history', ['records' => $records])
+        [$field, $dir] = $this->activeSort();
+
+        match ($field) {
+            'decision' => $query->orderBy('task_histories.action', $dir),
+            'task' => $query->orderBy(fn ($q) => $q->select('tasks.title')->from('tasks')->whereColumn('tasks.id', 'task_histories.task_id')->limit(1), $dir),
+            'employee' => $query->orderBy(fn ($q) => $q->select('users.name')->from('tasks')
+                ->join('employees', 'employees.id', '=', 'tasks.employee_id')->join('users', 'users.id', '=', 'employees.user_id')
+                ->whereColumn('tasks.id', 'task_histories.task_id')->limit(1), $dir),
+            'by' => $query->orderBy(fn ($q) => $q->select('users.name')->from('users')->whereColumn('users.id', 'task_histories.actor_id')->limit(1), $dir),
+            'date' => $query->orderBy('task_histories.created_at', $dir),
+            default => $query->latest('task_histories.id'),
+        };
+
+        return $query->orderByDesc('task_histories.id');
+    }
+
+    protected function sortableFields(): array
+    {
+        return ['decision', 'task', 'employee', 'by', 'date'];
+    }
+
+    protected function exportQuery(): Builder
+    {
+        return $this->query();
+    }
+
+    protected function exportFilename(): string
+    {
+        return 'approval-history';
+    }
+
+    protected function exportColumns(): array
+    {
+        return [
+            __('Decision') => fn ($r) => $r->to_status->label(),
+            __('Task') => fn ($r) => $r->task->title,
+            __('Employee') => fn ($r) => $r->task->employee->user->name,
+            __('Decided by') => fn ($r) => $r->actor?->name,
+            __('Reason') => fn ($r) => $r->reason,
+            __('Date') => fn ($r) => $r->created_at->format('d/m/Y H:i'),
+        ];
+    }
+
+    public function render()
+    {
+        return view('livewire.approvals.approval-history', ['records' => $this->query()->paginate($this->rowsPerPage())])
             ->layout('components.layouts.app', ['title' => 'Approval history']);
     }
 }

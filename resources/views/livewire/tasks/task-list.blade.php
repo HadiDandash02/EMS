@@ -1,3 +1,12 @@
+@php
+    $columns = array_filter([
+        'employee' => $scope !== 'mine' ? __('Employee') : null,
+        'status' => __('Status'),
+        'priority' => __('Priority'),
+        'due' => __('Due'),
+        'created' => __('Created'),
+    ]);
+@endphp
 <div class="space-y-5">
     {{-- Page actions --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -30,9 +39,7 @@
         <x-date-input id="to" :label="__('Created to')" wire:model="dateTo" compact />
     </x-filter-bar>
 
-    {{-- Table (desktop) / cards (mobile) --}}
-    <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200"
-         wire:loading.class="opacity-60" wire:target="search,clearFilters,gotoPage,nextPage,previousPage">
+    <x-data-table id="tasks-{{ $scope }}" :columns="$columns">
         @if ($tasks->isEmpty())
             <x-empty-state :title="__('No tasks found')" :text="$search || $status || $priority || $employeeId || $departmentId || $dateFrom || $dateTo ? __('Try changing your filters or press Clear.') : __('Nothing here yet.')">
                 @if ($scope === 'mine')
@@ -40,41 +47,53 @@
                 @endif
             </x-empty-state>
         @else
+            {{-- Desktop table --}}
             <div class="hidden overflow-x-auto md:block">
-                <table class="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead class="bg-slate-100/70 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 text-xs">
                         <tr>
-                            <th class="px-4 py-3 text-start">{{ __('Task') }}</th>
-                            @if ($scope !== 'mine')<th class="px-4 py-3 text-start">{{ __('Employee') }}</th>@endif
-                            <th class="px-4 py-3 text-start">{{ __('Status') }}</th>
-                            <th class="px-4 py-3 text-start">{{ __('Priority') }}</th>
-                            <th class="px-4 py-3 text-start">{{ __('Due') }}</th>
-                            <th class="w-16 px-4 py-3 text-end">{{ __('Actions') }}</th>
+                            <x-th class="w-12 first:rounded-ss-lg">#</x-th>
+                            <x-sort-th field="title" :label="__('Task')" :sort="$sortField" :dir="$sortDirection" />
+                            @if ($scope !== 'mine')<x-sort-th field="employee" col="employee" :label="__('Employee')" :sort="$sortField" :dir="$sortDirection" />@endif
+                            <x-sort-th field="status" col="status" :label="__('Status')" :sort="$sortField" :dir="$sortDirection" />
+                            <x-sort-th field="priority" col="priority" :label="__('Priority')" :sort="$sortField" :dir="$sortDirection" />
+                            <x-sort-th field="due" col="due" :label="__('Due')" :sort="$sortField" :dir="$sortDirection" />
+                            <x-sort-th field="created" col="created" :label="__('Created')" :sort="$sortField" :dir="$sortDirection" />
+                            <x-th class="w-40 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach ($tasks as $task)
-                            <tr wire:key="task-{{ $task->id }}" class="transition hover:bg-slate-50/70">
+                            <tr wire:key="task-{{ $task->id }}" class="group transition-colors odd:bg-white even:bg-slate-50/50 hover:bg-indigo-50/60">
+                                <td class="border-s-4 border-transparent px-4 py-3 text-xs font-medium text-slate-400 transition group-hover:border-indigo-500">{{ $tasks->firstItem() + $loop->index }}</td>
                                 <td class="max-w-xs px-4 py-3">
-                                    <a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-medium text-slate-900 hover:text-indigo-600">{{ $task->title }}</a>
-                                    <p class="text-xs text-slate-400">{{ __('Created') }} {{ $task->created_at->diffForHumans() }}</p>
+                                    <a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-semibold text-slate-900 transition hover:text-indigo-600">{{ $task->title }}</a>
                                 </td>
                                 @if ($scope !== 'mine')
-                                    <td class="px-4 py-3">
+                                    <td data-col="employee" class="px-4 py-3">
                                         <div class="flex items-center gap-3">
                                             <x-avatar :user="$task->employee->user" size="sm" />
                                             <div>
-                                                <p class="text-slate-800">{{ $task->employee->user->name }}</p>
+                                                <p class="font-medium text-slate-800">{{ $task->employee->user->name }}</p>
                                                 <p class="text-xs text-slate-400">{{ $task->employee->department->name }}</p>
                                             </div>
                                         </div>
                                     </td>
                                 @endif
-                                <td class="px-4 py-3"><x-status-badge :status="$task->status" /></td>
-                                <td class="px-4 py-3"><x-priority-badge :priority="$task->priority" /></td>
-                                <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $task->due_date?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="px-4 py-3 text-end">
-                                    @include('livewire.tasks.partials.actions-menu', ['task' => $task])
+                                <td data-col="status" class="px-4 py-3"><x-status-badge :status="$task->status" /></td>
+                                <td data-col="priority" class="px-4 py-3"><x-priority-badge :priority="$task->priority" /></td>
+                                <td data-col="due" class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $task->due_date?->format('d/m/Y') ?? '—' }}</td>
+                                <td data-col="created" class="whitespace-nowrap px-4 py-3 text-slate-500" title="{{ $task->created_at->format('d/m/Y H:i') }}">{{ $task->created_at->format('d/m/Y') }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <x-icon-button icon="eye" :title="__('View details')" :href="route('tasks.show', $task)" />
+                                        @can('update', $task)
+                                            @if ($task->status === \App\Enums\TaskStatus::Pending || auth()->user()->isSuperAdmin())
+                                                <x-icon-button icon="pencil" :title="__('Edit')" :href="route('tasks.edit', $task)" />
+                                            @endif
+                                        @endcan
+                                        @include('livewire.tasks.partials.actions-menu', ['task' => $task])
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -82,6 +101,7 @@
                 </table>
             </div>
 
+            {{-- Mobile cards --}}
             <ul class="divide-y divide-slate-100 md:hidden">
                 @foreach ($tasks as $task)
                     <li wire:key="card-{{ $task->id }}" class="space-y-3 p-4">
@@ -105,5 +125,5 @@
 
             <x-table-footer :paginator="$tasks" />
         @endif
-    </div>
+    </x-data-table>
 </div>

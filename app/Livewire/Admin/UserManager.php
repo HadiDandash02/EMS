@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Enums\UserRole;
 use App\Livewire\Concerns\HasFilterBar;
+use App\Livewire\Concerns\SortsAndExports;
 use App\Models\Department;
 use App\Models\User;
 use App\Support\Sql;
@@ -14,12 +15,12 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Super admin: the list of accounts (search, filters, pagination).
+ * Super admin: the list of accounts (search, filters, sorting, pagination, export).
  * Create / edit / delete each open their own page (UserForm, DeleteUser).
  */
 class UserManager extends Component
 {
-    use HasFilterBar, WithPagination;
+    use HasFilterBar, SortsAndExports, WithPagination;
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -40,12 +41,12 @@ class UserManager extends Component
         return ['search', 'roleFilter', 'departmentFilter'];
     }
 
-    public function render()
+    private function query(): Builder
     {
         Gate::authorize('manage-users');
         $term = trim($this->search);
 
-        $users = User::query()
+        $query = User::query()
             ->with(['employee.department', 'employee.manager.user'])
             ->when($term !== '', fn (Builder $q) => $q->where(function (Builder $q) use ($term) {
                 Sql::whereContains($q, 'users.name', $term);
@@ -54,12 +55,57 @@ class UserManager extends Component
                 $q->orWhereHas('employee', fn (Builder $e) => Sql::whereContains($e, 'employees.employee_number', $term));
             }))
             ->when(UserRole::tryFrom($this->roleFilter), fn (Builder $q, UserRole $r) => $q->where('role', $r))
-            ->when((int) $this->departmentFilter, fn (Builder $q, int $id) => $q->whereHas('employee', fn (Builder $e) => $e->where('department_id', $id)))
-            ->orderBy('name')
-            ->paginate($this->rowsPerPage());
+            ->when((int) $this->departmentFilter, fn (Builder $q, int $id) => $q->whereHas('employee', fn (Builder $e) => $e->where('department_id', $id)));
 
+        [$field, $dir] = $this->activeSort();
+
+        match ($field) {
+            'name' => $query->orderBy('users.name', $dir),
+            'username' => $query->orderBy('users.username', $dir),
+            'role' => $query->orderBy('users.role', $dir),
+            'department' => $query->orderBy(fn ($q) => $q->select('departments.name')->from('employees')
+                ->join('departments', 'departments.id', '=', 'employees.department_id')->whereColumn('employees.user_id', 'users.id')->limit(1), $dir),
+            'created' => $query->orderBy('users.created_at', $dir),
+            default => $query->orderBy('users.name'),
+        };
+
+        return $query->orderBy('users.id');
+    }
+
+    protected function sortableFields(): array
+    {
+        return ['name', 'username', 'role', 'department', 'created'];
+    }
+
+    protected function exportQuery(): Builder
+    {
+        return $this->query();
+    }
+
+    protected function exportFilename(): string
+    {
+        return 'users';
+    }
+
+    protected function exportColumns(): array
+    {
+        return [
+            __('Full name') => fn ($u) => $u->name,
+            __('Username') => fn ($u) => $u->username,
+            __('Email') => fn ($u) => $u->email,
+            __('Phone') => fn ($u) => $u->phone,
+            __('Role') => fn ($u) => $u->role->label(),
+            __('Department') => fn ($u) => $u->employee?->department->name,
+            __('Manager') => fn ($u) => $u->employee?->manager?->user->name,
+            __('Employee number') => fn ($u) => $u->employee?->employee_number,
+            __('Created') => fn ($u) => $u->created_at->format('d/m/Y'),
+        ];
+    }
+
+    public function render()
+    {
         return view('livewire.admin.user-manager', [
-            'users' => $users,
+            'users' => $this->query()->paginate($this->rowsPerPage()),
             'departments' => Department::orderBy('name')->get(),
             'roles' => UserRole::cases(),
         ])->layout('components.layouts.app', ['title' => 'User management']);
