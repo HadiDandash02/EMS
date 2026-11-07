@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AvatarController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LegacyRedirectController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Admin\DeleteDepartment;
@@ -30,16 +33,11 @@ Route::middleware('guest')->group(function () {
 });
 
 // Language switch (works for guests too): remembered in the session
-Route::get('/language/{locale}', function (Request $request, string $locale) {
-    abort_unless(array_key_exists($locale, config('ems.locales')), 404);
-    $request->session()->put('locale', $locale);
-
-    return redirect()->back(fallback: '/');
-})->name('language');
+Route::get('/language/{locale}', LanguageController::class)->name('language');
 
 // ---- Signed in, no prefix: start page, logging out, profile pictures --------------------------
 Route::middleware('auth')->group(function () {
-    Route::get('/', fn (Request $request) => redirect($request->user()->homeUrl()))->name('home');
+    Route::get('/', HomeController::class)->name('home');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('/avatars/{user}', AvatarController::class)->whereNumber('user')->name('avatar');
 });
@@ -48,7 +46,7 @@ Route::middleware('auth')->group(function () {
 // route('tasks.index') needs no argument: SetPanelPrefix fills {panel} with the user's own prefix.
 Route::middleware('auth')->prefix('{panel}')->where(['panel' => $prefixes])->group(function () {
     // /hr -> /hr/dashboard
-    Route::get('/', fn (Request $request) => redirect($request->user()->homeUrl()))->name('panel.home');
+    Route::get('/', HomeController::class)->name('panel.home');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     // My profile (every role)
@@ -92,6 +90,4 @@ Route::middleware('auth')->prefix('{panel}')->where(['panel' => $prefixes])->gro
 });
 
 // ---- Old addresses without the prefix (bookmarks): /tasks/5 -> /employee/tasks/5 (301) ----------
-Route::middleware('auth')->get('/{path}', fn (Request $request, string $path) => redirect(
-    url($request->user()->url_prefix.'/'.$path).($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301,
-))->where('path', '(dashboard|tasks|team|approvals|profile|employees|all-tasks|users|departments)(/[A-Za-z0-9/-]*)?');
+Route::middleware('auth')->get('/{path}', LegacyRedirectController::class)->where('path', '(dashboard|tasks|team|approvals|profile|employees|all-tasks|users|departments)(/[A-Za-z0-9/-]*)?');
