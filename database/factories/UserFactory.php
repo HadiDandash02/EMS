@@ -19,7 +19,8 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'username' => fake()->unique()->userName(),
+            // usernames are stored lower-case, so build them lower-case and unique (random names could collide after lowercasing)
+            'username' => 'user'.fake()->unique()->numerify('########'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),

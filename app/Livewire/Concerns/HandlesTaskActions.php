@@ -5,73 +5,27 @@ namespace App\Livewire\Concerns;
 use App\Exceptions\InvalidTaskTransitionException;
 use App\Models\Task;
 use App\Services\TaskWorkflowService;
-use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
- * Task actions shared by the list and the detail page.
+ * One-click task actions available directly on a list / detail page.
  *
- * SECURITY NOTE: every public method of a Livewire component can be invoked from the
- * browser with any argument. Hiding a button is therefore NOT protection. Each action
- * loads the task by id and hands it to TaskWorkflowService, which authorises the
- * logged-in user against the (locked) row on the server.
+ * Only "start / rework" needs no confirmation. Complete, approve, cancel, delete and reject each open
+ * their own page (Tasks\ConfirmAction, Tasks\RejectTask) - there are no popups.
+ *
+ * SECURITY NOTE: every public method of a Livewire component can be invoked from the browser with any
+ * argument, so hiding a button is NOT protection. The task is loaded by id and handed to
+ * TaskWorkflowService, which authorises the logged-in user against the (locked) row on the server.
  */
 trait HandlesTaskActions
 {
     public function startTask(int $taskId): void
     {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->start($t, auth()->user()), __('Task started.'));
-    }
-
-    public function completeTask(int $taskId): void
-    {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->complete($t, auth()->user()), __('Task marked as completed.'));
-    }
-
-    public function cancelTask(int $taskId): void
-    {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->cancel($t, auth()->user()), __('Task cancelled.'));
-    }
-
-    public function approveTask(int $taskId): void
-    {
-        $this->performTaskAction($taskId, fn (TaskWorkflowService $s, Task $t) => $s->approve($t, auth()->user()), __('Task approved.'));
-    }
-
-    public function deleteTask(int $taskId): void
-    {
         $task = Task::findOrFail($taskId);
 
         try {
-            app(TaskWorkflowService::class)->delete($task, auth()->user());
-        } catch (AuthorizationException $e) {
-            $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
-
-            return;
-        } catch (InvalidTaskTransitionException $e) {
-            $this->notify($e->getMessage(), 'error');
-
-            return;
-        }
-
-        $this->notify(__('Task deleted.'));
-        $this->afterTaskDeleted();
-    }
-
-    /** Lists just refresh; the detail page overrides this to leave the (now missing) task. */
-    protected function afterTaskDeleted(): void
-    {
-        $this->dispatch('task-updated');
-    }
-
-    /** @param  Closure(TaskWorkflowService, Task): mixed  $action */
-    private function performTaskAction(int $taskId, Closure $action, string $successMessage): void
-    {
-        $task = Task::findOrFail($taskId);
-
-        try {
-            $action(app(TaskWorkflowService::class), $task);
-            $this->notify($successMessage);
+            app(TaskWorkflowService::class)->start($task, auth()->user());
+            $this->notify(__('Task started.'));
             $this->dispatch('task-updated');
         } catch (AuthorizationException $e) {
             $this->notify($e->getMessage() ?: __('You are not allowed to do that.'), 'error');
@@ -80,6 +34,7 @@ trait HandlesTaskActions
         }
     }
 
+    /** Shown by the inline alert bar at the top of the page (see the layout). */
     protected function notify(string $message, string $type = 'success'): void
     {
         $this->dispatch('notify', type: $type, message: $message);

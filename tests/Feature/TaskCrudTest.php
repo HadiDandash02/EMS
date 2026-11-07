@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\TaskStatus;
 use App\Enums\UserRole;
+use App\Livewire\Tasks\ConfirmAction;
 use App\Livewire\Tasks\TaskForm;
 use App\Livewire\Tasks\TaskList;
-use App\Livewire\Tasks\TaskShow;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +15,7 @@ use Livewire\Livewire;
 use Tests\Concerns\BuildsOrganisation;
 use Tests\TestCase;
 
-/** Create / Read / Update / Delete for tasks, for every role that may do it. */
+/** Create / Read / Update / Delete for tasks, for every role that may do it - each on its own page. */
 class TaskCrudTest extends TestCase
 {
     use BuildsOrganisation, RefreshDatabase;
@@ -32,16 +32,29 @@ class TaskCrudTest extends TestCase
         $this->admin->save();
     }
 
-    // ---- DELETE: owners ---------------------------------------------------------------
+    private function confirm(User $user, Task $task, string $action)
+    {
+        return Livewire::actingAs($user)->test(ConfirmAction::class, ['task' => $task, 'action' => $action]);
+    }
+
+    // ---- DELETE: owners (confirmation page) ---------------------------------------------
+
+    public function test_the_delete_confirmation_is_a_page_not_a_popup(): void
+    {
+        $task = $this->taskFor($this->employeeEmp);
+
+        $this->actingAs($this->employee)->get("/employee/tasks/{$task->id}/confirm/delete")
+            ->assertOk()->assertSee('Delete task')->assertSee($task->title);
+    }
 
     public function test_owner_can_delete_their_pending_or_cancelled_task(): void
     {
         $pending = $this->taskFor($this->employeeEmp);
         $cancelled = $this->taskFor($this->employeeEmp, 'cancelled');
 
-        $page = Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine']);
-        $page->call('deleteTask', $pending->id)->assertDispatched('notify', type: 'success', message: 'Task deleted.');
-        $page->call('deleteTask', $cancelled->id)->assertDispatched('notify', type: 'success', message: 'Task deleted.');
+        $this->confirm($this->employee, $pending, 'delete')->call('confirm')->assertRedirect(route('tasks.index'));
+        $this->assertSame('Task deleted.', session('success'));
+        $this->confirm($this->employee, $cancelled, 'delete')->call('confirm')->assertRedirect(route('tasks.index'));
 
         $this->assertDatabaseCount('tasks', 0);
     }
@@ -52,23 +65,30 @@ class TaskCrudTest extends TestCase
         app(\App\Services\TaskWorkflowService::class)->update($task, $this->employee, ['title' => 'Edited', 'priority' => 'low']);
         $this->assertDatabaseCount('task_histories', 1);
 
-        Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine'])->call('deleteTask', $task->id);
+        $this->confirm($this->employee, $task, 'delete')->call('confirm');
 
         $this->assertDatabaseCount('task_histories', 0);
     }
 
     public function test_owner_cannot_delete_tasks_that_were_started_or_reviewed(): void
     {
-        $started = $this->taskFor($this->employeeEmp, 'inProgress');
-        $completed = $this->taskFor($this->employeeEmp, 'completed');
-        $approved = $this->taskFor($this->employeeEmp, 'approved');
+        foreach (['inProgress', 'completed', 'approved'] as $state) {
+            $task = $this->taskFor($this->employeeEmp, $state);
 
-        $page = Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine']);
-        foreach ([$started, $completed, $approved] as $task) {
-            $page->call('deleteTask', $task->id)->assertDispatched('notify', type: 'error');
+            // the page refuses to open: back to the task with an explanation
+            $this->confirm($this->employee, $task, 'delete')->assertRedirect(route('tasks.show', $task));
+            $this->assertStringContainsString('not available', session('error'));
         }
 
         $this->assertDatabaseCount('tasks', 3);
+    }
+
+    public function test_the_service_still_refuses_even_if_the_page_is_bypassed(): void
+    {
+        $task = $this->taskFor($this->employeeEmp, 'completed');
+
+        $this->expectException(\App\Exceptions\InvalidTaskTransitionException::class);
+        app(\App\Services\TaskWorkflowService::class)->delete($task, $this->employee);
     }
 
     public function test_nobody_can_delete_someone_elses_task(): void
@@ -76,23 +96,45 @@ class TaskCrudTest extends TestCase
         $task = $this->taskFor($this->teammateEmp);
 
         foreach ([$this->employee, $this->manager, $this->hr] as $user) {
-            Livewire::actingAs($user)->test(TaskList::class, ['scope' => $user->isHr() ? 'all' : ($user->isManager() ? 'team' : 'mine')])
-                ->call('deleteTask', $task->id)
-                ->assertDispatched('notify', type: 'error', message: 'You can only delete your own tasks.');
+            $this->confirm($user, $task, 'delete')->assertForbidden();
+            $this->actingAs($user)->get($this->p($user, "/tasks/{$task->id}/confirm/delete"))->assertForbidden();
         }
 
         $this->assertDatabaseHas('tasks', ['id' => $task->id]);
     }
 
-    public function test_detail_page_delete_redirects_back_to_the_list(): void
+    public function test_unknown_confirmation_actions_are_404(): void
     {
         $task = $this->taskFor($this->employeeEmp);
 
-        Livewire::actingAs($this->employee)->test(TaskShow::class, ['task' => $task])
-            ->call('deleteTask', $task->id)
-            ->assertRedirect(route('tasks.index'));
+        $this->actingAs($this->employee)->get("/employee/tasks/{$task->id}/confirm/explode")->assertNotFound();
+    }
 
-        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+    // ---- other confirmations --------------------------------------------------------------
+
+    public function test_complete_and_cancel_have_confirmation_pages(): void
+    {
+        $toComplete = $this->taskFor($this->employeeEmp, 'inProgress');
+        $toCancel = $this->taskFor($this->employeeEmp);
+
+        $this->confirm($this->employee, $toComplete, 'complete')->call('confirm')->assertRedirect(route('tasks.show', $toComplete));
+        $this->assertSame(TaskStatus::Completed, $toComplete->fresh()->status);
+
+        $this->confirm($this->employee, $toCancel, 'cancel')->call('confirm')->assertRedirect();
+        $this->assertSame(TaskStatus::Cancelled, $toCancel->fresh()->status);
+    }
+
+    public function test_only_the_owners_manager_can_open_the_approve_page(): void
+    {
+        $task = $this->taskFor($this->employeeEmp, 'completed');
+
+        $this->confirm($this->manager, $task, 'approve')->call('confirm');
+        $this->assertSame(TaskStatus::Approved, $task->fresh()->status);
+
+        $other = $this->taskFor($this->employeeEmp, 'completed');
+        $this->confirm($this->otherManager, $other, 'approve')->assertForbidden();
+        $this->confirm($this->employee, $other, 'approve')->assertForbidden();
+        $this->confirm($this->hr, $other, 'approve')->assertForbidden();
     }
 
     // ---- super admin: full CRUD on any task -----------------------------------------------
@@ -100,10 +142,9 @@ class TaskCrudTest extends TestCase
     public function test_super_admin_can_create_a_task_for_any_employee(): void
     {
         Livewire::actingAs($this->admin)->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->set('employee_id', (string) $this->employeeEmp->id)
             ->set('title', 'Assigned by admin')->set('priority', 'high')
-            ->call('save')->assertHasNoErrors();
+            ->call('save')->assertHasNoErrors()->assertRedirect(route('tasks.all'));
 
         $task = Task::firstOrFail();
         $this->assertSame($this->employeeEmp->id, $task->employee_id);
@@ -113,7 +154,6 @@ class TaskCrudTest extends TestCase
     public function test_super_admin_must_choose_an_employee(): void
     {
         Livewire::actingAs($this->admin)->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->set('title', 'Orphan task')->set('priority', 'low')
             ->call('save')->assertHasErrors(['employee_id' => 'required']);
     }
@@ -122,20 +162,17 @@ class TaskCrudTest extends TestCase
     {
         $task = $this->taskFor($this->employeeEmp, 'approved');
 
-        Livewire::actingAs($this->admin)->test(TaskForm::class)
-            ->dispatch('open-task-form', taskId: $task->id)
+        Livewire::actingAs($this->admin)->test(TaskForm::class, ['task' => $task])
             ->set('title', 'Corrected by admin')->call('save')->assertHasNoErrors();
         $this->assertSame('Corrected by admin', $task->fresh()->title);
 
-        Livewire::actingAs($this->admin)->test(TaskList::class, ['scope' => 'all'])
-            ->call('deleteTask', $task->id)->assertDispatched('notify', type: 'success', message: 'Task deleted.');
+        $this->confirm($this->admin, $task, 'delete')->call('confirm')->assertRedirect(route('tasks.all'));
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
 
     public function test_regular_users_cannot_pick_the_owner_of_a_task(): void
     {
         Livewire::actingAs($this->employee)->test(TaskForm::class)
-            ->dispatch('open-task-form')
             ->set('employee_id', (string) $this->teammateEmp->id)
             ->set('title', 'Mine really')->set('priority', 'low')
             ->call('save')->assertHasNoErrors();
@@ -189,7 +226,7 @@ class TaskCrudTest extends TestCase
     {
         $task = Task::factory()->forEmployee($this->employeeEmp)->create(['due_date' => '2027-03-09']);
 
-        $this->actingAs($this->employee)->get($this->p($this->employee, "/tasks/{$task->id}"))->assertOk()->assertSee('09/03/2027');
+        $this->actingAs($this->employee)->get("/employee/tasks/{$task->id}")->assertOk()->assertSee('09/03/2027');
         Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine'])->assertSee('09/03/2027')->assertDontSee('Mar 9');
     }
 
@@ -204,7 +241,7 @@ class TaskCrudTest extends TestCase
 
     public function test_filters_render_searchable_selects_and_the_date_picker(): void
     {
-        $this->actingAs($this->hr)->get($this->p($this->hr, '/all-tasks'))->assertOk()
+        $this->actingAs($this->hr)->get('/hr/all-tasks')->assertOk()
             ->assertSee('Type to search…')
             ->assertSee('dd/mm/yyyy', false);
     }

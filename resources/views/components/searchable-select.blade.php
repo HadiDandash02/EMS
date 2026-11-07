@@ -22,7 +22,7 @@
      @keydown.escape.window="open = false" @click.outside="open = false">
     @if ($label)<label for="{{ $id }}" class="mb-1 block text-xs font-medium text-slate-600">{{ $label }}</label>@endif
     <button type="button" id="{{ $id }}" @click="toggle()" aria-haspopup="listbox" :aria-expanded="open"
-            class="flex w-full items-center justify-between gap-2 rounded-lg border-0 bg-white py-2 ps-3 pe-2 text-start text-sm ring-1 ring-inset focus:outline-none focus:ring-2 focus:ring-indigo-500 {{ $error ? 'ring-rose-400' : 'ring-slate-300' }}">
+            class="flex h-10 w-full items-center justify-between gap-2 rounded-lg border-0 bg-white ps-3 pe-2 text-start text-sm ring-1 ring-inset focus:outline-none focus:ring-2 focus:ring-indigo-500 {{ $error ? 'ring-rose-400' : 'ring-slate-300' }}">
         <span class="truncate" :class="current === null ? 'text-slate-500' : 'text-slate-900'" x-text="current ?? @js($placeholder ?? __('Select…'))"></span>
         <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
     </button>

@@ -95,20 +95,31 @@ class ProfileAndLoginTest extends TestCase
     public function test_password_change_requires_the_current_password_and_a_strong_new_one(): void
     {
         $page = Livewire::actingAs($this->employee)->test(EditProfile::class);
+        $strong = 'N3w-Str0ng!Pass';
 
-        $page->set('current_password', 'wrong')->set('password', 'NewPass123')->set('password_confirmation', 'NewPass123')
+        // wrong current password
+        $page->set('current_password', 'wrong')->set('password', $strong)->set('password_confirmation', $strong)
             ->call('updatePassword')->assertHasErrors(['current_password']);
 
-        $page->set('current_password', 'password')->set('password', 'short')->set('password_confirmation', 'short')
-            ->call('updatePassword')->assertHasErrors(['password']);
+        // every weakness is refused: too short, no symbol, no number, no upper case, no lower case
+        foreach (['Sh0rt!a', 'NoSymbol12345', 'No-Number-Here!', 'no-upper-case-1!', 'NO-LOWER-CASE-1!'] as $weak) {
+            $page->set('current_password', 'password')->set('password', $weak)->set('password_confirmation', $weak)
+                ->call('updatePassword')->assertHasErrors(['password']);
+        }
 
-        $page->set('current_password', 'password')->set('password', 'NewPass123')->set('password_confirmation', 'Mismatch123')
+        // confirmation must match
+        $page->set('current_password', 'password')->set('password', $strong)->set('password_confirmation', 'Mismatch-1!Pass')
             ->call('updatePassword')->assertHasErrors(['password' => 'confirmed']);
 
-        $page->set('current_password', 'password')->set('password', 'NewPass123')->set('password_confirmation', 'NewPass123')
-            ->call('updatePassword')->assertHasNoErrors();
+        // the new password may not equal the old one
+        $page->set('current_password', 'password')->set('password', 'password')->set('password_confirmation', 'password')
+            ->call('updatePassword')->assertHasErrors(['password']);
 
-        $this->assertTrue(Hash::check('NewPass123', $this->employee->fresh()->password));
+        // finally a strong one works and the checklist is cleared
+        $page->set('current_password', 'password')->set('password', $strong)->set('password_confirmation', $strong)
+            ->call('updatePassword')->assertHasNoErrors()->assertDispatched('password-reset');
+
+        $this->assertTrue(Hash::check($strong, $this->employee->fresh()->password));
     }
 
     public function test_user_can_upload_and_remove_a_profile_picture(): void

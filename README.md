@@ -1,4 +1,4 @@
-# EMS – Employee Task & Approval Management System
+# TaskFlow – Employee Task & Approval Management System
 
 A Laravel application where employees create and complete tasks, managers approve or reject
 completed work, and HR gets a company-wide, searchable view – with a complete audit trail of every
@@ -86,12 +86,105 @@ user may open are offered) · **language switcher** (English / العربية) �
 
 **Languages.** English and Arabic. The choice is remembered in the session (`GET /language/{en|ar}`, also on the login page).
 Arabic switches the whole interface to **right-to-left** (logical Tailwind classes `ps-`/`pe-`/`start-`/`end-`), translates labels,
-statuses, validation messages, toasts and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
+statuses, validation messages, inline messages and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
 `lang/ar/validation.php`; a test fails if a `__('...')` key is missing from the Arabic file.
 
 **Tables.** Row actions are in a **"⋮" menu** (View details · Edit · Start/Rework · Complete · Cancel task · Approve · Reject ·
 Delete) that only lists what the signed-in user may do; every action is re-checked on the server. Filters have a **Search** and a
 **Clear** button, searchable dropdowns (type to filter) and **dd/mm/yyyy** date pickers.
+
+---
+## 0c. Pages instead of popups, pagination, branding, buttons and passwords
+
+**No popups.** Nothing opens in a modal or a browser `confirm()` box. Every form and every "are you sure?" is its own page,
+reached from the "⋮" menu or a button, and messages appear **inline** at the top of the page (green = saved, red = problem):
+
+| Action | Page |
+|---|---|
+| New / edit task | `/{role}/tasks/create`, `/{role}/tasks/{id}/edit` |
+| Complete · Approve · Cancel · Delete a task | `/{role}/tasks/{id}/confirm/{complete\|approve\|cancel\|delete}` |
+| Reject a task (reason required) | `/{role}/tasks/{id}/reject` |
+| New / edit user | `/admin/users/create`, `/admin/users/{id}/edit` · delete: `/admin/users/{id}/delete` |
+| New / edit department | `/admin/departments/create`, `/admin/departments/{id}/edit` · delete: `/admin/departments/{id}/delete` |
+
+Each page checks the policy **when it opens** (403 if you may not do it, or a message if the task is in the wrong state) and the
+workflow service checks **again** when you confirm, so pasting a URL or calling the action directly changes nothing.
+
+**Pagination on every table** (tasks, employees, approvals, users, departments): the footer is always visible and shows
+*Showing 1 to 10 of 25*, a **Rows per page** choice (10 / 25 / 50 / 100, validated on the server) and numbered page buttons.
+Clearing the filters keeps the chosen page size.
+
+**Logo and brand.** *TaskFlow*: a gradient tile with a check leaving a progress ring ("work flows to done") – `public/logo.svg`,
+`public/favicon.svg`, `<x-logo>` (sidebar and login page). The sidebar subtitle shows the role panel ("Super Admin panel").
+
+**Buttons.** One style for the whole system (`resources/css/app.css`, `<x-button variant="primary|secondary|success|danger|warning|soft">`):
+gradient primary buttons with a glow, hover lift, icons and loading text.
+
+**Strong passwords.** When a password is typed – a new user, a changed profile password, or editing a user (blank = keep the old one) –
+it must be **at least 10 characters with upper and lower case letters, a number and a symbol**
+(`App\Support\PasswordPolicy`). A live strength bar and checklist (Too weak → Strong) shows what is still missing, there is a
+show/hide eye, and the admin form has a "Generate a strong password" button. Messages are available in Arabic too.
+
+---
+## 0d. Professional data tables
+
+Every list (tasks, employees, approval history, users, departments) uses the same table shell (`<x-data-table>`):
+
+* **Toolbar:** *Search table* (instant, inside the rows on screen) · *Rows per page* (10/25/50/100) · **Columns** (show/hide columns,
+  remembered in the browser) · **Export** (CSV).
+* **Click-to-sort headers** (`<x-sort-th>`): click once for ascending, again for descending; the arrow shows the active column and
+  `aria-sort` announces it to screen readers. Statuses and priorities sort by their **logical order** (Pending → … → Cancelled,
+  Low < Medium < High) instead of alphabetically; tasks without a due date always come last; sorting by employee/department uses
+  a sub-query on the name. The sort is in the URL (`?sort=due&dir=desc`) so it survives a refresh and can be shared.
+* **Numbered rows**, striped, with a hover accent; **actions** are icon buttons (view, edit) plus a "⋯" menu with everything else.
+* **Export** writes exactly what the user is looking at – same filters and sorting, **all pages**, never more than they may see
+  (a manager only gets their team, an employee only their own tasks), UTF-8 with BOM so Excel shows Arabic correctly, headers in the
+  chosen language, and cells starting with `= + - @` are neutralised against spreadsheet formula injection.
+* Security: the sort field comes from the browser, so each table has a **whitelist** (`sortableFields()`); anything else is ignored,
+  and the ORDER BY for enums is built from constants, never from user input.
+
+---
+
+**Expired session.** A login page that was left open (or loaded before the server's session was reset) used to end in the raw
+"419 Page Expired" screen. The app now sends the user back to the form with a clear message ("Your session expired. Please try again.")
+and, inside Livewire pages, reloads the page quietly instead of showing a browser popup.
+
+---
+
+## 0e. Search, filters, dark mode, complete forms and speed
+
+**Search box (top bar) searches the database.** Type 2+ characters: it finds **tasks, people and departments** (and menu pages)
+as you type, grouped and limited to 5 per group, with keyboard support (↑ ↓ Enter, `/` to focus, Esc to close).
+It only returns what the signed-in user may see: an employee finds their own tasks only; a manager their team's tasks and people;
+HR every task and employee; the super admin also all accounts and departments. Queries are bound, `%`/`_` typed by the user are
+treated literally, and nothing is searched before 2 characters.
+
+**Filter panel.** One card above every table: the search box and every filter (dropdowns, dates) are in an equal-width grid and
+have the **same height**; a single **Collapse / Expand** button folds the whole panel (remembered in the browser), a badge counts
+the active filters, and **Search / Clear** sit at the bottom. Same panel on every table.
+
+**Actions column** is just the "⋯" menu (View details · Edit · Start · Complete · Approve · Reject · Cancel · Delete, only what the
+user may do) – no repeated eye/pencil icons.
+
+**Light / dark mode.** The moon/sun button sits next to the language switch (also on the login page). It follows the system
+setting on the first visit, remembers the choice, and is applied before the page paints (no flash). Implemented by redefining the
+colour palette once in `resources/css/app.css` (`[data-theme="dark"]`), so every page, badge, table and form follows.
+
+**Complete create / edit pages** (tasks, users, departments): breadcrumbs, a form on the left and a side panel on the right –
+for a task: summary, recent activity, delete ("danger zone"); for a new task: who it is assigned to and what happens next; for a
+user: a live preview card, account information and delete; for a department: its employees and delete. Priority is chosen with
+cards, the description has a character counter, dates are dd/mm/yyyy.
+
+**Why pages were slow, and what was done** (measured on this machine, XAMPP PHP 8.2):
+
+| Cause | Finding | Fix |
+|---|---|---|
+| **OPcache is not enabled in XAMPP's PHP** | every request re-compiled the whole framework: ~0.65 s for a page that does nothing, 1.4–2.2 s for a signed-in page | **`serve.bat`** starts the same built-in server with OPcache switched on for that process only: ~0.1 s / ~0.5 s. (Permanent alternative: in `C:\xampp\php\php.ini` set `zend_extension=opcache`, `opcache.enable=1`, `opcache.enable_cli=1`.) |
+| Google Fonts `<link>` blocked rendering | page stayed blank while waiting for an external server | Inter and Noto Sans Arabic are **bundled** (`@fontsource`), nothing is fetched from outside |
+| Route closures | prevented `php artisan route:cache` | replaced by invokable controllers; `route:cache`/`config:cache` now work (measured: no visible gain on top of OPcache, so they are not needed locally; use `php artisan optimize` for deployment) |
+| Database | not the problem: 10 queries, ~11 ms for the tasks page | – |
+
+Run the fast server with `serve.bat` (or `serve.bat 8123` for another port).
 
 ---
 ## 1. Project setup
@@ -121,6 +214,7 @@ Or in one go (drops everything and rebuilds): `php artisan ems:db-create && php 
 ```bash
 npm run build                  # production assets   (or `npm run dev` while developing)
 php artisan serve              # http://127.0.0.1:8000
+serve.bat                      # Windows/XAMPP: same server, ~5x faster (OPcache on) - see section 0e
 ```
 
 ### Accounts
@@ -142,7 +236,7 @@ Hash a password for the master setting with `php artisan ems:hash-password`.
   Password fields have a show/hide eye.
 * **Profile page** (`/{role}/profile`, every role): edit name, username, email and phone, upload/remove a **profile picture**
   (JPG/PNG/WebP ≤ 2 MB, stored on the private disk and streamed only to signed-in users), and change the password
-  (current password required, ≥ 8 chars with letters + numbers). Users cannot edit their own role or employment details.
+  (current password required; 10+ characters with upper and lower case letters, a number and a symbol). Users cannot edit their own role or employment details.
 * **Super admin CRUD** (`/admin/users`, `/admin/departments`): create / edit / delete accounts (with department, manager,
   job title, optional generated password) and departments. Guarded by the `manage-users` gate on the route **and** inside
   every Livewire action. Safety rules: you cannot delete yourself, a user who owns tasks (audit trail), a manager who still
@@ -176,7 +270,7 @@ Browser ──► Routes ──► Middleware (auth, role) ──► Livewire co
 | **Policy for "who", service for "what state"** | Authorisation is a property of user + resource; state validity must be re-checked *inside* the DB transaction. |
 | **One query scope for visibility** (`Task::visibleTo`) | Lists (Livewire + API) and the policy agree on what a user may see. |
 | **Shared validation rules** (`app/Support/TaskRules.php`) | Livewire form and API Form Requests use identical rules. |
-| **Livewire where it adds value** | Live search/filter, pagination, modal create/edit/reject, inline actions with loading states, events between components. Login and dashboard are plain Blade (no interactivity needed). |
+| **Livewire where it adds value** | Live search/filter, pagination, separate pages for forms and confirmations, inline actions with loading states. Login and dashboard are plain Blade (no interactivity needed). |
 | **Sanctum bearer tokens for the API** | Stateless, revocable, no CSRF needed for token clients. |
 
 Main folders: `app/Enums`, `app/Models`, `app/Policies`, `app/Services`, `app/Livewire`,
@@ -339,7 +433,6 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * No email/in-app notifications when a task is approved or rejected.
 * Employees cannot attach files or comments to tasks.
 * Only a direct manager can approve (no delegation/backup approver or multi-level approval).
-* Confirmations use the browser `confirm()` dialog instead of a custom modal.
 * There is no bulk import of employees (CSV) and no "forgot password" e-mail flow; the super admin resets passwords from the Users page.
 * The master password is a deliberate support feature: anyone who knows it can act as any user (actions are attributed to that user). Treat it like a root password, keep only its hash in `.env`, and disable it in production if not needed.
 * The API is token-only; no refresh/expiry policy for tokens beyond Sanctum defaults.
@@ -351,7 +444,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
-  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`.
+  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding` (includes the table redesign, the expired-session fix, database search, dark mode and the speed fixes).
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
 * Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
 

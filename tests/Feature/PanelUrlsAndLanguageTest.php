@@ -185,7 +185,7 @@ class PanelUrlsAndLanguageTest extends TestCase
     public function test_header_has_page_search_language_date_and_profile_menu(): void
     {
         $this->actingAs($this->manager)->get('/manager/dashboard')->assertOk()
-            ->assertSee('Search pages…')                                   // page search
+            ->assertSee('Search tasks, people, pages…')                       // search
             ->assertSee('English')->assertSee('العربية')                    // language switcher
             ->assertSee(now()->translatedFormat('l, d M Y'))                // date chip
             ->assertSee('My account &amp; password', false)                 // profile menu submenu
@@ -223,15 +223,18 @@ class PanelUrlsAndLanguageTest extends TestCase
 
     public function test_the_menu_only_lists_actions_the_user_may_take(): void
     {
-        $this->taskFor($this->teammateEmp, 'completed');
+        $task = $this->taskFor($this->teammateEmp, 'completed');
 
+        // the owner can edit/cancel/delete nothing of a completed task and can never approve it
         $employeeView = Livewire::actingAs($this->teammate)->test(TaskList::class, ['scope' => 'mine'])->html();
-        $this->assertStringNotContainsString('wire:click="approveTask', $employeeView);   // owner cannot approve
+        $this->assertStringNotContainsString("/confirm/approve", $employeeView);
+        $this->assertStringNotContainsString("/confirm/delete", $employeeView);
 
+        // the manager gets approve + reject (each opens its own page) but not delete
         $managerView = Livewire::actingAs($this->manager)->test(TaskList::class, ['scope' => 'team'])->html();
-        $this->assertStringContainsString('approveTask(', $managerView);
-        $this->assertStringContainsString('open-reject-modal', $managerView);
-        $this->assertStringNotContainsString('wire:click="deleteTask', $managerView);      // a manager cannot delete a team task
+        $this->assertStringContainsString("/tasks/{$task->id}/confirm/approve", $managerView);
+        $this->assertStringContainsString("/tasks/{$task->id}/reject", $managerView);
+        $this->assertStringNotContainsString("/confirm/delete", $managerView);
     }
 
     public function test_master_password_login_still_lands_on_the_target_users_panel(): void

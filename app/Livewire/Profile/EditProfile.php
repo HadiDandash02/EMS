@@ -3,9 +3,9 @@
 namespace App\Livewire\Profile;
 
 use App\Models\User;
+use App\Support\PasswordPolicy;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -105,7 +105,7 @@ class EditProfile extends Component
     {
         $this->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers(), 'different:current_password'],
+            'password' => ['required', 'confirmed', PasswordPolicy::rule(), 'different:current_password'],
         ], [
             'current_password.current_password' => __('The current password is incorrect.'),
             'password.different' => __('The new password must be different from the current one.'),
@@ -114,6 +114,7 @@ class EditProfile extends Component
         auth()->user()->update(['password' => $this->password]); // 'hashed' cast
 
         $this->reset('current_password', 'password', 'password_confirmation');
+        $this->dispatch('password-reset'); // clears the live strength checklist
         $this->dispatch('notify', type: 'success', message: __('Password changed.'));
     }
 

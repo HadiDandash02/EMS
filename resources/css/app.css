@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/* Fonts are bundled with the app: nothing is fetched from Google, so pages never wait on a slow connection. */
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/noto-sans-arabic/arabic-400.css';
+@import '@fontsource/noto-sans-arabic/arabic-500.css';
+@import '@fontsource/noto-sans-arabic/arabic-600.css';
+@import '@fontsource/noto-sans-arabic/arabic-700.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -11,3 +21,136 @@
 }
 
 [x-cloak] { display: none !important; }
+
+/* ---------------------------------------------------------------------------------------------
+   Buttons: one look for the whole system (use <x-button variant="primary|secondary|success|danger|soft">)
+   --------------------------------------------------------------------------------------------- */
+@layer components {
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold
+               transition duration-150 ease-out select-none
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+               active:scale-[.98] disabled:pointer-events-none disabled:opacity-60;
+    }
+    .btn-sm { @apply rounded-lg px-3 py-1.5 text-xs; }
+    .btn-lg { @apply rounded-2xl px-6 py-3 text-base; }
+
+    .btn-primary {
+        @apply bg-linear-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-md shadow-indigo-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-500/40 hover:brightness-110 focus-visible:ring-indigo-500;
+    }
+    .btn-success {
+        @apply bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-emerald-500/40 hover:brightness-105 focus-visible:ring-emerald-500;
+    }
+    .btn-danger {
+        @apply bg-linear-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/30
+               hover:-translate-y-px hover:shadow-lg hover:shadow-rose-500/40 hover:brightness-105 focus-visible:ring-rose-500;
+    }
+    .btn-warning {
+        @apply bg-linear-to-r from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/30
+               hover:-translate-y-px hover:shadow-lg hover:brightness-105 focus-visible:ring-amber-500;
+    }
+    .btn-secondary {
+        @apply bg-white text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300
+               hover:bg-slate-50 hover:text-slate-900 hover:ring-slate-400 focus-visible:ring-slate-400;
+    }
+    .btn-soft {
+        @apply bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100
+               hover:bg-indigo-100 hover:ring-indigo-200 focus-visible:ring-indigo-400;
+    }
+    .btn-soft-danger {
+        @apply bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-100
+               hover:bg-rose-100 hover:ring-rose-200 focus-visible:ring-rose-400;
+    }
+}
+
+/* Table column chooser: <x-data-table> sets data-hide="status due"; cells carry data-col="status" */
+[data-hide~="task"] [data-col="task"],
+[data-hide~="employee"] [data-col="employee"],
+[data-hide~="status"] [data-col="status"],
+[data-hide~="priority"] [data-col="priority"],
+[data-hide~="due"] [data-col="due"],
+[data-hide~="created"] [data-col="created"],
+[data-hide~="department"] [data-col="department"],
+[data-hide~="manager"] [data-col="manager"],
+[data-hide~="role"] [data-col="role"],
+[data-hide~="email"] [data-col="email"],
+[data-hide~="username"] [data-col="username"],
+[data-hide~="user"] [data-col="user"],
+[data-hide~="tasks"] [data-col="tasks"],
+[data-hide~="number"] [data-col="number"],
+[data-hide~="code"] [data-col="code"],
+[data-hide~="employees"] [data-col="employees"],
+[data-hide~="decision"] [data-col="decision"],
+[data-hide~="by"] [data-col="by"],
+[data-hide~="reason"] [data-col="reason"],
+[data-hide~="date"] [data-col="date"],
+[data-hide~="actions"] [data-col="actions"] {
+    display: none;
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Dark mode. Tailwind builds every colour from a CSS variable, so dark mode simply redefines the
+   palette once (slate = greys, plus the tinted badge/alert colours). The pages need no changes.
+   The toggle in the top bar sets <html data-theme="dark|light"> and remembers it in localStorage.
+   --------------------------------------------------------------------------------------------- */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    --color-slate-50: #0b1120;   /* page background */
+    --color-slate-100: #1a2540;
+    --color-slate-200: #2a3856;  /* borders */
+    --color-slate-300: #3b4a69;  /* input rings */
+    --color-slate-400: #8493ad;
+    --color-slate-500: #98a6bd;
+    --color-slate-600: #b3bfd2;
+    --color-slate-700: #cbd5e1;
+    --color-slate-800: #e2e8f0;
+    --color-slate-900: #f1f5f9;  /* headings */
+
+    --color-indigo-50: #1d2247;  --color-indigo-100: #272d63;  --color-indigo-200: #343c85;
+    --color-indigo-700: #a5b4fc; --color-indigo-800: #c7d2fe;
+    --color-rose-50: #3b1322;    --color-rose-100: #4c182b;    --color-rose-200: #7f2a40;
+    --color-rose-700: #fda4af;   --color-rose-800: #fecdd3;
+    --color-amber-50: #36270a;   --color-amber-100: #4a3410;   --color-amber-200: #7a5a14;
+    --color-amber-700: #fcd34d;  --color-amber-800: #fde68a;
+    --color-emerald-50: #0a2e22; --color-emerald-100: #0f4231; --color-emerald-200: #14664c;
+    --color-emerald-600: #34d399; --color-emerald-700: #6ee7b7; --color-emerald-800: #a7f3d0;
+    --color-blue-50: #14284d;    --color-blue-200: #1e4080;    --color-blue-700: #93c5fd;
+    --color-fuchsia-50: #3a1342; --color-fuchsia-200: #6b2678; --color-fuchsia-700: #f0abfc;
+    --color-teal-50: #0b3030;    --color-teal-200: #14605e;    --color-teal-700: #5eead4;
+    --color-zinc-100: #27272a;   --color-zinc-200: #3f3f46;    --color-zinc-500: #a1a1aa;
+}
+/* "white" cannot be redefined (text-white must stay white), so surfaces are overridden explicitly */
+[data-theme='dark'] .bg-white,
+[data-theme='dark'] .odd\:bg-white:nth-child(odd) { background-color: #111b33; }
+[data-theme='dark'] .bg-white\/85 { background-color: rgb(11 17 32 / 0.85); }
+[data-theme='dark'] .via-white, [data-theme='dark'] .to-white { --tw-gradient-via: #111b33; --tw-gradient-to: #111b33; }
+[data-theme='dark'] .ring-white { --tw-ring-color: #111b33; }
+[data-theme='dark'] .text-indigo-600 { color: #818cf8; }
+[data-theme='dark'] .text-rose-600 { color: #fb7185; }
+[data-theme='dark'] .text-rose-500 { color: #fb7185; }
+[data-theme='dark'] .hover\:bg-slate-50:hover { background-color: #1a2540; }
+[data-theme='dark'] option { background-color: #111b33; color: #e2e8f0; }
+[data-theme='dark'] ::placeholder { color: #6b7a94; }
+
+/* date picker (flatpickr) */
+[data-theme='dark'] .flatpickr-calendar { background: #111b33; border: 1px solid #2a3856; box-shadow: 0 10px 30px rgb(0 0 0 / .5); }
+[data-theme='dark'] .flatpickr-months .flatpickr-month,
+[data-theme='dark'] .flatpickr-current-month .flatpickr-monthDropdown-months,
+[data-theme='dark'] .flatpickr-current-month input.cur-year,
+[data-theme='dark'] span.flatpickr-weekday { background: #111b33; color: #cbd5e1; fill: #cbd5e1; }
+[data-theme='dark'] .flatpickr-day { color: #e2e8f0; }
+[data-theme='dark'] .flatpickr-day:hover { background: #1a2540; border-color: #1a2540; }
+[data-theme='dark'] .flatpickr-day.prevMonthDay, [data-theme='dark'] .flatpickr-day.nextMonthDay, [data-theme='dark'] .flatpickr-day.flatpickr-disabled { color: #4b5a78; }
+[data-theme='dark'] .flatpickr-months .flatpickr-prev-month svg, [data-theme='dark'] .flatpickr-months .flatpickr-next-month svg { fill: #cbd5e1; }
+[data-theme='dark'] .flatpickr-day.selected { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+/* buttons built with @apply keep their own background: give them dark versions too */
+[data-theme='dark'] .btn-secondary { background-color: #16233f; color: #e2e8f0; }
+[data-theme='dark'] .btn-secondary:hover { background-color: #1f3052; color: #fff; }
+[data-theme='dark'] .btn-soft { background-color: #1d2247; color: #c7d2fe; }
+[data-theme='dark'] .btn-soft-danger { background-color: #3b1322; color: #fda4af; }

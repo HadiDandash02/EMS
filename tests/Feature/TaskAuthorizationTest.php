@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Tasks\ConfirmAction;
 use App\Livewire\Tasks\TaskList;
+use App\Models\Task;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -45,18 +47,20 @@ class TaskAuthorizationTest extends TestCase
     {
         $others = $this->taskFor($this->teammateEmp);
 
+        // the confirmation page refuses to open for a task the user does not own
         Livewire::actingAs($this->employee)
-            ->test(TaskList::class, ['scope' => 'mine'])
-            ->call('cancelTask', $others->id)
-            ->assertDispatched('notify', type: 'error', message: 'You can only cancel your own tasks.');
+            ->test(ConfirmAction::class, ['task' => $others, 'action' => 'cancel'])
+            ->assertForbidden();
+
+        $this->actingAs($this->employee)->get("/employee/tasks/{$others->id}/confirm/cancel")->assertForbidden();
 
         $this->assertSame('PENDING', $others->fresh()->status->value);
     }
 
     public function test_employee_task_list_only_contains_their_own_tasks(): void
     {
-        $mine = $this->taskFor($this->employeeEmp);
-        $theirs = $this->taskFor($this->teammateEmp);
+        $mine = Task::factory()->forEmployee($this->employeeEmp)->pending()->create(["title" => "Alpha report for me"]);
+        $theirs = Task::factory()->forEmployee($this->teammateEmp)->pending()->create(["title" => "Zulu report for them"]);
 
         Livewire::actingAs($this->employee)
             ->test(TaskList::class, ['scope' => 'mine'])

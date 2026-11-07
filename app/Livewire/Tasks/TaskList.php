@@ -6,6 +6,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Livewire\Concerns\HandlesTaskActions;
 use App\Livewire\Concerns\HasFilterBar;
+use App\Livewire\Concerns\SortsAndExports;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Task;
@@ -24,7 +25,7 @@ use Livewire\WithPagination;
  */
 class TaskList extends Component
 {
-    use HandlesTaskActions, HasFilterBar, WithPagination;
+    use HandlesTaskActions, HasFilterBar, SortsAndExports, WithPagination;
 
     /** #[Locked] = the browser cannot tamper with it (e.g. switch "mine" to "all"). */
     #[Locked]
@@ -75,7 +76,6 @@ class TaskList extends Component
         return ['search', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
     }
 
-    #[On('task-saved')]
     #[On('task-updated')]
     public function refreshList(): void
     {
@@ -102,7 +102,59 @@ class TaskList extends Component
                 'date_to' => $this->validDate($this->dateTo),
             ]);
 
-        return $query->latest('tasks.created_at')->latest('tasks.id');
+        return $this->sortTasks($query);
+    }
+
+    // ---- sorting + export (SortsAndExports) ------------------------------------------------
+
+    protected function sortableFields(): array
+    {
+        return ['title', 'employee', 'status', 'priority', 'due', 'created'];
+    }
+
+    private function sortTasks(Builder $query): Builder
+    {
+        [$field, $dir] = $this->activeSort();
+
+        match ($field) {
+            'title' => $query->orderBy('tasks.title', $dir),
+            // sort by the employee's NAME (a correlated sub-query, no extra join in the main query)
+            'employee' => $query->orderBy(fn ($q) => $q->select('users.name')->from('employees')
+                ->join('users', 'users.id', '=', 'employees.user_id')->whereColumn('employees.id', 'tasks.employee_id')->limit(1), $dir),
+            // enums sort by their logical order (Pending ... Cancelled, Low < Medium < High), not alphabetically
+            'status' => $this->orderByList($query, 'tasks.status', TaskStatus::values(), $dir),
+            'priority' => $this->orderByList($query, 'tasks.priority', array_map(fn ($p) => $p->value, TaskPriority::cases()), $dir),
+            'due' => $query->orderByRaw('tasks.due_date IS NULL')->orderBy('tasks.due_date', $dir),   // tasks without a due date always last
+            'created' => $query->orderBy('tasks.created_at', $dir),
+            default => $query->latest('tasks.created_at'),
+        };
+
+        return $query->orderByDesc('tasks.id');   // stable order for equal values
+    }
+
+    protected function exportQuery(): Builder
+    {
+        return $this->query();
+    }
+
+    protected function exportFilename(): string
+    {
+        return 'tasks';
+    }
+
+    protected function exportColumns(): array
+    {
+        return [
+            '#' => fn ($t) => $t->id,
+            __('Task') => fn ($t) => $t->title,
+            __('Employee') => fn ($t) => $t->employee->user->name,
+            __('Department') => fn ($t) => $t->employee->department->name,
+            __('Status') => fn ($t) => $t->status->label(),
+            __('Priority') => fn ($t) => $t->priority->label(),
+            __('Due') => fn ($t) => $t->due_date?->format('d/m/Y'),
+            __('Created') => fn ($t) => $t->created_at->format('d/m/Y H:i'),
+            __('Reviewed by') => fn ($t) => $t->reviewer?->name,
+        ];
     }
 
     private function validDate(string $value): ?string
@@ -121,7 +173,7 @@ class TaskList extends Component
         };
 
         return view('livewire.tasks.task-list', [
-            'tasks' => $this->query()->paginate(10),
+            'tasks' => $this->query()->paginate($this->rowsPerPage()),
             'employees' => $employees,
             'departments' => $this->scope === 'all' ? Department::orderBy('name')->get() : collect(),
             'statuses' => TaskStatus::cases(),

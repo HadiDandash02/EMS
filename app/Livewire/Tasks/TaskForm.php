@@ -10,17 +10,13 @@ use App\Services\TaskWorkflowService;
 use App\Support\TaskRules;
 use Illuminate\Auth\Access\AuthorizationException;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Create / edit modal. Opened from anywhere with: $dispatch('open-task-form', { taskId: 12 })
- * and announces success with the `task-saved` event that lists listen to.
+ * Create / edit a task on its own page (/{role}/tasks/create and /{role}/tasks/{task}/edit).
  */
 class TaskForm extends Component
 {
-    public bool $open = false;
-
     #[Locked]
     public ?int $taskId = null;
 
@@ -35,6 +31,24 @@ class TaskForm extends Component
     /** Only used by the super admin, who creates tasks on behalf of an employee. */
     public string $employee_id = '';
 
+    public function mount(?Task $task = null): void
+    {
+        if ($task?->exists) {
+            $this->authorize('update', $task);
+
+            $this->taskId = $task->id;
+            $this->title = $task->title;
+            $this->description = (string) $task->description;
+            $this->priority = $task->priority->value;
+            $this->due_date = $task->due_date?->toDateString();
+
+            return;
+        }
+
+        $this->authorize(auth()->user()->isSuperAdmin() ? 'createFor' : 'create', Task::class);
+        $this->priority = TaskPriority::Medium->value;
+    }
+
     protected function rules(): array
     {
         $rules = TaskRules::fields();
@@ -47,71 +61,50 @@ class TaskForm extends Component
         return $rules;
     }
 
-    #[On('open-task-form')]
-    public function openForm(?int $taskId = null): void
-    {
-        $this->resetValidation();
-        $this->reset('title', 'description', 'due_date', 'employee_id');
-        $this->priority = TaskPriority::Medium->value;
-        $this->taskId = $taskId;
-
-        if ($taskId) {
-            $task = Task::findOrFail($taskId);
-            $this->authorize('update', $task);
-
-            $this->title = $task->title;
-            $this->description = (string) $task->description;
-            $this->priority = $task->priority->value;
-            $this->due_date = $task->due_date?->toDateString();
-        } else {
-            $this->authorize(auth()->user()->isSuperAdmin() ? 'createFor' : 'create', Task::class);
-        }
-
-        $this->open = true;
-    }
-
-    public function save(TaskWorkflowService $workflow): void
+    public function save(TaskWorkflowService $workflow)
     {
         $data = $this->validate();
         $data['description'] = $data['description'] ?: null;
         $data['due_date'] = $data['due_date'] ?: null;
 
         try {
-            // (employee_id is only present for the super admin; the service ignores it for everyone else)
             if ($this->taskId) {
-                $workflow->update(Task::findOrFail($this->taskId), auth()->user(), $data);
+                $task = $workflow->update(Task::findOrFail($this->taskId), auth()->user(), $data);
                 $message = __('Task updated.');
             } else {
-                $workflow->create(auth()->user(), $data);
+                $task = $workflow->create(auth()->user(), $data);   // employee_id is ignored unless the user is the super admin
                 $message = __('Task created.');
             }
         } catch (AuthorizationException|InvalidTaskTransitionException $e) {
-            $this->dispatch('notify', type: 'error', message: $e->getMessage() ?: __('Not allowed.'));
-            $this->open = false;
+            session()->flash('error', $e->getMessage() ?: __('Not allowed.'));
 
-            return;
+            return $this->redirect($this->listUrl(), navigate: true);
         }
 
-        $this->open = false;
-        $this->dispatch('notify', type: 'success', message: $message);
-        $this->dispatch('task-saved');
+        session()->flash('success', $message);
+
+        return $this->redirect($this->taskId ? route('tasks.show', $task) : $this->listUrl(), navigate: true);
     }
 
-    public function close(): void
+    private function listUrl(): string
     {
-        $this->open = false;
+        return auth()->user()->canSeeAll() && ! auth()->user()->employee ? route('tasks.all') : route('tasks.index');
     }
 
     public function render()
     {
-        $isAdmin = auth()->check() && auth()->user()->isSuperAdmin();
+        $isAdmin = auth()->user()->isSuperAdmin();
 
         return view('livewire.tasks.task-form', [
             'priorities' => TaskPriority::cases(),
-            'owners' => $isAdmin && $this->open && ! $this->taskId
+            'owners' => $isAdmin && ! $this->taskId
                 ? Employee::with('user')->get()->sortBy('user.name')->mapWithKeys(fn ($e) => [$e->id => $e->user->name.' · '.$e->employee_number])
                 : collect(),
             'isAdmin' => $isAdmin,
-        ]);
+            // the task being edited (null when creating): feeds the summary / activity panel next to the form
+            'task' => $this->taskId ? Task::with(['employee.user', 'employee.department', 'reviewer', 'histories.actor'])->find($this->taskId) : null,
+            'listUrl' => $this->listUrl(),
+            'cancelUrl' => $this->taskId ? route('tasks.show', $this->taskId) : $this->listUrl(),
+        ])->layout('components.layouts.app', ['title' => $this->taskId ? 'Edit task' : 'New task']);
     }
 }

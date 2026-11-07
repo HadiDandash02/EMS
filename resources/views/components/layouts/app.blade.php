@@ -32,9 +32,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __($title ?? 'EMS') }} · {{ config('app.name') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Light / dark: applied before the page paints (no flash). Saved choice, otherwise the system setting.
+        try {
+            var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.theme = t;
+        } catch (e) {}
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -46,12 +50,8 @@
     {{-- Sidebar (light, like the Employee Management project) --}}
     <aside class="fixed inset-y-0 start-0 z-40 flex w-64 flex-col border-e border-slate-200 bg-white transition-transform"
            :class="sidebar ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'">
-        <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-3 border-b border-slate-100 px-5 py-5 text-slate-900 hover:text-indigo-600">
-            <img src="{{ asset('favicon.svg') }}" alt="" class="h-9 w-9 rounded-[10px] shadow-md shadow-indigo-500/30">
-            <span class="leading-tight">
-                <span class="block text-sm font-bold">{{ __('Task Management') }}</span>
-                <span class="block text-[11px] text-slate-500">{{ __(':role panel', ['role' => $user->role->label()]) }}</span>
-            </span>
+        <a href="{{ route('dashboard') }}" wire:navigate class="block border-b border-slate-100 px-5 py-4" aria-label="TaskFlow">
+            <x-logo :subtitle="__(':role panel', ['role' => $user->role->label()])" />
         </a>
 
         <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
@@ -94,43 +94,19 @@
             {{-- Right side: page search · language · today's date · profile --}}
             <div class="ms-auto flex shrink-0 items-center gap-2">
 
-                {{-- Page search: type a page name, press Enter (or "/" to focus) --}}
-                <div class="relative" x-data="{
-                        q: '', open: false, mobile: false, hl: 0, pages: @js($pages),
-                        get results() { const q = this.q.trim().toLowerCase(); return q ? this.pages.filter(p => p.label.toLowerCase().includes(q)) : this.pages; },
-                        show() { this.open = true; this.hl = 0; },
-                        close() { this.open = false; this.mobile = false; },
-                        go(p) { if (!p) return; this.close(); this.q = ''; window.Livewire && Livewire.navigate ? Livewire.navigate(p.url) : (window.location = p.url); },
-                        move(d) { const n = this.results.length; if (n) this.hl = (this.hl + d + n) % n; },
-                        focus() { this.mobile = true; this.$nextTick(() => { this.$refs.q.focus(); this.show(); }); },
-                    }"
-                    @keydown.window="if ($event.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); focus(); }"
-                    @keydown.escape.window="close()" @click.outside="close()">
-                    <button type="button" class="rounded-lg bg-white p-2 text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50 md:hidden" @click="focus()" aria-label="{{ __('Search pages') }}">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </button>
-                    <div :class="mobile ? 'fixed inset-x-0 top-0 z-50 bg-white p-3 shadow-lg md:static md:bg-transparent md:p-0 md:shadow-none' : 'hidden md:block'">
-                        <div class="relative">
-                            <svg class="pointer-events-none absolute start-3 top-2.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M21 21l-4.3-4.3M17 10a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <input x-ref="q" x-model="q" type="search" autocomplete="off" placeholder="{{ __('Search pages…') }}" aria-label="{{ __('Search pages') }}"
-                                   @focus="show()" @input="show()"
-                                   @keydown.arrow-down.prevent="show(); move(1)" @keydown.arrow-up.prevent="move(-1)" @keydown.enter.prevent="go(results[hl])"
-                                   class="block w-full rounded-lg border-0 bg-white py-2 ps-9 pe-8 text-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 md:w-36 lg:w-44 xl:w-60">
-                            <kbd class="pointer-events-none absolute end-2 top-2 hidden rounded border border-slate-200 px-1.5 text-[10px] font-medium text-slate-400 md:block">/</kbd>
-                        </div>
-                        <ul x-show="open" x-cloak x-transition.opacity.duration.100ms role="listbox"
-                            class="absolute inset-x-3 mt-1 max-h-72 overflow-y-auto rounded-xl bg-white p-1 text-sm shadow-lg ring-1 ring-slate-200 md:inset-x-auto md:end-0 md:w-72">
-                            <template x-for="(p, i) in results" :key="p.url">
-                                <li role="option" @click="go(p)" @mouseenter="hl = i"
-                                    class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-slate-700" :class="hl === i ? 'bg-indigo-50 text-indigo-700' : ''">
-                                    <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" :d="p.icon"/></svg>
-                                    <span x-text="p.label"></span>
-                                </li>
-                            </template>
-                            <li x-show="results.length === 0" class="px-3 py-3 text-center text-slate-400">{{ __('No pages found') }}</li>
-                        </ul>
-                    </div>
-                </div>
+                {{-- Search: tasks, people, departments (from the database, limited to what this user may see) and menu pages --}}
+                @livewire('global-search', ['pages' => $pages->all()])
+
+                {{-- Light / dark mode --}}
+                <button type="button"
+                        x-data="{ dark: document.documentElement.dataset.theme === 'dark' }"
+                        @click="dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}"
+                        :aria-label="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))"
+                        :title="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-indigo-600">
+                    <svg x-show="!dark" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    <svg x-show="dark" x-cloak class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                </button>
 
                 {{-- Language --}}
                 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
@@ -198,6 +174,28 @@
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8">
+            {{-- Messages appear INSIDE the page (no floating popups): saved / error after a form, or from a component --}}
+            @php
+                $flash = collect(['success', 'error'])->filter(fn ($k) => session()->has($k))
+                    ->map(fn ($k) => ['type' => $k, 'message' => session($k)])->values();
+            @endphp
+            <div x-data="{ items: @js($flash), add(d) { this.items = [{ type: d.type ?? 'success', message: d.message }]; this.$nextTick(() => this.$el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })); } }"
+                 @notify.window="add($event.detail)" x-show="items.length" x-cloak class="mb-5">
+                <template x-for="(a, i) in items" :key="i">
+                    <div role="alert" class="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm"
+                         :class="a.type === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'">
+                        <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path x-show="a.type !== 'error'" stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path x-show="a.type === 'error'" stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.01"/>
+                        </svg>
+                        <p class="flex-1 font-medium" x-text="a.message"></p>
+                        <button type="button" @click="items = []" class="-m-1 rounded p-1 opacity-60 transition hover:opacity-100" aria-label="{{ __('Close') }}">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
             {{ $slot }}
         </main>
 
@@ -205,21 +203,6 @@
     </div>
 </div>
 
-{{-- Toasts: any component can fire $this->dispatch('notify', type: 'success', message: '...') --}}
-<div x-data="{ toasts: [], add(d) { const t = { id: Date.now() + Math.random(), type: d.type ?? 'success', message: d.message }; this.toasts.push(t); setTimeout(() => this.toasts = this.toasts.filter(x => x.id !== t.id), 5000); } }"
-     @notify.window="add($event.detail)"
-     class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex flex-col items-center gap-2 px-4 sm:items-end sm:px-6">
-    <template x-for="t in toasts" :key="t.id">
-        <div x-transition class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 text-sm shadow-lg"
-             :class="t.type === 'error' ? 'border-rose-200' : 'border-emerald-200'" role="status">
-            <span class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" :class="t.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'"></span>
-            <span class="text-slate-700" x-text="t.message"></span>
-        </div>
-    </template>
-</div>
-
-@livewire('tasks.task-form')
-@livewire('tasks.reject-modal')
 @livewireScripts
 </body>
 </html>
