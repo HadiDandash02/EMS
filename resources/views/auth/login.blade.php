@@ -41,6 +41,13 @@
             <h1 class="text-2xl font-semibold text-slate-900">{{ __('Welcome back') }}</h1>
             <p class="mt-1 text-sm text-slate-500">{{ __('Sign in with your username or email.') }}</p>
 
+            @if (session('error'))
+                <div role="alert" class="mt-6 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                    <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.01"/></svg>
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form method="POST" action="{{ url('/login') }}" class="mt-8 space-y-5">
                 @csrf
                 <div>
