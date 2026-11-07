@@ -83,4 +83,13 @@ class DesignSystemTest extends TestCase
             $this->assertStringContainsString($needle, $guide);
         }
     }
+    public function test_searching_shows_no_loading_spinner_or_dimmed_table(): void
+    {
+        $bar = file_get_contents(resource_path('views/components/filter-bar.blade.php'));
+        $table = file_get_contents(resource_path('views/components/data-table.blade.php'));
+
+        $this->assertStringNotContainsString('animate-spin', $bar);
+        $this->assertStringNotContainsString('wire:loading', $bar);
+        $this->assertStringNotContainsString('opacity-60', $table);
+    }
 }
