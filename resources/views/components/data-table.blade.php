@@ -88,7 +88,7 @@
         </div>
     </div>
 
-    <div class="data-table-body" wire:loading.class="opacity-60" wire:target="applyFilters,clearFilters,gotoPage,nextPage,previousPage,perPage,sortBy">
+    <div class="data-table-body">
         {{ $slot }}
     </div>
     </div>

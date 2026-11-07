@@ -1,5 +1,4 @@
 @props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0, 'hideSearch' => false])
-@php $targets = 'applyFilters,clearFilters,gotoPage,nextPage,previousPage'; @endphp
 {{--
     FILTER PANEL: one card. Every control (search box, dropdowns, dates) sits in an equal-width grid
     and has the same height. The whole panel collapses/expands with one button (remembered in the browser).
@@ -45,9 +44,6 @@
         </div>
 
         <div class="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-            <span wire:loading wire:target="{{ $targets }}" class="inline-flex items-center text-indigo-600">
-                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/><path fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" class="opacity-75"/></svg>
-            </span>
             <x-button type="button" variant="secondary" icon="x" wire:click="clearFilters">{{ __('Clear') }}</x-button>
             <x-button type="submit" variant="primary" icon="search">{{ __('Search') }}</x-button>
         </div>
