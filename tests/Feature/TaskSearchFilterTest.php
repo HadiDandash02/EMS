@@ -150,7 +150,7 @@ class TaskSearchFilterTest extends TestCase
         $this->assertSame([], $this->rows($list->set('taskId', (string) $theirs->id)));
         $list->assertSee('No tasks found');
 
-        $list->call('clearFilters')->assertSet('taskId', '');
+        $list->call('clearFilters')->assertSet('taskId', []);
         $this->assertEqualsCanonicalizing(['Mine alpha', 'Mine delta'], $this->rows($list));
     }
 }

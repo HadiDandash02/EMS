@@ -1,7 +1,7 @@
 <x-page :title="__('Reject task')" :subtitle="__('The task will be sent back to the employee. A reason is required.')"
         :crumbs="[[__('Tasks'), $task->listUrlFor(auth()->user())], [$task->title, route('tasks.show', $task)], [__('Reject task'), null]]">
     <div class="grid gap-6 lg:grid-cols-3">
-        <form wire:submit="reject" class="lg:col-span-2">
+        <form novalidate wire:submit="reject" class="lg:col-span-2">
             <x-card :title="__('Reason for rejection')" :hint="__('Fields marked * are required.')" tone="danger">
                 <label for="rj-reason" class="block text-sm font-medium text-slate-700">{{ __('Reason') }} <span class="text-rose-500">*</span></label>
                 <textarea id="rj-reason" rows="8" wire:model="reason" autofocus

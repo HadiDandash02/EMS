@@ -177,3 +177,13 @@
 [data-theme='dark'] .btn-secondary:hover { background-color: #1f3052; color: #fff; }
 [data-theme='dark'] .btn-soft { background-color: #1d2247; color: #c7d2fe; }
 [data-theme='dark'] .btn-soft-danger { background-color: #3b1322; color: #fda4af; }
+
+/* Dropdown lists of every filter (<x-searchable-select>): an always-visible, themed scrollbar when there are many rows */
+.select-scroll { scrollbar-width: thin; scrollbar-color: #a5b4fc #eef2ff; }
+.select-scroll::-webkit-scrollbar { width: 10px; }
+.select-scroll::-webkit-scrollbar-track { background: #eef2ff; border-radius: 8px; }
+.select-scroll::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 8px; border: 2px solid #eef2ff; }
+.select-scroll::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+[data-theme='dark'] .select-scroll { scrollbar-color: #4f5b8f #16233f; }
+[data-theme='dark'] .select-scroll::-webkit-scrollbar-track { background: #16233f; }
+[data-theme='dark'] .select-scroll::-webkit-scrollbar-thumb { background: #4f5b8f; border-color: #16233f; }

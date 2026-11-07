@@ -9,7 +9,7 @@
     </div>
 
     <x-filter-bar hide-search :total="$departments->total()" noun="department" :active="collect([$departmentId])->filter()->count()">
-        <x-searchable-select id="dp-pick" :label="__('Department')" wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departmentOptions" />
+        <x-searchable-select id="dp-pick" :label="__('Department')" multiple wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departmentOptions" />
     </x-filter-bar>
 
     <x-data-table id="departments" :columns="$columns">

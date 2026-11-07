@@ -353,5 +353,7 @@
     "Please confirm": "يرجى التأكيد",
     "Reason for rejection": "سبب الرفض",
     "Everything that happened to this task, newest last.": "كل ما جرى على هذه المهمة، الأحدث في الأخير.",
-    "All users": "كل المستخدمين"
+    "All users": "كل المستخدمين",
+    "Please complete the required fields and fix the highlighted problems, then try again.": "يرجى استكمال الحقول المطلوبة وتصحيح المشاكل المحددة ثم المحاولة مرة أخرى.",
+    "selected": "محدد"
 }

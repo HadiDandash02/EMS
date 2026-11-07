@@ -21,11 +21,11 @@ class ApprovalHistory extends Component
     public string $search = '';
 
     /** Picked from the searchable "Task" filter. */
-    #[Url(as: 'task', except: '')]
-    public string $taskId = '';
+    #[Url(as: 'task')]
+    public $taskId = [];          // list of ids (multi-select)
 
-    #[Url(except: '')]
-    public string $decision = '';
+    #[Url]
+    public $decision = [];        // list: approved / rejected
 
     protected function filterProperties(): array
     {
@@ -41,8 +41,8 @@ class ApprovalHistory extends Component
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
             ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
-            ->when((int) $this->taskId, fn ($q, int $id) => $q->where('task_histories.task_id', $id))
-            ->when(TaskAction::tryFrom($this->decision), fn ($q, $a) => $q->where('action', $a))
+            ->when($this->ids($this->taskId), fn ($q, array $ids) => $q->whereIn('task_histories.task_id', $ids))
+            ->when(array_values(array_intersect($this->enumValues($this->decision, TaskAction::class), ['approved', 'rejected'])), fn ($q, array $a) => $q->whereIn('action', $a))
             ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)));
 
         [$field, $dir] = $this->activeSort();

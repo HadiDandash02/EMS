@@ -154,7 +154,7 @@ class PanelUrlsAndLanguageTest extends TestCase
 
         $message = validator(['title' => ''], ['title' => 'required'])->errors()->first('title');
 
-        $this->assertSame('حقل العنوان مطلوب.', $message);
+        $this->assertSame('حقل العنوان مطلوب – يرجى استكماله.', $message);
     }
 
     public function test_every_translation_key_used_in_the_code_exists_in_the_arabic_file(): void

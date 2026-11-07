@@ -35,20 +35,20 @@ class TaskList extends Component
     public string $search = '';
 
     /** Picked from the searchable "Task" filter (a task id the user is allowed to see). */
-    #[Url(as: 'task', except: '')]
-    public string $taskId = '';
+    #[Url(as: 'task')]
+    public $taskId = [];          // list of ids (multi-select)
 
-    #[Url(except: '')]
-    public string $status = '';
+    #[Url]
+    public $status = [];          // list of status values
 
-    #[Url(except: '')]
-    public string $priority = '';
+    #[Url]
+    public $priority = [];        // list of priority values
 
-    #[Url(except: '')]
-    public string $employeeId = '';
+    #[Url]
+    public $employeeId = [];      // list of employee ids
 
-    #[Url(except: '')]
-    public string $departmentId = '';
+    #[Url]
+    public $departmentId = [];    // list of department ids
 
     #[Url(except: '')]
     public string $dateFrom = '';
@@ -70,8 +70,8 @@ class TaskList extends Component
         $this->scope = $scope;
 
         // Managers land on the approval queue by default.
-        if ($scope === 'team' && $this->status === '' && ! request()->has('status')) {
-            $this->status = TaskStatus::Completed->value;
+        if ($scope === 'team' && blank($this->status) && ! request()->has('status')) {
+            $this->status = [TaskStatus::Completed->value];
         }
     }
 
@@ -104,11 +104,11 @@ class TaskList extends Component
             ->with(['employee.user', 'employee.department', 'reviewer'])
             ->filter([
                 'search' => trim($this->search),
-                'task_id' => (int) $this->taskId ?: null,
-                'status' => TaskStatus::tryFrom($this->status)?->value,
-                'priority' => TaskPriority::tryFrom($this->priority)?->value,
-                'employee_id' => $this->scope === 'mine' ? null : ((int) $this->employeeId ?: null),
-                'department_id' => $this->scope === 'all' ? ((int) $this->departmentId ?: null) : null,
+                'task_id' => $this->ids($this->taskId),
+                'status' => $this->enumValues($this->status, TaskStatus::class),
+                'priority' => $this->enumValues($this->priority, TaskPriority::class),
+                'employee_id' => $this->scope === 'mine' ? [] : $this->ids($this->employeeId),
+                'department_id' => $this->scope === 'all' ? $this->ids($this->departmentId) : [],
                 'date_from' => $this->validDate($this->dateFrom),
                 'date_to' => $this->validDate($this->dateTo),
             ]);

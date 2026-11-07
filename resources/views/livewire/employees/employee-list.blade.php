@@ -3,8 +3,8 @@
 @endphp
 <div class="space-y-5">
     <x-filter-bar hide-search :total="$employees->total()" noun="employee" :active="collect([$employeeId, $departmentId])->filter()->count()">
-        <x-searchable-select id="emp-pick" :label="__('Employee')" wire:model.live="employeeId" :placeholder="__('All employees')" :all-label="__('All employees')" :options="$employeeOptions" />
-        <x-searchable-select id="emp-dept" :label="__('Department')" wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
+        <x-searchable-select id="emp-pick" :label="__('Employee')" multiple wire:model.live="employeeId" :placeholder="__('All employees')" :all-label="__('All employees')" :options="$employeeOptions" />
+        <x-searchable-select id="emp-dept" :label="__('Department')" multiple wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
 
     <x-data-table id="employees" :columns="$columns">

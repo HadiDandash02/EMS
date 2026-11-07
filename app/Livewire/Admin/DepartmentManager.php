@@ -21,8 +21,8 @@ class DepartmentManager extends Component
     public string $search = '';
 
     /** Picked from the searchable "Department" filter. */
-    #[Url(as: 'department', except: '')]
-    public string $departmentId = '';
+    #[Url(as: 'department')]
+    public $departmentId = [];    // list of ids (multi-select)
 
     public function mount(): void
     {
@@ -41,7 +41,7 @@ class DepartmentManager extends Component
 
         $query = Department::query()
             ->withCount('employees')
-            ->when((int) $this->departmentId, fn ($q, int $id) => $q->where('departments.id', $id))
+            ->when($this->ids($this->departmentId), fn ($q, array $ids) => $q->whereIn('departments.id', $ids))
             ->when($term !== '', fn ($q) => $q->where(function ($q) use ($term) {
                 Sql::whereContains($q, 'departments.name', $term);
                 Sql::whereContains($q, 'departments.code', $term, 'or');

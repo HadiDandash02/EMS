@@ -20,11 +20,11 @@ class EmployeeList extends Component
     public string $search = '';
 
     /** Picked from the searchable "Employee" filter. */
-    #[Url(as: 'employee', except: '')]
-    public string $employeeId = '';
+    #[Url(as: 'employee')]
+    public $employeeId = [];      // list of ids (multi-select)
 
-    #[Url(except: '')]
-    public string $departmentId = '';
+    #[Url]
+    public $departmentId = [];    // list of ids (multi-select)
 
     protected function filterProperties(): array
     {
@@ -48,8 +48,8 @@ class EmployeeList extends Component
                     Sql::whereContains($u, 'users.email', $term, 'or');
                 });
             }))
-            ->when((int) $this->employeeId, fn (Builder $q, int $id) => $q->where('employees.id', $id))
-            ->when((int) $this->departmentId, fn (Builder $q, int $id) => $q->where('department_id', $id));
+            ->when($this->ids($this->employeeId), fn (Builder $q, array $ids) => $q->whereIn('employees.id', $ids))
+            ->when($this->ids($this->departmentId), fn (Builder $q, array $ids) => $q->whereIn('department_id', $ids));
 
         [$field, $dir] = $this->activeSort();
 

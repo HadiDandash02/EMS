@@ -9,6 +9,7 @@
     $dots = ['low' => 'bg-slate-400', 'medium' => 'bg-amber-500', 'high' => 'bg-rose-500'];
 @endphp
 <div class="page">
+    <x-form-errors />
     <x-breadcrumbs :items="[[__('Tasks'), $listUrl], [$editing ? __('Edit task') : __('New task'), null]]" />
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -20,7 +21,7 @@
 
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- ============ Form ============ --}}
-        <form wire:submit="save" class="card lg:col-span-2">
+        <form novalidate wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Task details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>

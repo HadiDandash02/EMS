@@ -10,6 +10,7 @@
     </x-page>
 --}}
 <div {{ $attributes->class('page') }}>
+    <x-form-errors />
     @if ($crumbs)<x-breadcrumbs :items="$crumbs" />@endif
 
     <div class="flex flex-wrap items-start justify-between gap-4">

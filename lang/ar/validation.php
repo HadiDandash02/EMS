@@ -20,7 +20,7 @@ return [
     'mimes' => 'يجب أن يكون :attribute ملفاً من النوع: :values.',
     'prohibited' => 'الحقل :attribute غير مسموح به.',
     'regex' => 'صيغة :attribute غير صالحة.',
-    'required' => 'حقل :attribute مطلوب.',
+    'required' => 'حقل :attribute مطلوب – يرجى استكماله.',
     'required_with' => 'حقل :attribute مطلوب عند وجود :values.',
     'required_without' => 'حقل :attribute مطلوب عند عدم وجود :values.',
     'required_unless' => 'حقل :attribute مطلوب.',
