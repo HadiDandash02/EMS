@@ -9,8 +9,8 @@
     </div>
 
     <x-filter-bar :placeholder="__('Name, username, email or employee number…')" :label="__('Search users')" :total="$users->total()" noun="user" :active="collect([$roleFilter, $departmentFilter])->filter()->count()">
-        <x-searchable-select id="uf-role" :label="__('Role')" wire:model="roleFilter" :placeholder="__('All roles')" :all-label="__('All roles')" :options="collect($roles)->mapWithKeys(fn ($r) => [$r->value => $r->label()])" />
-        <x-searchable-select id="uf-dept" :label="__('Department')" wire:model="departmentFilter" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
+        <x-searchable-select id="uf-role" :label="__('Role')" wire:model.live="roleFilter" :placeholder="__('All roles')" :all-label="__('All roles')" :options="collect($roles)->mapWithKeys(fn ($r) => [$r->value => $r->label()])" />
+        <x-searchable-select id="uf-dept" :label="__('Department')" wire:model.live="departmentFilter" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
 
     <x-data-table id="users" :columns="$columns">

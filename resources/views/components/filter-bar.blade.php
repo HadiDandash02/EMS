@@ -10,7 +10,7 @@
           open: (() => { try { return JSON.parse(localStorage.getItem('filters-open') ?? 'true'); } catch (e) { return true; } })(),
           toggle() { this.open = !this.open; try { localStorage.setItem('filters-open', JSON.stringify(this.open)); } catch (e) {} },
       }"
-      class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+      class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
 
     <div class="flex items-center justify-between gap-3 px-4 py-3">
         <div class="flex items-center gap-2.5">

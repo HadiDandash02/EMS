@@ -92,4 +92,20 @@ class DesignSystemTest extends TestCase
         $this->assertStringNotContainsString('wire:loading', $bar);
         $this->assertStringNotContainsString('opacity-60', $table);
     }
+    public function test_filter_dropdowns_are_not_clipped_and_apply_as_soon_as_a_value_is_picked(): void
+    {
+        $bar = file_get_contents(resource_path('views/components/filter-bar.blade.php'));
+        $this->assertStringNotContainsString('overflow-hidden', $bar);   // an overflow-hidden card cut the open dropdown list off
+
+        foreach (['tasks/task-list', 'admin/user-manager', 'approvals/approval-history', 'employees/employee-list'] as $view) {
+            $html = file_get_contents(resource_path("views/livewire/{$view}.blade.php"));
+            preg_match_all('/<x-searchable-select[^>]*>/', $html, $m);
+            foreach ($m[0] as $tag) {
+                $this->assertStringContainsString('wire:model.live=', $tag, "{$view}: a filter select must apply on pick");
+            }
+        }
+
+        $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
+        $list->assertSet('searched', false)->set('status', 'PENDING')->assertSet('searched', true);
+    }
 }
