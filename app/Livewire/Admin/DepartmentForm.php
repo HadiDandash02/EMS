@@ -50,7 +50,9 @@ class DepartmentForm extends Component
     {
         Gate::authorize('manage-users');
 
-        return view('livewire.admin.department-form')
+        $department = $this->departmentId ? Department::withCount('employees')->with(['employees' => fn ($q) => $q->with('user')->limit(8)])->find($this->departmentId) : null;
+
+        return view('livewire.admin.department-form', ['department' => $department])
             ->layout('components.layouts.app', ['title' => $this->departmentId ? 'Edit department' : 'New department']);
     }
 }

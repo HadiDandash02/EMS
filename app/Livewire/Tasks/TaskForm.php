@@ -101,6 +101,9 @@ class TaskForm extends Component
                 ? Employee::with('user')->get()->sortBy('user.name')->mapWithKeys(fn ($e) => [$e->id => $e->user->name.' · '.$e->employee_number])
                 : collect(),
             'isAdmin' => $isAdmin,
+            // the task being edited (null when creating): feeds the summary / activity panel next to the form
+            'task' => $this->taskId ? Task::with(['employee.user', 'employee.department', 'reviewer', 'histories.actor'])->find($this->taskId) : null,
+            'listUrl' => $this->listUrl(),
             'cancelUrl' => $this->taskId ? route('tasks.show', $this->taskId) : $this->listUrl(),
         ])->layout('components.layouts.app', ['title' => $this->taskId ? 'Edit task' : 'New task']);
     }

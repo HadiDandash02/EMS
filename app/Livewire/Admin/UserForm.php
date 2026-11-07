@@ -184,7 +184,11 @@ class UserForm extends Component
     {
         Gate::authorize('manage-users');
 
+        $subject = $this->userId ? User::with('employee.department', 'employee.manager.user')->find($this->userId) : null;
+
         return view('livewire.admin.user-form', [
+            'subject' => $subject,
+            'taskCount' => $subject?->employee?->tasks()->count() ?? 0,
             'departments' => Department::orderBy('name')->get(),
             'managers' => Employee::with('user')->whereHas('user', fn ($q) => $q->where('role', UserRole::Manager))
                 ->when($this->userId, fn ($q) => $q->where('user_id', '!=', $this->userId))->get()->sortBy('user.name'),
