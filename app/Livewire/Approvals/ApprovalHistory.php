@@ -20,12 +20,16 @@ class ApprovalHistory extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /** Picked from the searchable "Task" filter. */
+    #[Url(as: 'task', except: '')]
+    public string $taskId = '';
+
     #[Url(except: '')]
     public string $decision = '';
 
     protected function filterProperties(): array
     {
-        return ['search', 'decision'];
+        return ['search', 'taskId', 'decision'];
     }
 
     private function query(): Builder
@@ -37,6 +41,7 @@ class ApprovalHistory extends Component
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
             ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
+            ->when((int) $this->taskId, fn ($q, int $id) => $q->where('task_histories.task_id', $id))
             ->when(TaskAction::tryFrom($this->decision), fn ($q, $a) => $q->where('action', $a))
             ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)));
 
@@ -85,7 +90,15 @@ class ApprovalHistory extends Component
 
     public function render()
     {
-        return view('livewire.approvals.approval-history', ['records' => $this->query()->paginate($this->rowsPerPage())])
+        $user = auth()->user();
+
+        // options of the searchable "Task" filter: tasks that have a decision this user is allowed to see
+        $taskIds = TaskHistory::query()->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
+            ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))->pluck('task_id')->unique();
+        $taskOptions = \App\Models\Task::with('employee.user:id,name')->whereIn('id', $taskIds)->latest('id')->get()
+            ->mapWithKeys(fn ($t) => [$t->id => $t->title.' — '.$t->employee->user->name]);
+
+        return view('livewire.approvals.approval-history', ['records' => $this->query()->paginate($this->rowsPerPage()), 'taskOptions' => $taskOptions])
             ->layout('components.layouts.app', ['title' => 'Approval history']);
     }
 }

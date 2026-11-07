@@ -8,7 +8,8 @@
         <x-button :href="route('admin.users.create')" variant="primary" icon="plus">{{ __('New user') }}</x-button>
     </div>
 
-    <x-filter-bar :placeholder="__('Name, username, email or employee number…')" :label="__('Search users')" :total="$users->total()" noun="user" :active="collect([$roleFilter, $departmentFilter])->filter()->count()">
+    <x-filter-bar hide-search :total="$users->total()" noun="user" :active="collect([$userId, $roleFilter, $departmentFilter])->filter()->count()">
+        <x-searchable-select id="uf-user" :label="__('User')" wire:model.live="userId" :placeholder="__('All users')" :all-label="__('All users')" :options="$userOptions" />
         <x-searchable-select id="uf-role" :label="__('Role')" wire:model.live="roleFilter" :placeholder="__('All roles')" :all-label="__('All roles')" :options="collect($roles)->mapWithKeys(fn ($r) => [$r->value => $r->label()])" />
         <x-searchable-select id="uf-dept" :label="__('Department')" wire:model.live="departmentFilter" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>

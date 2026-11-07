@@ -8,7 +8,9 @@
         <x-button :href="route('admin.departments.create')" variant="primary" icon="plus">{{ __('New department') }}</x-button>
     </div>
 
-    <x-filter-bar :placeholder="__('Department name or code…')" :label="__('Search departments')" :total="$departments->total()" noun="department" />
+    <x-filter-bar hide-search :total="$departments->total()" noun="department" :active="collect([$departmentId])->filter()->count()">
+        <x-searchable-select id="dp-pick" :label="__('Department')" wire:model.live="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departmentOptions" />
+    </x-filter-bar>
 
     <x-data-table id="departments" :columns="$columns">
         @if ($departments->isEmpty())

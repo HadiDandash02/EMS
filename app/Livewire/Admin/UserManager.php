@@ -25,6 +25,10 @@ class UserManager extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /** Picked from the searchable "User" filter. */
+    #[Url(as: 'user', except: '')]
+    public string $userId = '';
+
     #[Url(except: '')]
     public string $roleFilter = '';
 
@@ -38,7 +42,7 @@ class UserManager extends Component
 
     protected function filterProperties(): array
     {
-        return ['search', 'roleFilter', 'departmentFilter'];
+        return ['search', 'userId', 'roleFilter', 'departmentFilter'];
     }
 
     private function query(): Builder
@@ -54,6 +58,7 @@ class UserManager extends Component
                 Sql::whereContains($q, 'users.email', $term, 'or');
                 $q->orWhereHas('employee', fn (Builder $e) => Sql::whereContains($e, 'employees.employee_number', $term));
             }))
+            ->when((int) $this->userId, fn (Builder $q, int $id) => $q->where('users.id', $id))
             ->when(UserRole::tryFrom($this->roleFilter), fn (Builder $q, UserRole $r) => $q->where('role', $r))
             ->when((int) $this->departmentFilter, fn (Builder $q, int $id) => $q->whereHas('employee', fn (Builder $e) => $e->where('department_id', $id)));
 
@@ -108,6 +113,8 @@ class UserManager extends Component
             'users' => $this->query()->paginate($this->rowsPerPage()),
             'departments' => Department::orderBy('name')->get(),
             'roles' => UserRole::cases(),
+            // options of the searchable "User" filter
+            'userOptions' => User::orderBy('name')->get(['id', 'name', 'username'])->mapWithKeys(fn (User $u) => [$u->id => $u->name.' (@'.$u->username.')']),
         ])->layout('components.layouts.app', ['title' => 'User management']);
     }
 }
