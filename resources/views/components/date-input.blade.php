@@ -22,5 +22,5 @@
      }">
     @if ($label)<label for="{{ $id }}" class="{{ $compact ? 'mb-1 block text-xs font-medium text-slate-600' : 'block text-sm font-medium text-slate-700' }}">{{ $label }}</label>@endif
     <input x-ref="input" id="{{ $id }}" type="text" placeholder="{{ __('dd/mm/yyyy') }}" readonly
-           {{ $attributes->whereDoesntStartWith('wire:')->class(['block w-full cursor-pointer rounded-lg border-0 bg-white px-3 py-2 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500', $label && ! $compact ? 'mt-1' : '', $error ? 'ring-rose-400' : 'ring-slate-300']) }}>
+           {{ $attributes->whereDoesntStartWith('wire:')->class(['block h-10 w-full cursor-pointer rounded-lg border-0 bg-white px-3 text-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500', $label && ! $compact ? 'mt-1' : '', $error ? 'ring-rose-400' : 'ring-slate-300']) }}>
 </div>

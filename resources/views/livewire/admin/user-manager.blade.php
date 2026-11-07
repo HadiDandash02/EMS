@@ -8,7 +8,7 @@
         <x-button :href="route('admin.users.create')" variant="primary" icon="plus">{{ __('New user') }}</x-button>
     </div>
 
-    <x-filter-bar :placeholder="__('Name, username, email or employee number…')" :label="__('Search users')" :total="$users->total()" noun="user">
+    <x-filter-bar :placeholder="__('Name, username, email or employee number…')" :label="__('Search users')" :total="$users->total()" noun="user" :active="collect([$roleFilter, $departmentFilter])->filter()->count()">
         <x-searchable-select id="uf-role" :label="__('Role')" wire:model="roleFilter" :placeholder="__('All roles')" :all-label="__('All roles')" :options="collect($roles)->mapWithKeys(fn ($r) => [$r->value => $r->label()])" />
         <x-searchable-select id="uf-dept" :label="__('Department')" wire:model="departmentFilter" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
@@ -27,7 +27,7 @@
                             <x-sort-th field="department" col="department" :label="__('Department')" :sort="$sortField" :dir="$sortDirection" />
                             <x-th col="manager">{{ __('Manager') }}</x-th>
                             <x-sort-th field="created" col="created" :label="__('Created')" :sort="$sortField" :dir="$sortDirection" />
-                            <x-th class="w-32 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
+                            <x-th class="w-20 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -49,7 +49,6 @@
                                 <td data-col="created" class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $u->created_at->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <x-icon-button icon="pencil" :title="__('Edit')" :href="route('admin.users.edit', $u)" />
                                         <x-row-menu>
                                             <a href="{{ route('admin.users.edit', $u) }}" wire:navigate role="menuitem" class="{{ $item }} hover:bg-slate-50">
                                                 <svg class="h-[18px] w-[18px] text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.86 4.49l2.65 2.65M4 20l1-4L17.5 3.5a1.9 1.9 0 012.7 0l.3.3a1.9 1.9 0 010 2.7L8 19l-4 1z"/></svg>

@@ -22,7 +22,7 @@
     </div>
 
     {{-- Filters --}}
-    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$tasks->total()" noun="task">
+    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$tasks->total()" noun="task" :active="collect([$status, $priority, $employeeId, $departmentId, $dateFrom, $dateTo])->filter()->count()">
         <x-searchable-select id="status" :label="__('Status')" wire:model="status" :placeholder="__('All statuses')" :all-label="__('All statuses')"
             :options="collect($statuses)->mapWithKeys(fn ($s) => [$s->value => $s->label()])" />
         <x-searchable-select id="priority" :label="__('Priority')" wire:model="priority" :placeholder="__('All priorities')" :all-label="__('All priorities')"
@@ -59,7 +59,7 @@
                             <x-sort-th field="priority" col="priority" :label="__('Priority')" :sort="$sortField" :dir="$sortDirection" />
                             <x-sort-th field="due" col="due" :label="__('Due')" :sort="$sortField" :dir="$sortDirection" />
                             <x-sort-th field="created" col="created" :label="__('Created')" :sort="$sortField" :dir="$sortDirection" />
-                            <x-th class="w-40 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
+                            <x-th class="w-20 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -86,12 +86,6 @@
                                 <td data-col="created" class="whitespace-nowrap px-4 py-3 text-slate-500" title="{{ $task->created_at->format('d/m/Y H:i') }}">{{ $task->created_at->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <x-icon-button icon="eye" :title="__('View details')" :href="route('tasks.show', $task)" />
-                                        @can('update', $task)
-                                            @if ($task->status === \App\Enums\TaskStatus::Pending || auth()->user()->isSuperAdmin())
-                                                <x-icon-button icon="pencil" :title="__('Edit')" :href="route('tasks.edit', $task)" />
-                                            @endif
-                                        @endcan
                                         @include('livewire.tasks.partials.actions-menu', ['task' => $task])
                                     </div>
                                 </td>

@@ -4,7 +4,7 @@
 <div class="space-y-5">
     <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? __('Every approval and rejection decision in the company.') : __('The approval and rejection decisions you have made.') }}</p>
 
-    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$records->total()" noun="decision">
+    <x-filter-bar :placeholder="__('Search by task title…')" :label="__('Search title')" :total="$records->total()" noun="decision" :active="collect([$decision])->filter()->count()">
         <x-searchable-select id="decision" :label="__('Decision')" wire:model="decision" :placeholder="__('All decisions')" :all-label="__('All decisions')"
             :options="['approved' => __('Approved'), 'rejected' => __('Rejected')]" />
     </x-filter-bar>

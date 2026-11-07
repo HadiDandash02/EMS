@@ -22,7 +22,7 @@
                             <x-sort-th field="name" :label="__('Department')" :sort="$sortField" :dir="$sortDirection" />
                             <x-sort-th field="code" col="code" :label="__('Code')" :sort="$sortField" :dir="$sortDirection" />
                             <x-sort-th field="employees" col="employees" :label="__('Employees')" :sort="$sortField" :dir="$sortDirection" />
-                            <x-th class="w-32 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
+                            <x-th class="w-20 text-end last:rounded-se-lg">{{ __('Actions') }}</x-th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -34,7 +34,6 @@
                                 <td data-col="employees" class="px-4 py-3 text-slate-600">{{ $d->employees_count }}</td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <x-icon-button icon="pencil" :title="__('Edit')" :href="route('admin.departments.edit', $d)" />
                                         <x-row-menu>
                                             <a href="{{ route('admin.departments.edit', $d) }}" wire:navigate role="menuitem" class="{{ $item }} hover:bg-slate-50">
                                                 <svg class="h-[18px] w-[18px] text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.86 4.49l2.65 2.65M4 20l1-4L17.5 3.5a1.9 1.9 0 012.7 0l.3.3a1.9 1.9 0 010 2.7L8 19l-4 1z"/></svg>

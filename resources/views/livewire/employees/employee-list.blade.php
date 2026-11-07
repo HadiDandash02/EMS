@@ -2,7 +2,7 @@
     $columns = ['role' => __('Role'), 'department' => __('Department'), 'manager' => __('Manager'), 'tasks' => __('Tasks')];
 @endphp
 <div class="space-y-5">
-    <x-filter-bar :placeholder="__('Name, email, number or job title…')" :label="__('Search employees')" :total="$employees->total()" noun="employee">
+    <x-filter-bar :placeholder="__('Name, email, number or job title…')" :label="__('Search employees')" :total="$employees->total()" noun="employee" :active="collect([$departmentId])->filter()->count()">
         <x-searchable-select id="emp-dept" :label="__('Department')" wire:model="departmentId" :placeholder="__('All departments')" :all-label="__('All departments')" :options="$departments->pluck('name', 'id')" />
     </x-filter-bar>
 
