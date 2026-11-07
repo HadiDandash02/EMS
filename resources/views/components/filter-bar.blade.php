@@ -1,4 +1,4 @@
-@props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0])
+@props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0, 'hideSearch' => false])
 @php $targets = 'search,clearFilters,gotoPage,nextPage,previousPage'; @endphp
 {{--
     FILTER PANEL: one card. Every control (search box, dropdowns, dates) sits in an equal-width grid
@@ -30,6 +30,7 @@
 
     <div x-show="open" x-cloak x-transition.opacity.duration.150ms class="border-t border-slate-100 p-4">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @unless ($hideSearch)
             <div>
                 <label for="fb-search" class="mb-1 block text-xs font-medium text-slate-600">{{ $label ?? __('Search') }}</label>
                 <div class="relative">
@@ -38,6 +39,7 @@
                            class="block h-10 w-full rounded-lg border-0 bg-white ps-9 pe-3 text-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
+            @endunless
 
             {{ $slot }}
         </div>

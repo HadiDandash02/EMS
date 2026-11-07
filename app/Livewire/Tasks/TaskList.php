@@ -34,6 +34,10 @@ class TaskList extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /** Picked from the searchable "Task" filter (a task id the user is allowed to see). */
+    #[Url(as: 'task', except: '')]
+    public string $taskId = '';
+
     #[Url(except: '')]
     public string $status = '';
 
@@ -73,7 +77,7 @@ class TaskList extends Component
 
     protected function filterProperties(): array
     {
-        return ['search', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
+        return ['search', 'taskId', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
     }
 
     #[On('task-updated')]
@@ -82,18 +86,25 @@ class TaskList extends Component
         // Intentionally empty: receiving the event triggers a re-render.
     }
 
-    private function query(): Builder
+    /** Every task this user may see in this list (own / team / all) - before any filter is applied. */
+    private function scoped(): Builder
     {
         $user = auth()->user();
 
-        $query = Task::query()
-            ->with(['employee.user', 'employee.department', 'reviewer'])
+        return Task::query()
             ->when($this->scope === 'mine', fn (Builder $q) => $q->where('tasks.employee_id', $user->employee->id))
             ->when($this->scope === 'team', fn (Builder $q) => $q->forTeamOf($user))
             // Final safety net for every scope: never return a row the user could not open.
-            ->visibleTo($user)
+            ->visibleTo($user);
+    }
+
+    private function query(): Builder
+    {
+        $query = $this->scoped()
+            ->with(['employee.user', 'employee.department', 'reviewer'])
             ->filter([
                 'search' => trim($this->search),
+                'task_id' => (int) $this->taskId ?: null,
                 'status' => TaskStatus::tryFrom($this->status)?->value,
                 'priority' => TaskPriority::tryFrom($this->priority)?->value,
                 'employee_id' => $this->scope === 'mine' ? null : ((int) $this->employeeId ?: null),
@@ -172,7 +183,12 @@ class TaskList extends Component
             default => collect(),
         };
 
+        // Options of the searchable "Task" filter: every task visible in this list, newest first.
+        $taskOptions = $this->scoped()->with('employee.user:id,name')->latest('tasks.id')->get(['tasks.id', 'tasks.title', 'tasks.employee_id'])
+            ->mapWithKeys(fn (Task $t) => [$t->id => $this->scope === 'mine' ? $t->title : $t->title.' — '.$t->employee->user->name]);
+
         return view('livewire.tasks.task-list', [
+            'taskOptions' => $taskOptions,
             'tasks' => $this->query()->paginate($this->rowsPerPage()),
             'employees' => $employees,
             'departments' => $this->scope === 'all' ? Department::orderBy('name')->get() : collect(),

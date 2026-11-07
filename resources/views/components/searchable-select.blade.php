@@ -35,7 +35,7 @@
                    @input="hl = 0"
                    class="block w-full rounded-md border-0 px-2.5 py-1.5 text-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-500">
         </div>
-        <ul class="max-h-56 overflow-y-auto py-1 text-sm" role="listbox">
+        <ul class="max-h-64 overflow-y-auto overscroll-contain py-1 text-sm" role="listbox">
             @if ($allLabel)
                 <li x-show="q.trim() === ''" role="option" @click="pick('')"
                     class="cursor-pointer px-3 py-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-700" :class="{ 'font-medium text-indigo-700': !value }">{{ $allLabel }}</li>
