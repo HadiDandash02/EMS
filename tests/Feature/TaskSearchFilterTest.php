@@ -100,8 +100,8 @@ class TaskSearchFilterTest extends TestCase
 
     public function test_manager_team_list_excludes_other_teams(): void
     {
-        $mine = $this->taskFor($this->employeeEmp, 'completed');
-        $theirs = $this->taskFor($this->outsiderEmp, 'completed');
+        $mine = Task::factory()->forEmployee($this->employeeEmp)->completed()->create(["title" => "Alpha team task"]);
+        $theirs = Task::factory()->forEmployee($this->outsiderEmp)->completed()->create(["title" => "Zulu other team task"]);
 
         Livewire::actingAs($this->manager)
             ->test(TaskList::class, ['scope' => 'team'])

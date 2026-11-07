@@ -126,6 +126,31 @@ it must be **at least 10 characters with upper and lower case letters, a number 
 show/hide eye, and the admin form has a "Generate a strong password" button. Messages are available in Arabic too.
 
 ---
+## 0d. Professional data tables
+
+Every list (tasks, employees, approval history, users, departments) uses the same table shell (`<x-data-table>`):
+
+* **Toolbar:** *Search table* (instant, inside the rows on screen) · *Rows per page* (10/25/50/100) · **Columns** (show/hide columns,
+  remembered in the browser) · **Export** (CSV).
+* **Click-to-sort headers** (`<x-sort-th>`): click once for ascending, again for descending; the arrow shows the active column and
+  `aria-sort` announces it to screen readers. Statuses and priorities sort by their **logical order** (Pending → … → Cancelled,
+  Low < Medium < High) instead of alphabetically; tasks without a due date always come last; sorting by employee/department uses
+  a sub-query on the name. The sort is in the URL (`?sort=due&dir=desc`) so it survives a refresh and can be shared.
+* **Numbered rows**, striped, with a hover accent; **actions** are icon buttons (view, edit) plus a "⋯" menu with everything else.
+* **Export** writes exactly what the user is looking at – same filters and sorting, **all pages**, never more than they may see
+  (a manager only gets their team, an employee only their own tasks), UTF-8 with BOM so Excel shows Arabic correctly, headers in the
+  chosen language, and cells starting with `= + - @` are neutralised against spreadsheet formula injection.
+* Security: the sort field comes from the browser, so each table has a **whitelist** (`sortableFields()`); anything else is ignored,
+  and the ORDER BY for enums is built from constants, never from user input.
+
+---
+
+**Expired session.** A login page that was left open (or loaded before the server's session was reset) used to end in the raw
+"419 Page Expired" screen. The app now sends the user back to the form with a clear message ("Your session expired. Please try again.")
+and, inside Livewire pages, reloads the page quietly instead of showing a browser popup.
+
+---
+
 ## 1. Project setup
 
 ### Requirements
@@ -382,7 +407,7 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
-  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding`.
+  `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding` (includes the table redesign and the expired-session fix).
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
 * Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
 

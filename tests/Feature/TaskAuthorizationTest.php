@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Tasks\ConfirmAction;
 use App\Livewire\Tasks\TaskList;
+use App\Models\Task;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -58,8 +59,8 @@ class TaskAuthorizationTest extends TestCase
 
     public function test_employee_task_list_only_contains_their_own_tasks(): void
     {
-        $mine = $this->taskFor($this->employeeEmp);
-        $theirs = $this->taskFor($this->teammateEmp);
+        $mine = Task::factory()->forEmployee($this->employeeEmp)->pending()->create(["title" => "Alpha report for me"]);
+        $theirs = Task::factory()->forEmployee($this->teammateEmp)->pending()->create(["title" => "Zulu report for them"]);
 
         Livewire::actingAs($this->employee)
             ->test(TaskList::class, ['scope' => 'mine'])
