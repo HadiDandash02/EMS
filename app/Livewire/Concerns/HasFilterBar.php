@@ -14,6 +14,12 @@ trait HasFilterBar
     #[Url(as: 'per', except: 10)]
     public int $perPage = 10;
 
+    /**
+     * Is the results table open? Every list shows its FILTERS first and keeps the table collapsed until the user
+     * presses Search (or arrives with filters already in the URL). The table card has its own Collapse/Expand button.
+     */
+    public bool $searched = false;
+
     /** @return list<string> public properties that make up the filters */
     abstract protected function filterProperties(): array;
 
@@ -23,14 +29,24 @@ trait HasFilterBar
         return in_array($this->perPage, [10, 25, 50, 100], true) ? $this->perPage : 10;
     }
 
-    public function search(): void
+    /** Livewire trait hook: arriving with filters in the URL (or a default filter) opens the table. */
+    public function renderingHasFilterBar(): void
     {
+        if (! $this->searched && collect($this->filterProperties())->contains(fn ($p) => filled($this->{$p}))) {
+            $this->searched = true;
+        }
+    }
+
+    public function applyFilters(): void
+    {
+        $this->searched = true;
         $this->resetPage();
     }
 
     public function clearFilters(): void
     {
         $this->reset($this->filterProperties());   // rows per page is a display choice, it stays
+        $this->searched = false;                  // back to: filters first, table closed
         $this->resetPage();
     }
 
@@ -39,6 +55,10 @@ trait HasFilterBar
         // Programmatic/URL changes must also go back to page 1.
         if ($property === 'perPage' || in_array($property, $this->filterProperties(), true)) {
             $this->resetPage();
+        }
+
+        if (in_array($property, $this->filterProperties(), true)) {
+            $this->searched = true;
         }
     }
 }

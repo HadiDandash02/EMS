@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-6xl space-y-6">
+<div class="page">
     <div>
         <h2 class="text-xl font-bold text-slate-900">{{ __('My profile') }}</h2>
         <p class="text-sm text-slate-500">{{ __('Your profile and password.') }}</p>
@@ -7,7 +7,7 @@
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- Identity card --}}
         <div class="space-y-6 lg:col-span-1">
-            <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div class="card">
                 <div class="h-24 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
                 <div class="-mt-12 px-6 pb-6 text-center">
                     @if ($photo && $photo->isPreviewable())
@@ -45,7 +45,7 @@
             </div>
 
             @if ($user->employee)
-                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <div class="card p-5">
                     <h3 class="text-sm font-semibold text-slate-900">{{ __('Employment') }}</h3>
                     <dl class="mt-4 space-y-3 text-sm">
                         @foreach ([

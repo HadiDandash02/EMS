@@ -3,20 +3,19 @@
     $roleOptions = collect($roles)->reject(fn ($r) => $r->value === 'super_admin' && $userId)->mapWithKeys(fn ($r) => [$r->value => $r->label()]);
     $field = 'mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500';
 @endphp
-<div class="mx-auto max-w-6xl space-y-5">
+<div class="page">
     <x-breadcrumbs :items="[[__('Users'), route('admin.users')], [$userId ? __('Edit user') : __('New user'), null]]" />
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h2 class="text-2xl font-bold text-slate-900">{{ $userId ? __('Edit user') : __('New user') }}</h2>
             <p class="text-sm text-slate-500">{{ $userId ? __('Update the account, password and employment details.') : __('Create an account and its employment details in one step.') }}</p>
         </div>
-        <x-button :href="route('admin.users')" variant="secondary" size="sm" icon="back" class="rtl:flex-row-reverse">{{ __('Back') }}</x-button>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
     <form wire:submit="save" class="space-y-6 lg:col-span-2">
 {{-- Account --}}
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <section class="card">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4"><h3 class="font-semibold text-slate-900">{{ __('Account') }}</h3></div>
             <div class="grid gap-5 p-6 sm:grid-cols-2">
                 @foreach ([['name', __('Full name').' *', 'text'], ['username', __('Username').' *', 'text'], ['email', __('Email').' *', 'email'], ['phone', __('Phone'), 'tel']] as [$f, $label, $type])
@@ -31,7 +30,7 @@
         </section>
 
         {{-- Security --}}
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <section class="card">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Password') }}</h3>
                 <p class="text-xs text-slate-500">{{ $userId ? __('Leave blank to keep the current password.') : __('A strong password is required.') }}</p>
@@ -54,7 +53,7 @@
         </section>
 
         {{-- Role & employment --}}
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <section class="card">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4"><h3 class="font-semibold text-slate-900">{{ __('Role & employment') }}</h3></div>
             <div class="grid gap-5 p-6 sm:grid-cols-2">
                 <div>
@@ -112,7 +111,7 @@
     {{-- ============ Side panel ============ --}}
     <aside class="space-y-5">
         {{-- live preview of the account being typed --}}
-        <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+        <section class="card">
             <div class="h-16 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
             <div class="-mt-8 px-5 pb-5 text-center">
                 @if ($subject)
@@ -129,7 +128,7 @@
         </section>
 
         @if ($subject)
-            <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+            <section class="card p-5">
                 <h3 class="text-sm font-semibold text-slate-900">{{ __('Account information') }}</h3>
                 <dl class="mt-3 divide-y divide-slate-100 text-sm">
                     <div class="flex justify-between gap-3 py-2"><dt class="text-slate-500">{{ __('Created') }}</dt><dd class="font-medium text-slate-800">{{ $subject->created_at->format('d/m/Y') }}</dd></div>
@@ -151,7 +150,7 @@
                 </section>
             @endif
         @else
-            <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+            <section class="card p-5">
                 <h3 class="text-sm font-semibold text-slate-900">{{ __('Good to know') }}</h3>
                 <ul class="mt-3 space-y-3 text-sm text-slate-600">
                     <li class="flex gap-2"><span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500"></span>{{ __('The username is used to sign in and is always lower case.') }}</li>

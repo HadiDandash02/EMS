@@ -1,12 +1,12 @@
 @props(['placeholder' => null, 'label' => null, 'total' => null, 'noun' => 'result', 'active' => 0, 'hideSearch' => false])
-@php $targets = 'search,clearFilters,gotoPage,nextPage,previousPage'; @endphp
+@php $targets = 'applyFilters,clearFilters,gotoPage,nextPage,previousPage'; @endphp
 {{--
     FILTER PANEL: one card. Every control (search box, dropdowns, dates) sits in an equal-width grid
     and has the same height. The whole panel collapses/expands with one button (remembered in the browser).
     Filters apply on "Search" / Enter; "Clear" resets them.
-    The Livewire component must expose public search()/clearFilters() (see Concerns\HasFilterBar).
+    The Livewire component must expose public applyFilters()/clearFilters() (see Concerns\HasFilterBar).
 --}}
-<form wire:submit="search"
+<form wire:submit="applyFilters"
       x-data="{
           open: (() => { try { return JSON.parse(localStorage.getItem('filters-open') ?? 'true'); } catch (e) { return true; } })(),
           toggle() { this.open = !this.open; try { localStorage.setItem('filters-open', JSON.stringify(this.open)); } catch (e) {} },

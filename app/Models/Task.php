@@ -111,6 +111,16 @@ class Task extends Model
             ->when($filters['date_to'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '<=', $v));
     }
 
+    /** Where the breadcrumb "Tasks" leads for this user: own list, the manager's team list, or the company list. */
+    public function listUrlFor(User $user): string
+    {
+        return match (true) {
+            $this->isOwnedBy($user) => route('tasks.index'),
+            $user->canSeeAll() => route('tasks.all'),
+            default => route('team.tasks'),
+        };
+    }
+
     public function isOwnedBy(User $user): bool
     {
         return $user->employee !== null && $this->employee_id === $user->employee->id;

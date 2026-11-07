@@ -202,7 +202,7 @@ class AdminCrudTest extends TestCase
     {
         $page = Livewire::actingAs($this->admin)->test(UserManager::class);
 
-        $page->set('search', $this->manager->name)->call('search')
+        $page->set('search', $this->manager->name)->call('applyFilters')
             ->assertSee($this->manager->name)->assertDontSee($this->hr->name);
 
         $page->call('clearFilters')->assertSet('search', '')->assertSee($this->manager->name)->assertSee($this->hr->name);
