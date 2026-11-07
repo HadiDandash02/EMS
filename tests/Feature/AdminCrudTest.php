@@ -200,14 +200,19 @@ class AdminCrudTest extends TestCase
 
     public function test_user_list_search_clear_and_filters(): void
     {
+        $names = fn ($page) => $page->viewData('users')->pluck('name')->all();
         $page = Livewire::actingAs($this->admin)->test(UserManager::class);
 
-        $page->set('search', $this->manager->name)->call('applyFilters')
-            ->assertSee($this->manager->name)->assertDontSee($this->hr->name);
+        $page->set('search', $this->manager->name)->call('applyFilters');
+        $this->assertSame([$this->manager->name], $names($page));
 
-        $page->call('clearFilters')->assertSet('search', '')->assertSee($this->manager->name)->assertSee($this->hr->name);
+        $page->call('clearFilters')->assertSet('search', '');
+        $this->assertContains($this->hr->name, $names($page));
+        $this->assertContains($this->manager->name, $names($page));
 
-        $page->set('roleFilter', 'hr')->assertSee($this->hr->name)->assertDontSee($this->employee->name);
+        $page->set('roleFilter', 'hr');
+        $this->assertContains($this->hr->name, $names($page));
+        $this->assertNotContains($this->employee->name, $names($page));
     }
 
     public function test_the_user_list_links_to_the_form_pages_instead_of_opening_popups(): void

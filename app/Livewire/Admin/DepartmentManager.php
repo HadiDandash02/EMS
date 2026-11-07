@@ -20,6 +20,10 @@ class DepartmentManager extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /** Picked from the searchable "Department" filter. */
+    #[Url(as: 'department', except: '')]
+    public string $departmentId = '';
+
     public function mount(): void
     {
         Gate::authorize('manage-users');
@@ -27,7 +31,7 @@ class DepartmentManager extends Component
 
     protected function filterProperties(): array
     {
-        return ['search'];
+        return ['search', 'departmentId'];
     }
 
     private function query(): Builder
@@ -37,6 +41,7 @@ class DepartmentManager extends Component
 
         $query = Department::query()
             ->withCount('employees')
+            ->when((int) $this->departmentId, fn ($q, int $id) => $q->where('departments.id', $id))
             ->when($term !== '', fn ($q) => $q->where(function ($q) use ($term) {
                 Sql::whereContains($q, 'departments.name', $term);
                 Sql::whereContains($q, 'departments.code', $term, 'or');
@@ -80,7 +85,11 @@ class DepartmentManager extends Component
 
     public function render()
     {
-        return view('livewire.admin.department-manager', ['departments' => $this->query()->paginate($this->rowsPerPage())])
+        return view('livewire.admin.department-manager', [
+            'departments' => $this->query()->paginate($this->rowsPerPage()),
+            // options of the searchable "Department" filter
+            'departmentOptions' => Department::orderBy('name')->get()->mapWithKeys(fn (Department $d) => [$d->id => $d->name.' ('.$d->code.')']),
+        ])
             ->layout('components.layouts.app', ['title' => 'Departments']);
     }
 }

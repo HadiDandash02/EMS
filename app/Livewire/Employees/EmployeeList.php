@@ -19,12 +19,16 @@ class EmployeeList extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    /** Picked from the searchable "Employee" filter. */
+    #[Url(as: 'employee', except: '')]
+    public string $employeeId = '';
+
     #[Url(except: '')]
     public string $departmentId = '';
 
     protected function filterProperties(): array
     {
-        return ['search', 'departmentId'];
+        return ['search', 'employeeId', 'departmentId'];
     }
 
     // ---- query (shared by the table and the export) -------------------------------------------
@@ -44,6 +48,7 @@ class EmployeeList extends Component
                     Sql::whereContains($u, 'users.email', $term, 'or');
                 });
             }))
+            ->when((int) $this->employeeId, fn (Builder $q, int $id) => $q->where('employees.id', $id))
             ->when((int) $this->departmentId, fn (Builder $q, int $id) => $q->where('department_id', $id));
 
         [$field, $dir] = $this->activeSort();
@@ -95,6 +100,9 @@ class EmployeeList extends Component
         return view('livewire.employees.employee-list', [
             'employees' => $this->query()->paginate($this->rowsPerPage()),
             'departments' => Department::orderBy('name')->get(),
+            // options of the searchable "Employee" filter
+            'employeeOptions' => Employee::with('user:id,name')->get()->sortBy('user.name')
+                ->mapWithKeys(fn (Employee $e) => [$e->id => $e->user->name.' · '.$e->employee_number]),
         ])->layout('components.layouts.app', ['title' => 'Employees']);
     }
 }

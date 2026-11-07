@@ -172,7 +172,7 @@ class SearchAndPagesTest extends TestCase
     public function test_all_tables_use_the_same_filter_panel(): void
     {
         foreach ([[$this->hr, '/all-tasks'], [$this->hr, '/employees'], [$this->hr, '/approvals'], [$this->admin, '/users'], [$this->admin, '/departments']] as [$user, $path]) {
-            $this->actingAs($user)->get($this->p($user, $path))->assertOk()->assertSee('Collapse')->assertSee($path === '/all-tasks' ? 'id="task"' : 'id="fb-search"', false);
+            $this->actingAs($user)->get($this->p($user, $path))->assertOk()->assertSee('Collapse')->assertDontSee('id="fb-search"', false);   // no free-text box: every list filters with searchable selects
         }
     }
     // ---- the actions menu is the only actions control ----------------------------------------------
