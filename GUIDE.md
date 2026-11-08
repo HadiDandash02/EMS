@@ -230,6 +230,25 @@ Components are in `app/Livewire/`, their views in `resources/views/livewire/`.
 
 **What a service is:** one PHP class that holds business logic, so it is not copied into many files (form, confirm page, reject page, API controller, seeder). Change a rule once, it changes everywhere. Ours contains: one public method per action, the private helpers `locked()` (transaction + `lockForUpdate` + policy), `transition()` (status enum check + save) and `log()` (history row), plus special rules (super admin creates for others, reject reason min 5, only pending can be cancelled). It uses: `DB::transaction`, `TaskPolicy` via `Gate`, the `TaskStatus` enum and the `TaskHistory` model.
 
+### Middleware – what runs before a page, and what each one does
+
+A **middleware** is a checkpoint every request passes *before* it reaches the page/controller. It can let the request through, change something, or stop it (403, 404, redirect). Registered in `bootstrap/app.php`, attached to routes in `routes/web.php` and `routes/api.php`.
+
+| Middleware | Where it is | What it does |
+|---|---|---|
+| `web` group (built in) | every web route | session, cookies, **CSRF token check** (an expired token -> friendly redirect instead of 419), shares validation errors with the views |
+| `guest` | login routes | a signed-in user opening /login is sent to their dashboard |
+| `auth` | all signed-in routes | not logged in -> redirect to /login |
+| `throttle:10,1` | `POST /login` and `POST /api/login` | max 10 attempts per minute -> stops password guessing |
+| `auth:sanctum` | all API routes | needs a valid bearer token, else JSON 401 |
+| **`role:...`** = `EnsureUserHasRole` | `routes/web.php`: `role:manager`, `role:manager,hr`, `role:hr`, `role:super_admin` | **which area may you enter**: wrong role -> 403. The super admin may enter every area. |
+| **`SetPanelPrefix`** | appended to the `web` group (every request, also Livewire's own calls) | makes `route('tasks.index')` use *your* prefix (`/employee/...`, `/manager/...`); opening another role's prefix -> **404** |
+| **`SetLocale`** | appended to the `web` group | reads the chosen language (English/Arabic) from the session and sets it for the whole request |
+
+**Layers of protection (outside in):** `auth` -> `role:` middleware (the area) -> `TaskPolicy` (this specific task) -> `TaskWorkflowService` (the task's current state).
+
+**Example:** an employee opens `/hr/all-tasks` -> `SetPanelPrefix` sees the prefix `hr` is not theirs -> **404**. An employee opens `/employee/all-tasks` -> `auth` passes, `role:hr` fails -> **403**. A manager opens `/manager/tasks/9` for a task outside the team -> both middleware pass, `TaskPolicy::view` says no -> **403**.
+
 ---
 
 ## 10. Tailwind CSS interface
