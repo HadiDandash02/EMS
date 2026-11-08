@@ -214,6 +214,22 @@ Components are in `app/Livewire/`, their views in `resources/views/livewire/`.
 | Events | `#[On('task-updated')]` refreshes the list/detail after an action |
 | Locked properties | `#[Locked] $scope` – the browser cannot switch "mine" into "all" (`test_list_scope_cannot_be_tampered_with_from_the_browser`) |
 
+### Livewire vs the service – who does what, on which page
+
+**Livewire** = the screen (a PHP class + a Blade view per page: shows data, validates the form, reacts to clicks, updates parts of the page without reloading). **`TaskWorkflowService`** = the decisions (one place for every rule that changes a task, so the website and the API cannot disagree).
+
+| Page | Livewire component | Service call |
+|---|---|---|
+| Task lists (`/tasks`, `/team/tasks`, `/all-tasks`) | `Tasks/TaskList` | `start()` (row menu) |
+| Task details (`/tasks/{id}`) | `Tasks/TaskShow` | `start()` |
+| New / edit task | `Tasks/TaskForm` | `create()` / `update()` |
+| Complete, cancel, approve, delete (confirmation pages) | `Tasks/ConfirmAction` | `complete()` / `cancel()` / `approve()` / `delete()` |
+| Reject | `Tasks/RejectTask` | `reject()` |
+| Approvals, employees, profile, admin users/departments | their own components | none (read-only or plain CRUD) |
+| REST API | no Livewire – `Api/TaskController` | every action |
+
+**What a service is:** one PHP class that holds business logic, so it is not copied into many files (form, confirm page, reject page, API controller, seeder). Change a rule once, it changes everywhere. Ours contains: one public method per action, the private helpers `locked()` (transaction + `lockForUpdate` + policy), `transition()` (status enum check + save) and `log()` (history row), plus special rules (super admin creates for others, reject reason min 5, only pending can be cancelled). It uses: `DB::transaction`, `TaskPolicy` via `Gate`, the `TaskStatus` enum and the `TaskHistory` model.
+
 ---
 
 ## 10. Tailwind CSS interface
