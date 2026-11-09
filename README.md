@@ -4,7 +4,6 @@ A Laravel application where employees create and complete tasks, managers approv
 completed work, and HR gets a searchable view of their whole department – with a complete audit trail of every
 action. Managers and HR only ever work inside their own department.
 
-**Author:** Ali Ahmad Abbas Hadi
 **Stack:** PHP 8.2 · Laravel 12 · MySQL · Livewire 3 · Tailwind CSS 4 · Laravel Sanctum · PHPUnit
 
 ---

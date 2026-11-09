@@ -194,3 +194,7 @@
 [data-theme='dark'] .select-scroll { scrollbar-color: #4f5b8f #16233f; }
 [data-theme='dark'] .select-scroll::-webkit-scrollbar-track { background: #16233f; }
 [data-theme='dark'] .select-scroll::-webkit-scrollbar-thumb { background: #4f5b8f; border-color: #16233f; }
+
+/* Edge/Chrome draw their own "reveal password" button; the password field already has its own eye icon (<x-password-input>) */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear { display: none; }
