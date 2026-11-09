@@ -36,5 +36,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Account / department administration is reserved for the super admin.
         Gate::define('manage-users', fn (User $user) => $user->isSuperAdmin());
+
+        // Privilege: open and edit the Translations catalogue (General Configurations > Translations). Held by the super admin.
+        Gate::define('manage-translations', fn (User $user) => $user->isSuperAdmin());
     }
 }

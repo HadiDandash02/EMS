@@ -3,12 +3,12 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Livewire\Admin\DeleteTranslation;
+use App\Livewire\Admin\TranslationForm;
 use App\Livewire\Admin\TranslationManager;
 use App\Models\Translation;
 use App\Models\User;
-use App\Support\MachineTranslator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\Concerns\BuildsOrganisation;
 use Tests\TestCase;
@@ -30,17 +30,7 @@ class TranslationsInDatabaseTest extends TestCase
         $this->admin->save();
     }
 
-    private function freshHttp(): void
-    {
-        app()->forgetInstance(\Illuminate\Http\Client\Factory::class);
-        Http::clearResolvedInstance(\Illuminate\Http\Client\Factory::class);
-    }
 
-    private function fakeService(string $translated = 'نص مترجم'): void
-    {
-        $this->freshHttp();
-        Http::fake(['*' => Http::response(['responseStatus' => 200, 'responseData' => ['translatedText' => $translated]])]);
-    }
 
     private function page(): \Livewire\Features\SupportTesting\Testable
     {
@@ -113,33 +103,12 @@ class TranslationsInDatabaseTest extends TestCase
             $this->actingAs($user)->get('/admin/translations')->assertNotFound();
         }
         $this->actingAs($this->admin)->get('/admin/translations')->assertOk()
-            ->assertSee('Translated To English')->assertSee('Translated To Arabic')->assertSee('Auto-translate ALL empty texts');
+            ->assertSee('Translated To English')->assertSee('Translated To Arabic')->assertDontSee('Auto-translate');
 
         Livewire::actingAs($this->hr)->test(TranslationManager::class)->assertForbidden();
     }
 
-    public function test_the_admin_saves_both_texts_of_a_key(): void
-    {
-        $row = Translation::where('key', 'Approve task')->firstOrFail();
 
-        $this->page()
-            ->set("edits.{$row->id}.en", 'Approve the task')->set("edits.{$row->id}.ar", 'اعتماد المهمة')
-            ->call('save', $row->id)->assertHasNoErrors();
-
-        $this->assertSame('Approve the task', $row->fresh()->en);
-        $this->assertSame('اعتماد المهمة', $row->fresh()->ar);
-        $this->assertFalse($row->fresh()->machine);
-    }
-
-    public function test_a_translation_must_keep_the_placeholders_of_the_key(): void
-    {
-        $row = Translation::where('key', 'like', '%:count attempts left%')->firstOrFail();
-        $before = $row->ar;
-
-        $this->page()->set("edits.{$row->id}.ar", 'بقيت محاولات')->call('save', $row->id)->assertHasErrors("edits.{$row->id}.ar");
-
-        $this->assertSame($before, $row->fresh()->ar);
-    }
 
     public function test_search_and_the_translated_to_filters(): void
     {
@@ -148,9 +117,9 @@ class TranslationsInDatabaseTest extends TestCase
 
         $this->assertSame(['A brand new sentence'], $this->keys($this->page()->set('search', 'brand new')));
 
-        $noArabic = $this->keys($this->page()->set('inArabic', ['no']));
+        $noArabic = $this->keys($this->page()->set('search', 'brand')->set('inArabic', ['no']));
         $this->assertContains('A brand new sentence', $noArabic);
-        $this->assertNotContains('Approve task', $noArabic);
+        $this->assertNotContains('Approve task', $this->keys($this->page()->set('search', 'Approve task')->set('inArabic', ['no'])));
 
         $yesArabic = $this->keys($this->page()->set('search', 'task')->set('inArabic', ['yes']));
         $this->assertContains('Approve task', $yesArabic);
@@ -159,7 +128,7 @@ class TranslationsInDatabaseTest extends TestCase
         $this->assertSame(['No english yet'], $this->keys($this->page()->set('inEnglish', ['no'])));
 
         // choosing both Yes and No means "no filter"
-        $this->assertContains('A brand new sentence', $this->keys($this->page()->set('inArabic', ['yes', 'no'])));
+        $this->assertContains('A brand new sentence', $this->keys($this->page()->set('search', 'brand')->set('inArabic', ['yes', 'no'])));
     }
 
     public function test_the_type_filter_separates_code_keys_from_keywords(): void
@@ -170,76 +139,11 @@ class TranslationsInDatabaseTest extends TestCase
         $this->assertNotContains('My own keyword', $this->keys($this->page()->set('type', ['code'])));
     }
 
-    public function test_the_admin_adds_and_deletes_a_keyword_but_not_a_code_key(): void
-    {
-        $page = $this->page()->set('newKey', 'welcome.banner')->set('newEn', 'Welcome to TaskFlow')->set('newAr', 'مرحبا بك في تاسك فلو')->call('addKeyword')->assertHasNoErrors();
 
-        $row = Translation::where('key', 'welcome.banner')->firstOrFail();
-        $this->assertSame('keyword', $row->type);
-        $this->assertSame('مرحبا بك في تاسك فلو', $row->ar);
 
-        $page->set('newKey', 'welcome.banner')->call('addKeyword')->assertHasErrors('newKey');       // duplicate key
-        $page->set('newKey', '')->call('addKeyword')->assertHasErrors(['newKey' => 'required']);
 
-        $page->call('deleteKeyword', $row->id);
-        $this->assertDatabaseMissing('translations', ['key' => 'welcome.banner']);
 
-        $code = Translation::where('key', 'Approve task')->firstOrFail();
-        $page->call('deleteKeyword', $code->id);                                                       // refused: it is a code key
-        $this->assertDatabaseHas('translations', ['key' => 'Approve task']);
-    }
 
-    // ---- the auto-translate function ---------------------------------------------------------------------
-
-    public function test_auto_translate_fills_the_empty_arabic_texts_and_marks_them_as_machine(): void
-    {
-        $this->fakeService('جملة جديدة');
-        $row = Translation::create(['key' => 'A brand new sentence', 'type' => 'code', 'en' => 'A brand new sentence', 'ar' => null]);
-
-        $this->page()->call('translateMissing');
-
-        $this->assertSame('جملة جديدة', $row->fresh()->ar);
-        $this->assertTrue($row->fresh()->machine);
-        Http::assertSent(fn ($request) => str_contains($request['langpair'], 'en|ar') && $request['q'] === 'A brand new sentence');
-    }
-
-    public function test_suggest_only_fills_the_box_and_saves_nothing_until_save_is_pressed(): void
-    {
-        $this->fakeService('اقتراح');
-        $row = Translation::create(['key' => 'Another new sentence', 'type' => 'code', 'en' => 'Another new sentence', 'ar' => null]);
-
-        $page = $this->page()->call('suggest', $row->id);
-
-        $page->assertSet("edits.{$row->id}.ar", 'اقتراح');
-        $this->assertNull($row->fresh()->ar);
-
-        $page->call('save', $row->id);
-        $this->assertSame('اقتراح', $row->fresh()->ar);
-    }
-
-    public function test_placeholders_are_protected_during_machine_translation(): void
-    {
-        $this->freshHttp();
-        Http::fake(fn () => Http::response(['responseStatus' => 200, 'responseData' => ['translatedText' => 'بقيت [[0]] محاولات']]));
-
-        $this->assertSame('بقيت :count محاولات', app(MachineTranslator::class)->translate(':count attempts left'));
-        Http::assertSent(fn ($request) => $request['q'] === '[[0]] attempts left');
-    }
-
-    public function test_a_damaged_placeholder_or_a_service_failure_never_saves_a_text(): void
-    {
-        $this->freshHttp();
-        Http::fake(['*' => Http::response(['responseStatus' => 200, 'responseData' => ['translatedText' => 'بقيت محاولات']])]);   // [[0]] lost
-        $this->assertNull(app(MachineTranslator::class)->translate(':count attempts left'));
-
-        $this->freshHttp();
-        Http::fake(['*' => Http::response('down', 500)]);
-        $this->assertNull(app(MachineTranslator::class)->translate('Approve'));
-
-        $this->freshHttp();
-        Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('no network'));
-        $this->assertNull(app(MachineTranslator::class)->translate('Approve'));
-    }
 
     public function test_the_scan_adds_keys_used_in_the_code_that_are_missing_from_the_table(): void
     {
@@ -253,40 +157,133 @@ class TranslationsInDatabaseTest extends TestCase
         $this->assertSame('code', $row->type);
     }
 
-    public function test_the_auto_translate_command_works_in_batches(): void
-    {
-        $this->fakeService('مترجم');
-        Translation::create(['key' => 'Sentence one', 'type' => 'code', 'en' => 'Sentence one', 'ar' => null]);
-        Translation::create(['key' => 'Sentence two', 'type' => 'code', 'en' => 'Sentence two', 'ar' => '']);
 
-        $this->artisan('translations:auto', ['--limit' => 1])->assertSuccessful();
-
-        $this->assertSame(1, Translation::where('machine', true)->count());
-    }
-    public function test_auto_translate_all_drains_every_empty_text_batch_after_batch(): void
+    public function test_the_privilege_belongs_to_the_super_admin_only(): void
     {
-        $this->fakeService('مترجم');
-        foreach (range(1, 40) as $i) {
-            Translation::create(['key' => "Bulk sentence {$i}", 'type' => 'code', 'en' => "Bulk sentence {$i}", 'ar' => null]);
+        $this->assertTrue($this->admin->can('manage-translations'));
+        foreach ([$this->employee, $this->manager, $this->hr] as $user) {
+            $this->assertFalse($user->can('manage-translations'));
         }
-        $this->assertSame(40, Translation::untranslated('ar')->count());
-
-        $page = $this->page();
-        $page->call('translateMissing')->assertReturned(25);     // 15 per batch: 40 -> 25
-        $page->call('translateMissing')->assertReturned(10);
-        $page->call('translateMissing')->assertReturned(0);      // nothing left: the page stops asking
-        $page->call('translateMissing')->assertReturned(0);
-
-        $this->assertSame(0, Translation::untranslated('ar')->count());
-        $this->assertSame(40, Translation::where('machine', true)->count());
     }
 
-    public function test_auto_translate_stops_with_minus_one_when_the_service_is_down(): void
+    public function test_the_catalogue_search_runs_on_mysql_too_because_reserved_words_are_qualified(): void
     {
-        $this->freshHttp();
-        Http::fake(['*' => Http::response('down', 500)]);
-        Translation::create(['key' => 'Unreachable sentence', 'type' => 'code', 'en' => 'Unreachable sentence', 'ar' => null]);
+        // `key` is a reserved word in MySQL (SQLite accepts it, so the other tests could not see the problem):
+        // the generated SQL must always write translations.key, never a bare key
+        $source = file_get_contents(app_path('Livewire/Admin/TranslationManager.php'));
 
-        $this->page()->call('translateMissing')->assertReturned(-1);   // the loop in the page stops instead of spinning forever
+        $this->assertStringContainsString("'translations.key'", $source);
+        $this->assertDoesNotMatchRegularExpression("/whereContains\(\\\$q, '(key|en|ar)'/", $source);
+
+        $page = $this->page()->set('search', 'approve');
+        $this->assertContains('Approve task', $this->keys($page));
+    }
+
+    public function test_there_is_no_machine_translation_any_more(): void
+    {
+        $this->assertFileDoesNotExist(app_path('Support/MachineTranslator.php'));
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('translations', 'machine'));
+        $this->actingAs($this->admin)->get('/admin/translations')->assertOk()->assertDontSee('Suggest')->assertDontSee('Auto-translate');
+    }
+    // ---- Actions: Edit / Delete, each on its own page --------------------------------------------------
+
+    public function test_the_table_is_read_only_and_the_actions_are_edit_and_delete(): void
+    {
+        $row = Translation::where('key', 'Approve task')->firstOrFail();
+
+        $html = $this->actingAs($this->admin)->get('/admin/translations?q=Approve+task')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('<textarea', $html);                       // no inline editing any more
+        $this->assertStringContainsString(route('admin.translations.edit', $row), $html);
+        $this->assertStringContainsString(route('admin.translations.delete', $row), $html);
+        $this->assertStringContainsString('الموافقة على المهمة', $html);                  // the Arabic text is shown as plain text
+    }
+
+    public function test_the_admin_edits_both_texts_of_a_key_on_its_own_page(): void
+    {
+        $row = Translation::where('key', 'Approve task')->firstOrFail();
+        $this->actingAs($this->admin)->get(route('admin.translations.edit', $row))->assertOk()->assertSee('Approve task');
+
+        Livewire::actingAs($this->admin)->test(TranslationForm::class, ['translation' => $row])
+            ->assertSet('en', 'Approve task')->assertSet('ar', 'الموافقة على المهمة')
+            ->set('en', 'Approve the task')->set('ar', 'اعتماد المهمة')
+            ->call('save')->assertHasNoErrors()->assertRedirect(route('admin.translations'));
+
+        $this->assertSame('Approve the task', $row->fresh()->en);
+        $this->assertSame('اعتماد المهمة', $row->fresh()->ar);
+        $this->assertSame('Approve task', $row->fresh()->key);                           // the key never changes
+    }
+
+    public function test_the_key_of_an_existing_translation_cannot_be_changed_from_the_browser(): void
+    {
+        $row = Translation::where('key', 'Approve task')->firstOrFail();
+
+        Livewire::actingAs($this->admin)->test(TranslationForm::class, ['translation' => $row])
+            ->set('key', 'Something else')->call('save')->assertHasNoErrors();
+
+        $this->assertSame('Approve task', $row->fresh()->key);
+        $this->assertDatabaseMissing('translations', ['key' => 'Something else']);
+    }
+
+    public function test_a_translation_must_keep_the_placeholders_of_the_key(): void
+    {
+        $row = Translation::where('key', 'like', '%:count attempts left%')->firstOrFail();
+        $before = $row->ar;
+
+        Livewire::actingAs($this->admin)->test(TranslationForm::class, ['translation' => $row])
+            ->set('ar', 'بقيت محاولات')->call('save')->assertHasErrors('ar');
+
+        $this->assertSame($before, $row->fresh()->ar);
+    }
+
+    public function test_the_admin_adds_a_keyword_with_validation_and_no_duplicates(): void
+    {
+        $page = Livewire::actingAs($this->admin)->test(TranslationForm::class);
+
+        $page->set('key', '')->call('save')->assertHasErrors(['key' => 'required']);
+
+        $page->set('key', 'welcome.banner')->set('en', 'Welcome to TaskFlow')->set('ar', 'مرحبا بك في تاسك فلو')
+            ->call('save')->assertHasNoErrors()->assertRedirect(route('admin.translations'));
+
+        $row = Translation::where('key', 'welcome.banner')->firstOrFail();
+        $this->assertSame('keyword', $row->type);
+        $this->assertSame('مرحبا بك في تاسك فلو', $row->ar);
+
+        Livewire::actingAs($this->admin)->test(TranslationForm::class)->set('key', 'welcome.banner')->call('save')->assertHasErrors('key');   // duplicate
+    }
+
+    public function test_the_admin_deletes_a_translation_on_a_confirmation_page(): void
+    {
+        $keyword = Translation::create(['key' => 'temp.keyword', 'type' => 'keyword', 'en' => 'Temp', 'ar' => 'مؤقت']);
+
+        $this->actingAs($this->admin)->get(route('admin.translations.delete', $keyword))->assertOk()->assertSee('temp.keyword')->assertSee('Please confirm');
+
+        Livewire::actingAs($this->admin)->test(DeleteTranslation::class, ['translation' => $keyword])
+            ->call('delete')->assertRedirect(route('admin.translations'));
+
+        $this->assertDatabaseMissing('translations', ['key' => 'temp.keyword']);
+    }
+
+    public function test_deleting_a_code_key_removes_its_arabic_text_and_the_english_key_is_shown_again(): void
+    {
+        $row = Translation::where('key', 'Approve task')->firstOrFail();
+
+        Livewire::actingAs($this->admin)->test(DeleteTranslation::class, ['translation' => $row])->call('delete');
+
+        app('translator')->setLoaded([]);
+        app()->setLocale('ar');
+        $this->assertSame('Approve task', __('Approve task'));
+    }
+
+    public function test_other_roles_cannot_open_edit_or_delete(): void
+    {
+        $row = Translation::first();
+
+        foreach ([$this->employee, $this->manager, $this->hr] as $user) {
+            $this->actingAs($user)->get("/admin/translations/{$row->id}/edit")->assertNotFound();
+            $this->actingAs($user)->get("/admin/translations/{$row->id}/delete")->assertNotFound();
+            Livewire::actingAs($user)->test(TranslationForm::class, ['translation' => $row])->assertForbidden();
+            Livewire::actingAs($user)->test(DeleteTranslation::class, ['translation' => $row])->assertForbidden();
+        }
     }
 }
