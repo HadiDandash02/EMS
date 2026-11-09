@@ -24,3 +24,7 @@ Homestead.yaml
 Thumbs.db
 
 .playwright-mcp/
+
+# Documentation other than README.md stays on this computer only
+/docs/
+/GUIDE.md
