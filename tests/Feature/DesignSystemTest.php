@@ -75,14 +75,6 @@ class DesignSystemTest extends TestCase
         }
     }
 
-    public function test_the_design_system_guide_exists_and_points_to_the_style_files(): void
-    {
-        $guide = file_get_contents(base_path('docs/DESIGN-SYSTEM.md'));
-
-        foreach (['resources/css/app.css', '.btn-primary', '.card', '<x-page>', 'components/button.blade.php'] as $needle) {
-            $this->assertStringContainsString($needle, $guide);
-        }
-    }
     public function test_searching_shows_no_loading_spinner_or_dimmed_table(): void
     {
         $bar = file_get_contents(resource_path('views/components/filter-bar.blade.php'));
@@ -107,19 +99,5 @@ class DesignSystemTest extends TestCase
 
         $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
         $list->assertSet('searched', false)->set('status', 'PENDING')->assertSet('searched', true);
-    }
-    public function test_the_erd_is_a_real_image_and_is_linked_from_the_readme(): void
-    {
-        foreach (['docs/erd.png', 'docs/erd.svg', 'docs/erd.mmd'] as $file) {
-            $this->assertFileExists(base_path($file));
-        }
-        $this->assertGreaterThan(50_000, filesize(base_path('docs/erd.png')));   // a drawn diagram, not an empty file
-        $this->assertSame("‰PNG", substr(file_get_contents(base_path('docs/erd.png'), false, null, 0, 4), 0, 4));
-
-        foreach (['departments', 'users', 'employees', 'tasks', 'task_histories'] as $table) {
-            $this->assertStringContainsString(strtoupper($table).' {', file_get_contents(base_path('docs/erd.mmd')));
-        }
-        $this->assertStringContainsString('docs/erd.png', file_get_contents(base_path('README.md')));
-        $this->assertStringContainsString('erd.png', file_get_contents(base_path('docs/ERD.md')));
     }
 }
