@@ -43,7 +43,7 @@ class AdminCrudTest extends TestCase
         return array_merge([
             'name' => 'Nadia Karam', 'username' => 'nadia', 'email' => 'nadia@x.test', 'phone' => '',
             'role' => 'employee', 'department_id' => (string) $this->dept->id, 'manager_id' => (string) $this->managerEmp->id,
-            'job_title' => 'Designer', 'password' => self::STRONG,
+            'job_title' => 'Designer', 'employee_number' => 'EMP-9001', 'password' => self::STRONG,
         ], $overrides);
     }
 
@@ -108,6 +108,59 @@ class AdminCrudTest extends TestCase
         ]))->call('save')->assertHasErrors(['name', 'username', 'email' => 'unique', 'password', 'department_id', 'job_title']);
 
         $this->assertDatabaseMissing('users', ['username' => 'x']);
+    }
+
+    public function test_the_employee_number_is_required_unique_and_well_formed(): void
+    {
+        foreach (['' => 'required', 'bad number!' => 'regex', $this->employeeEmp->employee_number => 'unique', 'EMP-1234567890123456789012' => 'max'] as $value => $rule) {
+            $component = Livewire::actingAs($this->admin)->test(UserForm::class);
+            $this->fill($component, $this->newUser(['employee_number' => (string) $value]))->call('save')->assertHasErrors(['employee_number' => $rule]);
+        }
+
+        $this->assertDatabaseMissing('users', ['username' => 'nadia']);
+    }
+
+    public function test_the_new_user_form_suggests_the_next_employee_number_but_it_stays_required(): void
+    {
+        $page = Livewire::actingAs($this->admin)->test(UserForm::class);
+
+        $this->assertMatchesRegularExpression('/^EMP-\d{4}$/', $page->get('employee_number'));   // a suggestion
+
+        $page->set('employee_number', '')->set('name', 'X')->call('save')->assertHasErrors(['employee_number' => 'required']);   // clearing it is not allowed
+    }
+
+    public function test_reports_to_offers_only_the_managers_of_the_selected_department(): void
+    {
+        $page = Livewire::actingAs($this->admin)->test(UserForm::class);
+
+        $page->assertViewHas('managers', fn ($m) => $m->isEmpty());                    // no department chosen yet
+
+        $page->set('department_id', (string) $this->dept->id);
+        $this->assertSame([$this->managerEmp->id], $page->viewData('managers')->pluck('id')->all());   // only Engineering's manager
+
+        $page->set('department_id', (string) $this->otherManagerEmp->department_id);
+        $this->assertSame([$this->otherManagerEmp->id], $page->viewData('managers')->pluck('id')->all());
+    }
+
+    public function test_changing_the_department_clears_a_manager_who_does_not_belong_to_it(): void
+    {
+        $page = Livewire::actingAs($this->admin)->test(UserForm::class)
+            ->set('department_id', (string) $this->dept->id)
+            ->set('manager_id', (string) $this->managerEmp->id)
+            ->assertSet('manager_id', (string) $this->managerEmp->id);
+
+        $page->set('department_id', (string) $this->otherManagerEmp->department_id)->assertSet('manager_id', '');
+    }
+
+    public function test_the_server_refuses_a_manager_from_another_department_even_if_the_form_is_tampered_with(): void
+    {
+        $component = Livewire::actingAs($this->admin)->test(UserForm::class);
+
+        // department Engineering, but the chosen manager works in the other department
+        $this->fill($component, $this->newUser(['manager_id' => (string) $this->otherManagerEmp->id]))->call('save')
+            ->assertHasErrors(['manager_id' => 'exists']);
+
+        $this->assertDatabaseMissing('users', ['username' => 'nadia']);
     }
 
     public function test_a_new_users_password_must_be_strong(): void

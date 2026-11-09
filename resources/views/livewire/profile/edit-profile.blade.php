@@ -9,7 +9,7 @@
         {{-- Identity card --}}
         <div class="space-y-6 lg:col-span-1">
             <div class="card">
-                <div class="h-24 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
+                <div class="h-24 rounded-t-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
                 <div class="-mt-12 px-6 pb-6 text-center">
                     @if ($photo && $photo->isPreviewable())
                         <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Preview') }}" class="mx-auto h-24 w-24 rounded-full object-cover ring-4 ring-white">
@@ -66,7 +66,7 @@
 
         {{-- Forms --}}
         <div class="space-y-6 lg:col-span-2">
-            <form novalidate wire:submit="saveProfile" class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <form novalidate data-validate wire:submit="saveProfile" class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Personal information') }}</h3>
                     <p class="text-sm text-slate-500">{{ __('Update your name, username and contact details.') }}</p>
@@ -83,7 +83,7 @@
                     @foreach ($fields as [$field, $label, $type, $auto, $hint])
                         <div>
                             <label for="p-{{ $field }}" class="block text-sm font-medium text-slate-700">{{ $label }}</label>
-                            <input id="p-{{ $field }}" type="{{ $type }}" wire:model="{{ $field }}" autocomplete="{{ $auto }}"
+                            <input id="p-{{ $field }}" type="{{ $type }}" wire:model="{{ $field }}" autocomplete="{{ $auto }}" {!! ['name' => 'required minlength="2" maxlength="100"', 'username' => 'required pattern="[A-Za-z0-9_.]{3,30}" data-pattern-message="'.e(__('Use 3-30 letters, numbers, dots or underscores.')).'"', 'email' => 'required maxlength="191"', 'phone' => 'maxlength="30" pattern="[0-9+\-\s()]*"'][$field] ?? '' !!}
                                    class="mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error($field) ring-rose-400 @else ring-slate-300 @enderror">
                             @if ($hint && ! $errors->has($field))<p class="mt-1 text-xs text-slate-400">{{ $hint }}</p>@endif
                             @error($field)<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
@@ -98,17 +98,17 @@
                 </div>
             </form>
 
-            <form novalidate wire:submit="updatePassword" id="change-password" class="scroll-mt-24 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+            <form novalidate data-validate wire:submit="updatePassword" id="change-password" class="scroll-mt-24 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
                 <div class="border-b border-slate-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-slate-900">{{ __('Change password') }}</h3>
                     <p class="text-sm text-slate-500">{{ __('At least 10 characters, with upper and lower case letters, a number and a symbol.') }}</p>
                 </div>
                 <div class="grid gap-5 p-6 sm:grid-cols-2">
                     <div class="sm:col-span-2">
-                        <x-password-input id="current_password" name="current_password" :label="__('Current password')" wire:model="current_password" :error="$errors->first('current_password')" />
+                        <x-password-input id="current_password" name="current_password" :label="__('Current password')" required wire:model="current_password" :error="$errors->first('current_password')" />
                     </div>
-                    <x-password-input id="new_password" name="password" :label="__('New password')" autocomplete="new-password" meter wire:model="password" :error="$errors->first('password')" />
-                    <x-password-input id="password_confirmation" name="password_confirmation" :label="__('Confirm new password')" autocomplete="new-password" wire:model="password_confirmation" />
+                    <x-password-input id="new_password" name="password" :label="__('New password')" autocomplete="new-password" meter required data-strong wire:model="password" :error="$errors->first('password')" />
+                    <x-password-input id="password_confirmation" name="password_confirmation" :label="__('Confirm new password')" autocomplete="new-password" required data-match="new_password" wire:model="password_confirmation" />
                 </div>
                 <div class="flex justify-end rounded-b-2xl bg-slate-50 px-6 py-4">
                     <x-button type="submit" variant="primary" icon="key" wire:loading.attr="disabled" wire:target="updatePassword">

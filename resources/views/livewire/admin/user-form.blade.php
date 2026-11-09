@@ -1,4 +1,11 @@
 @php
+    // constraints for the front-end validation (the server rules are in App\Livewire\Admin\UserForm::rules)
+    $constraints = [
+        'name' => 'required minlength="2" maxlength="100"',
+        'username' => 'required pattern="[A-Za-z0-9_.]{3,30}" data-pattern-message="'.e(__('Use 3-30 letters, numbers, dots or underscores.')).'"',
+        'email' => 'required maxlength="191"',
+        'phone' => 'maxlength="30" pattern="[0-9+\-\s()]*"',
+    ];
     $isAdminAccount = $userId && $role === 'super_admin';
     $roleOptions = collect($roles)->reject(fn ($r) => $r->value === 'super_admin' && $userId)->mapWithKeys(fn ($r) => [$r->value => $r->label()]);
     $field = 'mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500';
@@ -14,7 +21,7 @@
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-    <form novalidate wire:submit="save" class="space-y-6 lg:col-span-2">
+    <form novalidate data-validate wire:submit="save" class="space-y-6 lg:col-span-2">
 {{-- Account --}}
         <section class="card">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4"><h3 class="font-semibold text-slate-900">{{ __('Account') }}</h3></div>
@@ -22,7 +29,7 @@
                 @foreach ([['name', __('Full name').' *', 'text'], ['username', __('Username').' *', 'text'], ['email', __('Email').' *', 'email'], ['phone', __('Phone'), 'tel']] as [$f, $label, $type])
                     <div>
                         <label for="uf-{{ $f }}" class="block text-sm font-medium text-slate-700">{{ $label }}</label>
-                        <input id="uf-{{ $f }}" type="{{ $type }}" wire:model="{{ $f }}" @if ($f === 'username') autocapitalize="none" @endif
+                        <input id="uf-{{ $f }}" type="{{ $type }}" wire:model="{{ $f }}" @if ($f === 'username') autocapitalize="none" @endif {!! $constraints[$f] ?? '' !!}
                                class="{{ $field }} @error($f) ring-rose-400 @else ring-slate-300 @enderror">
                         @error($f)<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
@@ -48,7 +55,7 @@
                     $wire.set('password', p);
                     window.dispatchEvent(new CustomEvent('password-generated', { detail: p }));
                 } }">
-                <x-password-input id="uf-password" name="password" :label="$userId ? __('New password').' ('.__('optional').')' : __('Password').' *'" autocomplete="new-password" meter wire:model="password" :error="$errors->first('password')" />
+                <x-password-input id="uf-password" name="password" :label="$userId ? __('New password').' ('.__('optional').')' : __('Password').' *'" autocomplete="new-password" meter :required="! $userId" data-strong wire:model="password" :error="$errors->first('password')" />
                 <x-button type="button" variant="soft" size="sm" icon="key" class="mt-3" x-on:click="gen()">{{ __('Generate a strong password') }}</x-button>
             </div>
         </section>
@@ -70,22 +77,23 @@
                 @if ($role !== 'super_admin')
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">{{ __('Department') }} *</label>
-                        <x-searchable-select id="uf-dept" wire:model="department_id" :placeholder="__('Select…')" :options="$departments->pluck('name', 'id')" :error="$errors->has('department_id')" />
+                        <x-searchable-select id="uf-dept" required wire:model.live="department_id" :placeholder="__('Select…')" :options="$departments->pluck('name', 'id')" :error="$errors->has('department_id')" />
                         @error('department_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="uf-job" class="block text-sm font-medium text-slate-700">{{ __('Job title') }} *</label>
-                        <input id="uf-job" type="text" wire:model="job_title" class="{{ $field }} @error('job_title') ring-rose-400 @else ring-slate-300 @enderror">
+                        <input id="uf-job" type="text" wire:model="job_title" required maxlength="100" class="{{ $field }} @error('job_title') ring-rose-400 @else ring-slate-300 @enderror">
                         @error('job_title')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">{{ __('Reports to (manager)') }}</label>
-                        <x-searchable-select id="uf-manager" wire:model="manager_id" :placeholder="__('No manager')" :all-label="__('No manager')" :options="$managers->mapWithKeys(fn ($m) => [$m->id => $m->user->name])" :error="$errors->has('manager_id')" />
+                        <x-searchable-select id="uf-manager" wire:model="manager_id" :placeholder="$department_id === '' ? __('Choose a department first') : __('No manager')" :all-label="__('No manager')" :options="$managers->mapWithKeys(fn ($m) => [$m->id => $m->user->name])" :error="$errors->has('manager_id')" />
+                        @if ($department_id !== '' && $managers->isEmpty())<p class="mt-1 text-xs text-slate-500">{{ __('No manager in this department yet. Create a manager for it first.') }}</p>@endif
                         @error('manager_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label for="uf-number" class="block text-sm font-medium text-slate-700">{{ __('Employee number') }}</label>
-                        <input id="uf-number" type="text" wire:model="employee_number" placeholder="{{ __('Auto-generated if empty') }}" class="{{ $field }} @error('employee_number') ring-rose-400 @else ring-slate-300 @enderror">
+                        <label for="uf-number" class="block text-sm font-medium text-slate-700">{{ __('Employee number') }} *</label>
+                        <input id="uf-number" type="text" wire:model="employee_number" placeholder="EMP-0001" required maxlength="20" pattern="[A-Za-z0-9\-]+" data-pattern-message="{{ __('Use letters, numbers and dashes only (max 20).') }}" autocapitalize="characters" class="{{ $field }} @error('employee_number') ring-rose-400 @else ring-slate-300 @enderror">
                         @error('employee_number')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -113,7 +121,7 @@
     <aside class="space-y-5">
         {{-- live preview of the account being typed --}}
         <section class="card">
-            <div class="h-16 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
+            <div class="h-16 rounded-t-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500"></div>
             <div class="-mt-8 px-5 pb-5 text-center">
                 @if ($subject)
                     <x-avatar :user="$subject" size="xl" class="mx-auto !ring-4" />

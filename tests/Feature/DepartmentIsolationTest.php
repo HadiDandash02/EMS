@@ -187,6 +187,7 @@ class DepartmentIsolationTest extends TestCase
                     ->set('role', $role)
                     ->set('department_id', (string) $department->id)
                     ->set('job_title', ucfirst($role))
+                    ->set('employee_number', strtoupper("E{$i}-{$role}"))
                     ->set('password', $passwords)
                     ->call('save')->assertHasNoErrors();
 

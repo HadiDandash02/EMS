@@ -21,7 +21,7 @@
 
     <div class="grid gap-6 lg:grid-cols-3">
         {{-- ============ Form ============ --}}
-        <form novalidate wire:submit="save" class="card lg:col-span-2">
+        <form novalidate data-validate wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Task details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>
@@ -39,7 +39,7 @@
 
                 <div>
                     <label for="tf-title" class="block text-sm font-medium text-slate-700">{{ __('Title') }} <span class="text-rose-500">*</span></label>
-                    <input id="tf-title" type="text" wire:model="title" maxlength="150" autofocus placeholder="{{ __('e.g. Prepare the monthly sales report') }}"
+                    <input id="tf-title" type="text" wire:model="title" required minlength="3" maxlength="150" autofocus placeholder="{{ __('e.g. Prepare the monthly sales report') }}"
                            class="mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('title') ring-rose-400 @else ring-slate-300 @enderror">
                     @error('title')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>

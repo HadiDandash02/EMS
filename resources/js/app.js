@@ -1,4 +1,5 @@
 import './bootstrap';
+import './form-validation';   // instant front-end validation (the server still validates everything)
 import flatpickr from 'flatpickr';
 import { Arabic } from 'flatpickr/dist/l10n/ar.js';
 import 'flatpickr/dist/flatpickr.min.css';

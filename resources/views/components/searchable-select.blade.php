@@ -1,4 +1,4 @@
-@props(['id', 'options' => [], 'placeholder' => null, 'label' => null, 'allLabel' => null, 'error' => false, 'multiple' => false])
+@props(['id', 'options' => [], 'placeholder' => null, 'label' => null, 'allLabel' => null, 'error' => false, 'multiple' => false, 'required' => false])
 @php
     $model = $attributes->wire('model')->value();
     $live = $attributes->wire('model')->hasModifier('live');   // wire:model.live -> sync on every pick
@@ -11,7 +11,8 @@
     multiple = MULTI-SELECT: tick as many rows as you like (the property is a list); the list stays open.
     The list has its own scrollbar (see .select-scroll in resources/css/app.css) when there are many rows.
 --}}
-<div class="relative" wire:key="ss-{{ $id }}"
+{{-- the key changes when the OPTIONS change (e.g. managers of the chosen department), so the list is rebuilt with the new options --}}
+<div class="relative" data-select-host wire:key="ss-{{ $id }}-{{ md5($items->toJson()) }}"
      x-data="{
          open: false, q: '', multiple: @js((bool) $multiple), value: $wire.entangle('{{ $model }}'){{ $live ? '.live' : '' }}, options: @js($items), hl: 0,
          get vals() { return Array.isArray(this.value) ? this.value.map(String) : (this.value ? [String(this.value)] : []); },
@@ -42,6 +43,12 @@
             <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>
         </span>
     </button>
+
+    @if ($required)
+        {{-- invisible mirror of the chosen value: lets resources/js/form-validation.js treat the select as a required field --}}
+        <input type="text" tabindex="-1" aria-hidden="true" id="{{ $id }}-value" name="{{ $id }}-value" required :value="vals.join(',')"
+               class="pointer-events-none absolute inset-x-0 top-0 h-10 w-full opacity-0">
+    @endif
 
     <div x-show="open" x-cloak x-transition.opacity.duration.100ms
          class="absolute z-30 mt-1 w-full min-w-[12rem] overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-200">

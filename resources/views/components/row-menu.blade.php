@@ -26,7 +26,7 @@
     </button>
 
     <div x-ref="menu" x-show="open" x-cloak x-transition.opacity.duration.100ms role="menu" @click="open = false"
-         class="fixed z-50 w-52 rounded-xl bg-white p-1.5 text-slate-700 shadow-xl ring-1 ring-slate-200"
+         class="select-scroll fixed z-50 max-h-[70vh] w-52 overflow-y-auto overscroll-contain rounded-xl bg-white p-1.5 text-slate-700 shadow-xl ring-1 ring-slate-200"
          :style="`top:${top}px; ${document.dir === 'rtl' ? 'left' : 'right'}:${side}px`">
         {{ $slot }}
     </div>

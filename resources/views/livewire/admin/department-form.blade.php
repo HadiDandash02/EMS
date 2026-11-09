@@ -10,7 +10,7 @@
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-        <form novalidate wire:submit="save" class="card lg:col-span-2">
+        <form novalidate data-validate wire:submit="save" class="card lg:col-span-2">
             <div class="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-6 py-4">
                 <h3 class="font-semibold text-slate-900">{{ __('Department details') }}</h3>
                 <p class="text-xs text-slate-500">{{ __('Fields marked * are required.') }}</p>
@@ -19,13 +19,13 @@
             <div class="grid gap-5 px-6 py-6 sm:grid-cols-3">
                 <div class="sm:col-span-2">
                     <label for="dp-name" class="block text-sm font-medium text-slate-700">{{ __('Name') }} <span class="text-rose-500">*</span></label>
-                    <input id="dp-name" type="text" wire:model="name" autofocus placeholder="{{ __('e.g. Human Resources') }}"
+                    <input id="dp-name" type="text" wire:model="name" required minlength="2" maxlength="100" autofocus placeholder="{{ __('e.g. Human Resources') }}"
                            class="mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('name') ring-rose-400 @else ring-slate-300 @enderror">
                     @error('name')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label for="dp-code" class="block text-sm font-medium text-slate-700">{{ __('Code') }} <span class="text-rose-500">*</span></label>
-                    <input id="dp-code" type="text" wire:model="code" maxlength="10" placeholder="HR"
+                    <input id="dp-code" type="text" wire:model="code" required pattern="[A-Za-z0-9]{2,10}" data-pattern-message="{{ __('Use 2-10 letters or numbers.') }}" maxlength="10" placeholder="HR"
                            class="mt-1 block w-full rounded-lg border-0 px-3 py-2.5 font-mono text-sm uppercase shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 @error('code') ring-rose-400 @else ring-slate-300 @enderror">
                     <p class="mt-1 text-xs text-slate-400">{{ __('2-10 letters or numbers.') }}</p>
                     @error('code')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror

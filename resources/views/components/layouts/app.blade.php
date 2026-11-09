@@ -39,6 +39,7 @@
             document.documentElement.dataset.theme = t;
         } catch (e) {}
     </script>
+    <x-validation-messages />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -116,7 +117,7 @@
                         <span>{{ config("ems.locales.{$locale}.short") }}</span>
                         <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="absolute end-0 mt-2 w-40 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200">
+                    <div x-show="open" x-cloak x-transition class="select-scroll absolute end-0 mt-2 max-h-80 w-40 overflow-y-auto overscroll-contain rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200">
                         @foreach (config('ems.locales') as $code => $info)
                             <a href="{{ route('language', $code) }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm {{ $locale === $code ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
                                 {{ $info['name'] }}
@@ -143,7 +144,7 @@
                         </span>
                         <svg class="h-3.5 w-3.5 text-slate-400 transition" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="absolute end-0 mt-2 rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-slate-200" style="width:17rem">
+                    <div x-show="open" x-cloak x-transition class="select-scroll absolute end-0 mt-2 max-h-[80vh] overflow-y-auto overscroll-contain rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-slate-200" style="width:17rem">
                         <div class="border-b border-slate-100 px-3 pb-2.5 pt-2">
                             <p class="text-sm font-semibold text-slate-900">{{ $user->name }}</p>
                             <p class="truncate text-xs text-slate-500">&#64;{{ $user->username }} · {{ $user->email }}</p>
