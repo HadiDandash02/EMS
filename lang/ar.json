@@ -384,5 +384,18 @@
     "This task belongs to another department.": "هذه المهمة تخص قسمًا آخر.",
     "Every approval and rejection decision in your department.": "كل قرارات الاعتماد والرفض في قسمك.",
     "Every task of your department. Use the filters to narrow down.": "كل مهام قسمك. استخدم عوامل التصفية للتضييق.",
-    "Only managers and the super admin can approve or reject tasks.": "يمكن للمدراء والمدير العام فقط الموافقة على المهام أو رفضها."
+    "Only managers and the super admin can approve or reject tasks.": "يمكن للمدراء والمدير العام فقط الموافقة على المهام أو رفضها.",
+    "Enter the employee number.": "أدخل الرقم الوظيفي.",
+    "Use letters, numbers and dashes only (max 20).": "استخدم أحرفًا وأرقامًا وشرطات فقط (حتى 20).",
+    "Choose a manager of the selected department.": "اختر مديرًا من القسم المحدد.",
+    "Choose a department first": "اختر القسم أولًا",
+    "No manager in this department yet. Create a manager for it first.": "لا يوجد مدير في هذا القسم بعد. أنشئ مديرًا له أولًا.",
+    "This field is required – please complete it.": "هذا الحقل مطلوب – يرجى استكماله.",
+    "Enter a valid email address.": "أدخل بريدًا إلكترونيًا صحيحًا.",
+    "Use at least :min characters.": "استخدم :min أحرف على الأقل.",
+    "Use at most :max characters.": "استخدم :max حرفًا كحد أقصى.",
+    "This value is not in the expected format.": "هذه القيمة ليست بالصيغة المطلوبة.",
+    "The password needs 10+ characters, upper and lower case letters, a number and a symbol.": "تحتاج كلمة المرور إلى 10 أحرف أو أكثر وأحرف كبيرة وصغيرة ورقم ورمز.",
+    "The passwords do not match.": "كلمتا المرور غير متطابقتين.",
+    "Use 2-10 letters or numbers.": "استخدم من 2 إلى 10 حرفًا أو رقمًا."
 }

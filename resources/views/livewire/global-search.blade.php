@@ -30,7 +30,7 @@
         </div>
 
         <div x-show="open" x-cloak x-transition.opacity.duration.100ms role="listbox"
-             class="absolute inset-x-3 mt-1 max-h-96 overflow-y-auto rounded-xl bg-white p-1.5 text-sm shadow-xl ring-1 ring-slate-200 md:inset-x-auto md:end-0 md:w-96">
+             class="select-scroll absolute inset-x-3 mt-1 max-h-96 overflow-y-scroll overscroll-contain rounded-xl bg-white p-1.5 text-sm shadow-xl ring-1 ring-slate-200 md:inset-x-auto md:end-0 md:w-96">
             @forelse ($groups as $group)
                 <p class="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $group['title'] }}</p>
                 @foreach ($group['items'] as $item)

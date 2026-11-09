@@ -64,7 +64,7 @@
                         {{ __('Columns') }}
                     </x-button>
                     <div x-show="open" x-cloak x-transition.opacity.duration.100ms
-                         class="absolute end-0 z-30 mt-2 w-52 rounded-xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
+                         class="select-scroll absolute end-0 z-30 mt-2 max-h-80 w-52 overflow-y-auto overscroll-contain rounded-xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
                         <p class="px-2 pb-1 pt-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ __('Show columns') }}</p>
                         @foreach ($columns as $key => $label)
                             <label class="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">

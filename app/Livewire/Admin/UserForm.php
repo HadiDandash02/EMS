@@ -50,6 +50,8 @@ class UserForm extends Component
         Gate::authorize('manage-users');
 
         if (! $user?->exists) {
+            $this->employee_number = $this->nextEmployeeNumber();   // a suggestion: the field is required, the admin may change it
+
             return;
         }
 
@@ -77,6 +79,7 @@ class UserForm extends Component
 
         $this->username = strtolower(trim($this->username));
         $this->email = strtolower(trim($this->email));
+        $this->employee_number = strtoupper(trim($this->employee_number));
 
         $editing = $this->userId ? User::with('employee')->findOrFail($this->userId) : null;
         // On EDIT this comes from the stored account - never from the submitted role - so a
@@ -87,6 +90,9 @@ class UserForm extends Component
             'username.regex' => __('Use 3-30 letters, numbers, dots or underscores.'),
             'department_id.required' => __('Choose a department.'),
             'job_title.required' => __('Enter a job title.'),
+            'employee_number.required' => __('Enter the employee number.'),
+            'employee_number.regex' => __('Use letters, numbers and dashes only (max 20).'),
+            'manager_id.exists' => __('Choose a manager of the selected department.'),
         ]);
 
         if ($editing) {
@@ -119,7 +125,7 @@ class UserForm extends Component
                     'department_id' => (int) $this->department_id,
                     'manager_id' => $this->manager_id !== '' ? (int) $this->manager_id : null,
                     'job_title' => $this->job_title,
-                    'employee_number' => $this->employee_number !== '' ? $this->employee_number : $this->nextEmployeeNumber(),
+                    'employee_number' => $this->employee_number,
                     'hired_at' => $this->hired_at !== '' ? $this->hired_at : null,
                 ]);
             }
@@ -145,11 +151,12 @@ class UserForm extends Component
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]*$/'],
             'role' => $isAdminAccount && $editing ? ['required', Rule::in([UserRole::SuperAdmin->value])] : ['required', Rule::in($allowedRoles)],
             'department_id' => $isAdminAccount ? ['nullable'] : ['required', 'exists:departments,id'],
+            // the manager must really be a manager AND work in the department chosen for this person
             'manager_id' => $isAdminAccount ? ['nullable'] : ['nullable', Rule::exists('employees', 'id')->where(
-                fn ($q) => $q->whereIn('user_id', User::query()->where('role', UserRole::Manager)->select('id'))
+                fn ($q) => $q->whereIn('user_id', User::query()->where('role', UserRole::Manager)->select('id'))->where('department_id', (int) $this->department_id)
             )],
             'job_title' => $isAdminAccount ? ['nullable'] : ['required', 'string', 'max:100'],
-            'employee_number' => $isAdminAccount ? ['nullable'] : ['nullable', 'string', 'max:20', Rule::unique('employees', 'employee_number')->ignore($employeeId)],
+            'employee_number' => $isAdminAccount ? ['nullable'] : ['required', 'string', 'max:20', 'regex:/^[A-Za-z0-9\-]+$/', Rule::unique('employees', 'employee_number')->ignore($employeeId)],
             'hired_at' => $isAdminAccount ? ['nullable'] : ['nullable', 'date', 'before_or_equal:today'],
             // Strong password whenever one is typed (required for a new account, optional when editing).
             'password' => $editing ? ['nullable', PasswordPolicy::rule()] : ['required', PasswordPolicy::rule()],
@@ -167,6 +174,27 @@ class UserForm extends Component
                 'role' => __('This manager still has people reporting to them. Reassign their team first.'),
             ]);
         }
+    }
+
+    /** Picking another department clears a manager who does not belong to it. */
+    public function updatedDepartmentId(): void
+    {
+        if ($this->manager_id !== '' && ! $this->managersOfDepartment()->contains('id', (int) $this->manager_id)) {
+            $this->manager_id = '';
+        }
+    }
+
+    /** Managers of the SELECTED department only (nobody to choose from until a department is chosen). */
+    private function managersOfDepartment()
+    {
+        if ($this->department_id === '') {
+            return collect();
+        }
+
+        return Employee::with('user')->where('department_id', (int) $this->department_id)
+            ->whereHas('user', fn ($q) => $q->where('role', UserRole::Manager))
+            ->when($this->userId, fn ($q) => $q->where('user_id', '!=', $this->userId))
+            ->get()->sortBy('user.name');
     }
 
     private function nextEmployeeNumber(): string
@@ -190,8 +218,7 @@ class UserForm extends Component
             'subject' => $subject,
             'taskCount' => $subject?->employee?->tasks()->count() ?? 0,
             'departments' => Department::orderBy('name')->get(),
-            'managers' => Employee::with('user')->whereHas('user', fn ($q) => $q->where('role', UserRole::Manager))
-                ->when($this->userId, fn ($q) => $q->where('user_id', '!=', $this->userId))->get()->sortBy('user.name'),
+            'managers' => $this->managersOfDepartment(),
             'roles' => UserRole::cases(),
         ])->layout('components.layouts.app', ['title' => $this->userId ? 'Edit user' : 'New user']);
     }

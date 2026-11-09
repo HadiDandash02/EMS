@@ -16,6 +16,7 @@
             document.documentElement.dataset.theme = t;
         } catch (e) {}
     </script>
+    <x-validation-messages />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans text-slate-800 antialiased">
@@ -59,7 +60,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ url('/login') }}" novalidate class="mt-8 space-y-5">
+            <form method="POST" action="{{ url('/login') }}" novalidate data-validate class="mt-8 space-y-5">
                 <x-form-errors />
                 @csrf
                 <div>
