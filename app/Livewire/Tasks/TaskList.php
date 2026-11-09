@@ -67,12 +67,7 @@ class TaskList extends Component
             default => false,
         }, 403);
 
-        $this->scope = $scope;
-
-        // Managers land on the approval queue by default.
-        if ($scope === 'team' && blank($this->status) && ! request()->has('status')) {
-            $this->status = [TaskStatus::Completed->value];
-        }
+        $this->scope = $scope;   // no default filter: every list starts with ALL statuses (a manager narrows it himself)
     }
 
     protected function filterProperties(): array

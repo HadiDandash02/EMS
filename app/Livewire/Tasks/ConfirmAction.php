@@ -82,7 +82,17 @@ class ConfirmAction extends Component
 
         session()->flash('success', __($this->definitions()[$this->action]['done']));
 
-        return $this->redirect($this->action === 'delete' ? $this->listUrl() : route('tasks.show', $task), navigate: true);
+        return $this->redirect($this->redirectAfterSuccess($task), navigate: true);
+    }
+
+    /** After a decision the manager goes straight back to the team list; after delete, to the owner's list. */
+    private function redirectAfterSuccess(Task $task): string
+    {
+        return match ($this->action) {
+            'delete' => $this->listUrl(),
+            'approve' => route('team.tasks'),
+            default => route('tasks.show', $task),
+        };
     }
 
     private function listUrl(): string
