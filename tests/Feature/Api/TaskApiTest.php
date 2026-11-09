@@ -152,11 +152,15 @@ class TaskApiTest extends TestCase
         $this->putJson("/api/tasks/{$task->id}", ['title' => 'Too late'])->assertUnprocessable();
     }
 
-    public function test_owner_can_complete_a_task(): void
+    public function test_owner_can_complete_a_started_task_but_not_one_that_was_never_started(): void
     {
         $task = $this->taskFor($this->employeeEmp);
         Sanctum::actingAs($this->employee);
 
+        $this->postJson("/api/tasks/{$task->id}/complete")->assertUnprocessable();          // still PENDING: start it first
+        $this->assertSame(\App\Enums\TaskStatus::Pending, $task->fresh()->status);
+
+        $this->postJson("/api/tasks/{$task->id}/start")->assertOk();
         $this->postJson("/api/tasks/{$task->id}/complete")->assertOk()->assertJsonPath('data.status.value', 'COMPLETED');
     }
 

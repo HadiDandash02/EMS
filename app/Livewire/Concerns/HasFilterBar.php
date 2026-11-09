@@ -17,10 +17,10 @@ trait HasFilterBar
     public int $perPage = 10;
 
     /**
-     * Is the results table open? Every list shows its FILTERS first and keeps the table collapsed until the user
-     * presses Search (or arrives with filters already in the URL). The table card has its own Collapse/Expand button.
+     * Is the results table shown? By DEFAULT every list shows ALL its data at once (no filtering needed); the filters
+     * narrow it down. The Results card has its own Collapse/Expand button.
      */
-    public bool $searched = false;
+    public bool $searched = true;
 
     /** @return list<string> public properties that make up the filters */
     abstract protected function filterProperties(): array;
@@ -69,7 +69,7 @@ trait HasFilterBar
     public function clearFilters(): void
     {
         $this->reset($this->filterProperties());   // rows per page is a display choice, it stays
-        $this->searched = false;                  // back to: filters first, table closed
+        $this->searched = true;                   // the full list comes back
         $this->resetPage();
     }
 

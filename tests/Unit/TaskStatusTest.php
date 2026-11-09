@@ -13,7 +13,6 @@ class TaskStatusTest extends TestCase
     {
         return [
             'pending -> in progress' => [TaskStatus::Pending, TaskStatus::InProgress],
-            'pending -> completed' => [TaskStatus::Pending, TaskStatus::Completed],
             'pending -> cancelled' => [TaskStatus::Pending, TaskStatus::Cancelled],
             'in progress -> completed' => [TaskStatus::InProgress, TaskStatus::Completed],
             'completed -> approved' => [TaskStatus::Completed, TaskStatus::Approved],
@@ -31,6 +30,7 @@ class TaskStatusTest extends TestCase
             'cancelled -> pending' => [TaskStatus::Cancelled, TaskStatus::Pending],
             'cancelled -> approved' => [TaskStatus::Cancelled, TaskStatus::Approved],
             'pending -> approved (skips completion)' => [TaskStatus::Pending, TaskStatus::Approved],
+            'pending -> completed (must be started first)' => [TaskStatus::Pending, TaskStatus::Completed],
             'in progress -> approved' => [TaskStatus::InProgress, TaskStatus::Approved],
             'in progress -> cancelled' => [TaskStatus::InProgress, TaskStatus::Cancelled],
             'rejected -> approved (needs rework first)' => [TaskStatus::Rejected, TaskStatus::Approved],

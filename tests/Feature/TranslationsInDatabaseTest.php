@@ -113,7 +113,7 @@ class TranslationsInDatabaseTest extends TestCase
             $this->actingAs($user)->get('/admin/translations')->assertNotFound();
         }
         $this->actingAs($this->admin)->get('/admin/translations')->assertOk()
-            ->assertSee('Translated To English')->assertSee('Translated To Arabic')->assertSee('Auto-translate empty texts');
+            ->assertSee('Translated To English')->assertSee('Translated To Arabic')->assertSee('Auto-translate ALL empty texts');
 
         Livewire::actingAs($this->hr)->test(TranslationManager::class)->assertForbidden();
     }
@@ -262,5 +262,31 @@ class TranslationsInDatabaseTest extends TestCase
         $this->artisan('translations:auto', ['--limit' => 1])->assertSuccessful();
 
         $this->assertSame(1, Translation::where('machine', true)->count());
+    }
+    public function test_auto_translate_all_drains_every_empty_text_batch_after_batch(): void
+    {
+        $this->fakeService('مترجم');
+        foreach (range(1, 40) as $i) {
+            Translation::create(['key' => "Bulk sentence {$i}", 'type' => 'code', 'en' => "Bulk sentence {$i}", 'ar' => null]);
+        }
+        $this->assertSame(40, Translation::untranslated('ar')->count());
+
+        $page = $this->page();
+        $page->call('translateMissing')->assertReturned(25);     // 15 per batch: 40 -> 25
+        $page->call('translateMissing')->assertReturned(10);
+        $page->call('translateMissing')->assertReturned(0);      // nothing left: the page stops asking
+        $page->call('translateMissing')->assertReturned(0);
+
+        $this->assertSame(0, Translation::untranslated('ar')->count());
+        $this->assertSame(40, Translation::where('machine', true)->count());
+    }
+
+    public function test_auto_translate_stops_with_minus_one_when_the_service_is_down(): void
+    {
+        $this->freshHttp();
+        Http::fake(['*' => Http::response('down', 500)]);
+        Translation::create(['key' => 'Unreachable sentence', 'type' => 'code', 'en' => 'Unreachable sentence', 'ar' => null]);
+
+        $this->page()->call('translateMissing')->assertReturned(-1);   // the loop in the page stops instead of spinning forever
     }
 }

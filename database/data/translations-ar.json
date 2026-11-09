@@ -451,5 +451,9 @@
     "Choose at least one role.": "اختر دورًا واحدًا على الأقل.",
     "The super admin role cannot be combined with other roles.": "لا يمكن الجمع بين دور المدير العام وأدوار أخرى.",
     "Choose the roles": "اختر الأدوار",
-    "A person can have several roles. The first one is the main role (its panel opens at sign-in).": "يمكن أن يكون للشخص عدة أدوار. الدور الأول هو الدور الرئيسي (تفتح لوحته عند تسجيل الدخول)."
+    "A person can have several roles. The first one is the main role (its panel opens at sign-in).": "يمكن أن يكون للشخص عدة أدوار. الدور الأول هو الدور الرئيسي (تفتح لوحته عند تسجيل الدخول).",
+    "texts left": "نصوص متبقية",
+    "Stop": "إيقاف",
+    "Stopped.": "تم الإيقاف.",
+    "Auto-translate ALL empty texts": "ترجمة كل النصوص الفارغة تلقائيًا"
 }

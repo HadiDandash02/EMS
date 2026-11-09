@@ -23,7 +23,8 @@ enum TaskStatus: string
     public function transitions(): array
     {
         return match ($this) {
-            self::Pending => [self::InProgress, self::Completed, self::Cancelled],
+            // A task must be STARTED before it can be completed: Pending -> In progress -> Completed.
+            self::Pending => [self::InProgress, self::Cancelled],
             // [CHANGE-REQUEST #3: an In Progress task may also be cancelled] (1/5) replace the next line with:
             //   self::InProgress => [self::Completed, self::Cancelled],
             self::InProgress => [self::Completed],
