@@ -287,6 +287,10 @@ Main folders: `app/Enums`, `app/Models`, `app/Policies`, `app/Services`, `app/Li
 
 ## 3. Database & relationships
 
+![TaskFlow ERD](docs/erd.png)
+
+Full-size picture: [`docs/erd.png`](docs/erd.png) / [`docs/erd.svg`](docs/erd.svg) - details and design decisions in [`docs/ERD.md`](docs/ERD.md).
+
 Full diagram and design notes: **[docs/ERD.md](docs/ERD.md)** (Mermaid – renders on GitHub).
 
 ```

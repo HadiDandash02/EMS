@@ -82,7 +82,7 @@ TaskStatus::Completed->canTransitionTo(TaskStatus::Approved); // true
 ## 4. Database
 
 * **Migrations** (`database/migrations/`): `departments`, `employees`, `tasks`, `task_histories`, `users` (+ profile fields), `personal_access_tokens`.
-* **ERD:** `docs/ERD.md` (Mermaid diagram – renders on GitHub).
+* **ERD (a real picture):** `docs/erd.png` and `docs/erd.svg`, embedded in `docs/ERD.md` and the README (source: `docs/erd.mmd`).
 * **Relationships** (models in `app/Models/`):
 
 ```
