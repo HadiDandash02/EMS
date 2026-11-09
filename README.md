@@ -4,7 +4,7 @@ A Laravel application where employees create and complete tasks, managers approv
 completed work, and HR gets a company-wide, searchable view – with a complete audit trail of every
 action.
 
-**Author:** Ali Ahmad Abbas Hadi
+**Project:** Junior Laravel Developer – Phase 2 practical assessment
 **Stack:** PHP 8.2 · Laravel 12 · MySQL · Livewire 3 · Tailwind CSS 4 · Laravel Sanctum · PHPUnit
 
 ---
@@ -40,8 +40,8 @@ Section numbers follow the brief.
 | 12 | Automated tests (all 10 scenarios listed in the brief + at least one Unit test) | ✅ | section 8 (`php artisan test`) |
 | 13 | Git: feature branch, logical commits, merged through branches, Pull Request | ✅ / ⏳ | `feature/task-management` + topic branches. **`main` is only updated when the owner decides**; open the PR `feature/task-management → main` on GitHub |
 | 15 | README: setup, DB, architecture, relationships, authorization, validation, business rules, API, testing, AI usage, known limitations | ✅ | this file |
-| 16 | Submission: repo, PR, ERD, README, tests, API docs, migrations/seeders/factories, **screen recording** | ⏳ | everything except the recording is in the repo (see section 12) |
-| 17 | Screen recording 10–15 min | ⏳ | guide in section 12 |
+| 16 | Submission: repo, PR, ERD, README, tests, API docs, migrations/seeders/factories, **screen recording** | ✅ | all in the repo; the recordings are in [`recordings/`](recordings/) (see section 12) |
+| 17 | Screen recording 10–15 min | ✅ | [`recordings/TaskFlow-demo.mp4`](recordings/TaskFlow-demo.mp4) – full walkthrough; [`recordings/Livewire-and-Service-demo.mp4`](recordings/Livewire-and-Service-demo.mp4) – Livewire + service |
 | 18 | Final change requests (authorization rule, new filter, status transition, new API field, new test, business rule…) | ✅ ready | the code is built for this: see "Where to change things" in section 12 |
 | 19 | Debugging assessment (authorization, N+1, validation, transition, API response, transaction) | ✅ ready | tests exist for each area; see section 12 |
 | 20 | Understand, explain, maintain — I remain responsible for the code | ✅ | section 9 (AI usage) |
@@ -463,6 +463,15 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 
 ## 12. Screen recording guide & change-request readiness
 
+### The recordings (in this repository)
+
+| File | What it shows |
+|---|---|
+| [`recordings/TaskFlow-demo.mp4`](recordings/TaskFlow-demo.mp4) | Full walkthrough (~10 min, synthetic voice): login, employee creates and completes a task, manager approves / rejects, unauthorised access blocked (403), HR search and filters, REST API calls, the automated test run, and an explanation of `TaskWorkflowService` |
+| [`recordings/Livewire-and-Service-demo.mp4`](recordings/Livewire-and-Service-demo.mp4) | Livewire at work (an on-screen counter shows page loads vs Livewire requests) and what the workflow service contains |
+
+On GitHub, click a file and press the play button (or **Download**) to watch it.
+
 ### Recording script (≈ 12 minutes) — maps to section 17 of the brief
 1. **Login / authentication** – sign in with a username, then with an email; show the password eye; wrong password error.
 2. **Employee creates a task** (Abbas) – validation errors first, then a valid task; **views their tasks**, edits a pending one, cancels/deletes one.
@@ -495,4 +504,4 @@ Logs: `storage/logs/laravel.log`.
 
 ### Submission checklist
 Git repository ✅ · Pull Request ⏳ (open on GitHub) · ERD ✅ `docs/ERD.md` · README ✅ · Automated tests ✅ ·
-API documentation ✅ (section 7) · Migrations/seeders/factories ✅ · Screen recording ⏳.
+API documentation ✅ (section 7) · Migrations/seeders/factories ✅ · Screen recording ✅ ([`recordings/`](recordings/)).
