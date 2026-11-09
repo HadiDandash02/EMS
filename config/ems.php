@@ -21,6 +21,13 @@ return [
     | Interface languages (switcher in the top bar). Arabic is right-to-left.
     | Translations: the `translations` table (keys are the English texts), edited on /admin/translations.
     */
+    /*
+    | HR scope. false (default): HR works inside their own department only (the project's isolation rule).
+    | true: HR sees ALL employees and tasks of every department, exactly as the brief words it.
+    | Set in .env:  EMS_HR_SEES_ALL_DEPARTMENTS=true
+    */
+    'hr_sees_all_departments' => env('EMS_HR_SEES_ALL_DEPARTMENTS', false),
+
     // Machine translation service used by the "Auto-translate" button (any MyMemory-compatible address)
     'translator' => [
         'url' => env('TRANSLATION_API_URL', 'https://api.mymemory.translated.net/get'),

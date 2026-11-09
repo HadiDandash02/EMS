@@ -26,5 +26,10 @@ Thumbs.db
 .playwright-mcp/
 
 # Documentation other than README.md stays on this computer only
-/docs/
+/docs/*
+# ...except the database diagram, which is part of the submission
+!/docs/erd.png
+!/docs/erd.svg
+!/docs/erd.mmd
+!/docs/ERD.md
 /GUIDE.md

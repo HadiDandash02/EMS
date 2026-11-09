@@ -21,7 +21,7 @@ Section numbers follow the brief.
 | 2 | Employee must **not**: see others' private tasks, modify others', approve, approve own | ✅ | `TaskPolicy`, `Task::visibleTo`, tests in `TaskAuthorizationTest`, `ApprovalWorkflowTest` |
 | 2 | **Manager**: view team tasks & details, approve/reject completed tasks, rejection reason, approval history | ✅ | `/manager/team/tasks`, `RejectModal`, `/manager/approvals` |
 | 2 | Manager must **not**: approve own, approve outside team, approve already-approved, approve cancelled | ✅ | `TaskPolicy::review`, `TaskWorkflowService`, `ApprovalWorkflowTest` |
-| 2 | **HR**: view all employees & tasks, search/filter, history, details, approval/rejection info | ✅ | `/hr/employees`, `/hr/all-tasks`, `/hr/approvals` |
+| 2 | **HR**: view all employees & tasks, search/filter, history, details, approval/rejection info | ✅ (own department by default; all departments with `EMS_HR_SEES_ALL_DEPARTMENTS=true`, see section 5) | `/hr/employees`, `/hr/all-tasks`, `/hr/approvals` |
 | 3 | Status workflow defined, implemented and **documented** (valid transitions) | ✅ | `TaskStatus::transitions()`, section 4 below, `Unit/TaskStatusTest` |
 | 4 | DB design: users, employees, departments, tasks, approval/history; keys, FKs, nullable, indexes, timestamps; **ERD** | ✅ | `database/migrations`, **[docs/ERD.md](docs/ERD.md)**, section 3 |
 | 5 | Routing (web + API) | ✅ | `routes/web.php`, `routes/api.php` |
@@ -38,7 +38,7 @@ Section numbers follow the brief.
 | 10 | Tailwind: forms, tables, buttons, status badges, validation messages, empty states, loading, confirmations, responsive | ✅ | `resources/views` (mobile card layout, sidebar drawer, toasts, `wire:confirm`, modals) |
 | 11 | Security: unauthorised access, missing checks, mass assignment, input, SQL injection, CSRF, sensitive data, **ID-in-URL/API tampering**, no reliance on hidden buttons | ✅ | sections 5 and 6 below + dedicated tests |
 | 12 | Automated tests (all 10 scenarios listed in the brief + at least one Unit test) | ✅ | section 8 (`php artisan test`) |
-| 13 | Git: feature branch, logical commits, merged through branches, Pull Request | ✅ / ⏳ | `feature/task-management` + topic branches. **`main` is only updated when the owner decides**; open the PR `feature/task-management → main` on GitHub |
+| 13 | Git: feature branch, logical commits, merged through branches, Pull Request | ✅ | `feature/task-management` + topic branches, merged into `master` through GitHub Pull Requests (the default branch is `master`; it only changes through a merge) |
 | 15 | README: setup, DB, architecture, relationships, authorization, validation, business rules, API, testing, AI usage, known limitations | ✅ | this file |
 | 16 | Submission: repo, PR, ERD, README, tests, API docs, migrations/seeders/factories, **screen recording** | ✅ | all in the repo; the recordings are in [`recordings/`](recordings/) (see section 12) |
 | 17 | Screen recording 10–15 min | ✅ | [`recordings/TaskFlow-demo.mp4`](recordings/TaskFlow-demo.mp4) – the full walkthrough (about 13 minutes); the API is also covered by the Postman collection in [`postman/`](postman/) |
@@ -189,7 +189,7 @@ Run the fast server with `serve.bat` (or `serve.bat 8123` for another port).
 ---
 ### 0f. Design system, full-width pages and "filters first" lists
 
-* **One standard look, one place to change it.** Buttons, cards, page width/spacing, dark mode and brand colours are all defined in [`resources/css/app.css`](resources/css/app.css); the reusable pieces are `<x-page>`, `<x-card>`, `<x-info-list>` and `<x-button>`. The table of "I want to change X -> edit Y" is in [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
+* **One standard look, one place to change it.** Buttons, cards, page width/spacing, dark mode and brand colours are all defined in [`resources/css/app.css`](resources/css/app.css) (classes `.btn-*`, `.card*`, `.page*`, the `[data-theme='dark']` block); the reusable pieces are `<x-page>`, `<x-card>`, `<x-info-list>` and `<x-button>` in `resources/views/components/`.
 * **Every page is full width** with the same skeleton (breadcrumbs, title, cards, side summary). There is **no Back button** anywhere - the breadcrumb leads back.
 * **Filters first, table after Search.** Every list shows its filter panel first; the Results card appears only after **Search** (or when filters arrive in the URL), and then has its own Collapse / Expand button. **Clear** hides it again. Logic: `HasFilterBar` (`$searched`, `applyFilters()`).
 * The old free-text "Search title" box on task lists is now a **searchable "Task" select** that lists exactly the tasks the user may see (own / the team's / all).
@@ -338,6 +338,7 @@ tasks.reviewed_by ──► users
 * Rejection **requires** a reason (min. 5 chars). Enforced in the form, the API *and* the service.
 * Managers cannot review their own tasks; they cannot review tasks outside their team; HR is read-only.
 * The **super admin may approve and reject any task** (manager power) and sees everything (HR power) in all departments.
+* **HR scope - a documented decision.** The brief says HR views all employees and tasks. This project deliberately confines HR (like managers) to **their own department**. The literal brief wording is one setting away: put `EMS_HR_SEES_ALL_DEPARTMENTS=true` in `.env` and HR sees every department (still read only). Both modes are tested (`DepartmentIsolationTest`).
 * **Department isolation:** managers and HR only work inside their own department - they cannot see or act on any other department, and nobody from another department can reach theirs (this includes the HR department). The super admin is not confined and can create managers and HR users in any department.
 * **Transaction decision:** every transition runs in `DB::transaction()` with `lockForUpdate()` on the task row.
   The status update and the history insert must succeed or fail together (no approved task without an audit
@@ -469,13 +470,13 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 
 ## 11. Git workflow
 
-* **`main` is kept clean**: it only receives a merge when the owner decides (and through the Pull Request on GitHub).
+* **`master` is kept clean**: nothing is committed to it directly; it only receives merges of topic branches, through Pull Requests on GitHub.
 * All work happens on `feature/task-management`, built from small topic branches merged with `--no-ff`:
   `chore/project-setup`, `feature/database-structure`, `feature/authorization-workflow`, `feature/web-interface`,
   `feature/task-api`, `feature/automated-tests`, `docs/readme`, `feature/admin-accounts`, `feature/profiles-admin-ui`,
   `feature/task-crud-dates-filters`, `feature/panel-urls-header-i18n`, `feature/pages-pagination-branding` (includes the table redesign, the expired-session fix, database search, dark mode and the speed fixes).
 * Commits are small and descriptive ("Add task database structure", "Implement approval workflow", …).
-* Submission: push the branches, then open a Pull Request **`feature/task-management` → `main`**.
+* Submission: push the branch, open a Pull Request into `master`, review it and merge (the early pull requests #1 and #2 and every later one follow this flow).
 
 ---
 
@@ -520,5 +521,5 @@ API response problem → `TaskResource` + JSON structure test · Transaction iss
 Logs: `storage/logs/laravel.log`.
 
 ### Submission checklist
-Git repository ✅ · Pull Request ⏳ (open on GitHub) · ERD ✅ `docs/ERD.md` · README ✅ · Automated tests ✅ ·
+Git repository ✅ · Pull Request ✅ (GitHub pull requests, see the repository) · ERD ✅ `docs/erd.png` / `docs/ERD.md` · README ✅ · Automated tests ✅ ·
 API documentation ✅ (section 7) · Migrations/seeders/factories ✅ · Screen recording ✅ ([`recordings/`](recordings/)).

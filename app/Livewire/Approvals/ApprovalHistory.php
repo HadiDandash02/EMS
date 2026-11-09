@@ -40,6 +40,10 @@ class ApprovalHistory extends Component
         }
 
         if ($user->isHr()) {
+            if ($user->confinedDepartmentId() === null) {
+                return;   // company-wide HR
+            }
+
             $query->whereHas('task', fn ($t) => $t->whereIn('tasks.employee_id', \App\Models\Employee::query()->select('id')->where('department_id', $user->confinedDepartmentId())));
 
             return;

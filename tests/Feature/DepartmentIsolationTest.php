@@ -206,4 +206,25 @@ class DepartmentIsolationTest extends TestCase
         $this->assertSame($newHr->employee->department_id, $newHr->confinedDepartmentId());
         $this->assertNull($this->admin->confinedDepartmentId());
     }
+    public function test_the_company_wide_switch_gives_hr_every_department_exactly_as_the_brief_words_it(): void
+    {
+        $mine = $this->taskFor($this->employeeEmp, 'completed');
+        $other = $this->taskFor($this->outsiderEmp, 'completed');
+        app(TaskWorkflowService::class)->approve($other, $this->otherManager);
+
+        // default: own department only
+        $this->assertSame([$mine->id], $this->rows(Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])));
+        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$other->id}"))->assertForbidden();
+
+        // EMS_HR_SEES_ALL_DEPARTMENTS=true: all tasks, all employees, all decisions - and still read only
+        config(['ems.hr_sees_all_departments' => true]);
+
+        $this->assertSame([$mine->id, $other->id], $this->rows(Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])));
+        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$other->id}"))->assertOk();
+        $this->assertSame(\App\Models\Employee::count(), Livewire::actingAs($this->hr)->test(EmployeeList::class)->viewData('employees')->total());
+        $this->assertCount(1, Livewire::actingAs($this->hr)->test(ApprovalHistory::class)->viewData('records')->items());
+
+        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);   // HR still cannot approve
+        app(TaskWorkflowService::class)->approve($this->taskFor($this->employeeEmp, 'completed'), $this->hr);
+    }
 }
