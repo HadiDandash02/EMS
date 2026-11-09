@@ -184,7 +184,7 @@ class DepartmentIsolationTest extends TestCase
                     ->set('name', ucfirst($role)." of {$department->code}")
                     ->set('username', "{$role}{$i}x")
                     ->set('email', "{$role}{$i}x@x.test")
-                    ->set('role', $role)
+                    ->set('roles', [$role])
                     ->set('department_id', (string) $department->id)
                     ->set('job_title', ucfirst($role))
                     ->set('employee_number', strtoupper("E{$i}-{$role}"))
@@ -198,7 +198,7 @@ class DepartmentIsolationTest extends TestCase
         }
 
         // any existing user can be promoted to manager or HR
-        Livewire::actingAs($this->admin)->test(UserForm::class, ['user' => $this->teammate])->set('role', 'hr')->call('save')->assertHasNoErrors();
+        Livewire::actingAs($this->admin)->test(UserForm::class, ['user' => $this->teammate])->set('roles', ['hr'])->call('save')->assertHasNoErrors();
         $this->assertSame(UserRole::Hr, $this->teammate->fresh()->role);
 
         // and a freshly created HR user is confined to the department they were created in

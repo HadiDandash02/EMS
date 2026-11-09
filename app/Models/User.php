@@ -42,6 +42,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'extra_roles' => 'array',
         ];
     }
 
@@ -70,9 +71,40 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    /**
+     * ALL the roles of the user: the main one first, then the extra ones (a user may be, for example, manager AND HR).
+     *
+     * @return \Illuminate\Support\Collection<int, UserRole>
+     */
+    public function roles(): \Illuminate\Support\Collection
+    {
+        return collect([$this->role, ...array_map(fn ($r) => UserRole::tryFrom((string) $r), (array) $this->extra_roles)])
+            ->filter()->unique(fn (UserRole $r) => $r->value)->values();
+    }
+
     public function hasRole(UserRole $role): bool
     {
-        return $this->role === $role;
+        return $this->roles()->contains($role);
+    }
+
+    /** "Manager · HR" - every role, for display. */
+    public function roleLabels(): string
+    {
+        return $this->roles()->map(fn (UserRole $r) => $r->label())->implode(' · ');
+    }
+
+    /** Users who hold the role as main OR extra role (works on MySQL and SQLite). */
+    public function scopeWithRole(\Illuminate\Database\Eloquent\Builder $query, UserRole|string $role): \Illuminate\Database\Eloquent\Builder
+    {
+        $value = $role instanceof UserRole ? $role->value : $role;
+
+        return $query->where(fn ($q) => $q->where('users.role', $value)->orWhereJsonContains('users.extra_roles', $value));
+    }
+
+    /** The URL prefixes this user may open: one per role (the main role's prefix is the default). */
+    public function panelPrefixes(): array
+    {
+        return $this->roles()->map(fn (UserRole $r) => config('ems.panels.'.$r->value, 'employee'))->unique()->values()->all();
     }
 
     public function isHr(): bool

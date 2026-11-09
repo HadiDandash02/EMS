@@ -30,7 +30,8 @@ class SetPanelPrefix
 
         // Guests are left alone: the `auth` middleware sends them to the login page.
         if ($prefix && $route && $route->hasParameter('panel')) {
-            abort_unless($route->parameter('panel') === $prefix, 404);
+            // a user with several roles may open the prefix of ANY of their roles; everything else is a 404
+            abort_unless(in_array($route->parameter('panel'), $request->user()->panelPrefixes(), true), 404);
 
             // Controllers / components do not need it; remove it so it is not passed to them.
             $route->forgetParameter('panel');

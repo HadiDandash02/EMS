@@ -103,7 +103,7 @@ class GlobalSearch extends Component
                     Sql::whereContains($q, 'users.email', $term, 'or');
                 })
                 ->orderBy('users.name')->limit(self::LIMIT)->get()
-                ->map(fn (User $u) => ['label' => $u->name, 'sub' => $u->email.' · '.$u->role->label(), 'url' => route('admin.users.edit', $u), 'icon' => $icon])->all();
+                ->map(fn (User $u) => ['label' => $u->name, 'sub' => $u->email.' · '.$u->roleLabels(), 'url' => route('admin.users.edit', $u), 'icon' => $icon])->all();
         }
 
         if (! $user->isHr() && ! $user->isManager()) {

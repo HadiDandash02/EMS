@@ -57,7 +57,7 @@ class AuthController extends Controller
         return response()->json([
             'token' => $user->createToken($data['device_name'] ?? 'api')->plainTextToken,
             'token_type' => 'Bearer',
-            'user' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role->value],
+            'user' => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role->value, 'roles' => $user->roles()->map->value->all()],
         ]);
     }
 

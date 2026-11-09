@@ -6,8 +6,8 @@
         'email' => 'required maxlength="191"',
         'phone' => 'maxlength="30" pattern="[0-9+\-\s()]*"',
     ];
-    $isAdminAccount = $userId && $role === 'super_admin';
-    $roleOptions = collect($roles)->reject(fn ($r) => $r->value === 'super_admin' && $userId)->mapWithKeys(fn ($r) => [$r->value => $r->label()]);
+    $isAdminAccount = $userId && in_array('super_admin', $roles, true);
+    $roleOptions = collect($roleCases)->reject(fn ($r) => $r->value === 'super_admin' && $userId)->mapWithKeys(fn ($r) => [$r->value => $r->label()]);
     $field = 'mt-1 block w-full rounded-lg border-0 px-3 py-2.5 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500';
 @endphp
 <div class="page">
@@ -69,12 +69,14 @@
                     @if ($isAdminAccount)
                         <p class="rounded-lg bg-slate-50 px-3 py-2.5 text-sm text-slate-600 ring-1 ring-inset ring-slate-200">{{ __('Super Admin') }}</p>
                     @else
-                        <x-searchable-select id="uf-role" wire:model.live="role" :options="$roleOptions" :error="$errors->has('role')" />
+                        <x-searchable-select id="uf-role" multiple required wire:model.live="roles" :placeholder="__('Choose the roles')" :options="$roleOptions" :error="$errors->has('roles') || $errors->has('roles.*')" />
+                        <p class="mt-1 text-xs text-slate-500">{{ __('A person can have several roles. The first one is the main role (its panel opens at sign-in).') }}</p>
                     @endif
-                    @error('role')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                    @error('roles')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                    @error('roles.*')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>
 
-                @if ($role !== 'super_admin')
+                @if (! in_array('super_admin', $roles, true))
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">{{ __('Department') }} *</label>
                         <x-searchable-select id="uf-dept" required wire:model.live="department_id" :placeholder="__('Select…')" :options="$departments->pluck('name', 'id')" :error="$errors->has('department_id')" />
@@ -132,7 +134,7 @@
                 <p class="mt-3 text-base font-semibold text-slate-900" x-data x-text="$wire.name || @js($subject?->name ?? __('New user'))"></p>
                 <p class="text-sm text-slate-500" x-data x-text="'@' + ($wire.username || 'username')"></p>
                 <p class="truncate text-xs text-slate-400" x-data x-text="$wire.email || 'email@example.com'"></p>
-                @if ($subject)<div class="mt-3"><x-role-badge :role="$subject->role" /></div>@endif
+                @if ($subject)<div class="mt-3"><x-role-badges :user="$subject" /></div>@endif
             </div>
         </section>
 

@@ -360,6 +360,8 @@ Three layers, all **server side** (hiding buttons is only a UX hint):
 3. **Service re-check** – `TaskWorkflowService` authorises the actor against the *locked, freshly loaded* row,
    so even a forged Livewire call or direct service use cannot skip it.
 
+**Several roles per user.** A person can hold more than one role (for example Manager **and** HR). `users.role` is the **main role** (it decides the default panel and URL prefix); `users.extra_roles` (JSON) holds the others. Every rule asks `$user->hasRole(...)`, so the powers add up: `Task::visibleTo()` combines own tasks + the team (manager) + the department (HR), the policy accepts a manager role from either place, the `role:` middleware opens an area for any of the roles, and the URL prefix of any of the roles is accepted (any other prefix is a 404). The super admin creates and edits roles with a multi-select on the user form (the first role chosen is the main one); the super admin role is never combined with another, and a manager who still has a team cannot lose the manager role. Tested in `MultipleRolesTest`.
+
 **Department isolation (managers and HR).** `User::confinedDepartmentId()` returns the department a manager/HR user is confined to (`null` for the super admin). It is applied in `Task::visibleTo()`, `Task::forTeamOf()`, `Employee::visibleTo()`, `TaskPolicy` (view / approve / reject), the approval history, the dashboard, the global search and the API, so a user cannot widen the scope with a filter or by changing an ID (other department = **403**). Tested in `DepartmentIsolationTest`.
 
 Also: lists use `Task::visibleTo($user)`; Livewire `scope` is `#[Locked]` (browser can't switch "mine" to "all");

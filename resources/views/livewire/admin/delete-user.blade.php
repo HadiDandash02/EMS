@@ -25,7 +25,7 @@
                     <p class="truncate text-sm font-semibold text-slate-900">{{ $user->name }}</p>
                     <p class="truncate text-xs text-slate-500">&#64;{{ $user->username }}</p>
                 </div>
-                <x-role-badge :role="$user->role" class="ms-auto" />
+                <span class="ms-auto flex flex-wrap justify-end gap-1"><x-role-badges :user="$user" /></span>
             </div>
             <x-info-list class="mt-5" :items="[
                 __('Email') => $user->email,

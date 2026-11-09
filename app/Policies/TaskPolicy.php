@@ -104,7 +104,7 @@ class TaskPolicy
         //         : Response::allow();      // for ANY department: return Response::allow(); and also widen User::confinedDepartmentId()
         // }
 
-        if ($user->role !== UserRole::Manager) {
+        if (! $user->hasRole(UserRole::Manager)) {
             return Response::deny(__('Only managers and the super admin can approve or reject tasks.'));
         }
 
@@ -125,7 +125,7 @@ class TaskPolicy
 
     private function managesOwnerOf(User $user, Task $task): bool
     {
-        if ($user->role !== UserRole::Manager || $user->employee === null) {
+        if (! $user->hasRole(UserRole::Manager) || $user->employee === null) {
             return false;
         }
 

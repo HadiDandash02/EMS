@@ -42,7 +42,7 @@ class AdminCrudTest extends TestCase
     {
         return array_merge([
             'name' => 'Nadia Karam', 'username' => 'nadia', 'email' => 'nadia@x.test', 'phone' => '',
-            'role' => 'employee', 'department_id' => (string) $this->dept->id, 'manager_id' => (string) $this->managerEmp->id,
+            'roles' => ['employee'], 'department_id' => (string) $this->dept->id, 'manager_id' => (string) $this->managerEmp->id,
             'job_title' => 'Designer', 'employee_number' => 'EMP-9001', 'password' => self::STRONG,
         ], $overrides);
     }
@@ -200,7 +200,7 @@ class AdminCrudTest extends TestCase
         Livewire::actingAs($this->admin)->test(UserForm::class, ['user' => $this->employee])
             ->assertSet('name', $this->employee->name)
             ->assertSet('job_title', $this->employeeEmp->job_title)
-            ->set('name', 'Renamed Person')->set('job_title', 'Lead Dev')->set('role', 'manager')->set('password', '')
+            ->set('name', 'Renamed Person')->set('job_title', 'Lead Dev')->set('roles', ['manager'])->set('password', '')
             ->call('save')->assertHasNoErrors()->assertRedirect(route('admin.users'));
 
         $this->employee->refresh();
@@ -213,7 +213,7 @@ class AdminCrudTest extends TestCase
     public function test_editing_cannot_promote_a_user_to_super_admin(): void
     {
         Livewire::actingAs($this->admin)->test(UserForm::class, ['user' => $this->employee])
-            ->set('role', 'super_admin')->call('save')->assertHasErrors('role');
+            ->set('roles', ['super_admin'])->call('save')->assertHasErrors('roles.0');
 
         $this->assertSame(UserRole::Employee, $this->employee->fresh()->role);
     }
@@ -221,7 +221,7 @@ class AdminCrudTest extends TestCase
     public function test_a_manager_with_a_team_cannot_be_demoted(): void
     {
         Livewire::actingAs($this->admin)->test(UserForm::class, ['user' => $this->manager])
-            ->set('role', 'employee')->call('save')->assertHasErrors('role');
+            ->set('roles', ['employee'])->call('save')->assertHasErrors('roles');
     }
 
     public function test_super_admin_can_delete_a_user_without_tasks_on_a_confirmation_page(): void
