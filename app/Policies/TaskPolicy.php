@@ -21,10 +21,11 @@ class TaskPolicy
     public function view(User $user, Task $task): Response
     {
         return match (true) {
-            $user->canSeeAll() => Response::allow(),
+            $user->isSuperAdmin() => Response::allow(),
             $task->isOwnedBy($user) => Response::allow(),
+            $this->hrOfDepartment($user, $task) => Response::allow(),
             $this->managesOwnerOf($user, $task) => Response::allow(),
-            default => Response::deny(__('You are not allowed to view this task.')),
+            default => Response::deny($this->inAnotherDepartment($user, $task) ? __('This task belongs to another department.') : __('You are not allowed to view this task.')),
         };
     }
 
@@ -85,12 +86,22 @@ class TaskPolicy
 
     private function review(User $user, Task $task): Response
     {
+        // The super admin holds the manager and HR powers for EVERY department and user: he may approve or reject any
+        // task. (The status workflow still applies: only COMPLETED tasks, never twice, a reason is required to reject.)
+        if ($user->isSuperAdmin()) {
+            return Response::allow();
+        }
+
         if ($user->role !== UserRole::Manager) {
-            return Response::deny(__('Only managers can approve or reject tasks.'));
+            return Response::deny(__('Only managers and the super admin can approve or reject tasks.'));
         }
 
         if ($task->isOwnedBy($user)) {
             return Response::deny(__('You cannot review your own task.'));
+        }
+
+        if ($this->inAnotherDepartment($user, $task)) {
+            return Response::deny(__('This task belongs to another department.'));
         }
 
         if (! $this->managesOwnerOf($user, $task)) {
@@ -108,6 +119,34 @@ class TaskPolicy
 
         $task->loadMissing('employee');
 
-        return $task->employee->manager_id === $user->employee->id;
+        // the team is made of direct reports AND they must work in the manager's own department
+        return $task->employee->manager_id === $user->employee->id
+            && $task->employee->department_id === $user->employee->department_id;
+    }
+
+    /** HR sees (and reviews information of) every task of their own department. */
+    private function hrOfDepartment(User $user, Task $task): bool
+    {
+        if (! $user->isHr() || $user->employee === null) {
+            return false;
+        }
+
+        $task->loadMissing('employee');
+
+        return $task->employee->department_id === $user->employee->department_id;
+    }
+
+    /** True when a manager/HR user is looking at a task of a department that is not theirs. */
+    private function inAnotherDepartment(User $user, Task $task): bool
+    {
+        $department = $user->confinedDepartmentId();
+
+        if ($department === null) {
+            return false;
+        }
+
+        $task->loadMissing('employee');
+
+        return $task->employee->department_id !== $department;
     }
 }

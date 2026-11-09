@@ -72,13 +72,17 @@ class SearchAndPagesTest extends TestCase
         $this->search($this->manager, $this->outsider->name)->assertDontSee($this->outsider->email)->assertSee('No results for');
     }
 
-    public function test_hr_finds_every_task_and_employee_with_a_link_to_the_filtered_list(): void
+    public function test_hr_finds_tasks_and_employees_of_their_own_department_only(): void
     {
-        Task::factory()->forEmployee($this->outsiderEmp)->create(['title' => 'Cross team audit']);
+        Task::factory()->forEmployee($this->teammateEmp)->create(['title' => 'Same department audit']);
+        Task::factory()->forEmployee($this->outsiderEmp)->create(['title' => 'Other department audit']);
 
-        $this->search($this->hr, 'audit')->assertSee('Cross team audit');
-        $this->search($this->hr, $this->outsider->name)->assertSee($this->outsider->name)
-            ->assertSee('employees?q=', false);
+        $this->search($this->hr, 'audit')->assertSee('Same department audit')->assertDontSee('Other department audit');
+        $this->search($this->hr, $this->teammate->name)->assertSee($this->teammate->name)->assertSee('employees?q=', false);
+        // the typed text is echoed in the input box, so check the RESULTS, not the page
+        $groups = $this->search($this->hr, $this->outsider->name)->viewData('groups');
+        $labels = collect($groups)->flatMap(fn ($g) => collect($g['items'])->pluck('label'))->all();
+        $this->assertNotContains($this->outsider->name, $labels);
     }
 
     public function test_the_super_admin_finds_users_and_departments_with_edit_links(): void

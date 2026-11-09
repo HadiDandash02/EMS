@@ -137,10 +137,11 @@ class DashboardStats
      *
      * @return array{labels: list<string>, values: list<int>, colors: list<string>, total: int}
      */
-    public function decisions(?User $by = null): array
+    public function decisions(?User $by = null, ?int $department = null): array
     {
         $counts = TaskHistory::query()->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])->whereHas('task')
             ->when($by, fn ($q) => $q->where('actor_id', $by->id))
+            ->when($department !== null, fn ($q) => $q->whereHas('task', fn ($t) => $t->whereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $department))))
             ->selectRaw('action as k, count(*) as c')->groupBy('action')->pluck('c', 'k');
 
         $values = [(int) ($counts[TaskAction::Approved->value] ?? 0), (int) ($counts[TaskAction::Rejected->value] ?? 0)];
@@ -163,9 +164,10 @@ class DashboardStats
     }
 
     /** @return array{employees: int, departments: int, users: int} */
-    public function company(): array
+    public function company(User $viewer): array
     {
-        return ['employees' => Employee::count(), 'departments' => Department::count(), 'users' => DB::table('users')->count()];
+        // HR counts only their own department (the super admin sees the whole company)
+        return ['employees' => Employee::visibleTo($viewer)->count(), 'departments' => Department::count(), 'users' => DB::table('users')->count()];
     }
 
     public const STATUS_COLORS = [

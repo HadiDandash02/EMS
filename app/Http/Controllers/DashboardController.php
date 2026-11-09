@@ -41,7 +41,7 @@ class DashboardController extends Controller
         if ($user->isManager()) {
             $teamQuery = Task::forTeamOf($user);
             $team = [
-                'members' => $user->employee->directReports()->count(),
+                'members' => $user->employee->directReports()->where('department_id', $user->confinedDepartmentId())->count(),
                 'headline' => $stats->headline($teamQuery),
                 'status' => $stats->byStatus($teamQuery),
                 'perMember' => $stats->perEmployee($teamQuery),
@@ -51,16 +51,16 @@ class DashboardController extends Controller
 
         $company = null;
         if ($user->canSeeAll()) {
-            $all = Task::query();
+            $all = Task::query()->visibleTo($user);   // HR: only their department; super admin: everything
             $company = [
-                'numbers' => $stats->company(),
+                'numbers' => $stats->company($user),
                 'headline' => $stats->headline($all),
                 'status' => $stats->byStatus($all),
                 'priority' => $stats->byPriority($all),
                 'trend' => $stats->createdPerDay($all),
                 'perDepartment' => $stats->perDepartment($all),
                 'perEmployee' => $stats->perEmployee($all),
-                'decisions' => $stats->decisions(),
+                'decisions' => $stats->decisions(null, $user->confinedDepartmentId()),
                 'roles' => $user->isSuperAdmin() ? $stats->usersByRole() : null,
             ];
         }

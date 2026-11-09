@@ -79,7 +79,7 @@ class SuperAdminTest extends TestCase
             ->assertJsonPath('user.id', $this->manager->id);
     }
 
-    public function test_super_admin_can_view_everything_but_cannot_approve(): void
+    public function test_super_admin_can_view_everything(): void
     {
         $task = $this->taskFor($this->outsiderEmp, 'completed');
 
@@ -91,7 +91,28 @@ class SuperAdminTest extends TestCase
 
         Sanctum::actingAs($this->admin);
         $this->getJson('/api/tasks')->assertOk()->assertJsonPath('meta.total', 1);
-        $this->postJson("/api/tasks/{$task->id}/approve")->assertForbidden();
+    }
+
+    public function test_super_admin_can_approve_and_reject_any_task_of_any_department(): void
+    {
+        $approve = $this->taskFor($this->outsiderEmp, 'completed');   // another department, another manager
+        $reject = $this->taskFor($this->employeeEmp, 'completed');
+
+        \Livewire\Livewire::actingAs($this->admin)->test(\App\Livewire\Tasks\ConfirmAction::class, ['task' => $approve, 'action' => 'approve'])
+            ->call('confirm')->assertRedirect(route('tasks.all'));
+        $this->assertSame(\App\Enums\TaskStatus::Approved, $approve->fresh()->status);
+        $this->assertDatabaseHas('task_histories', ['task_id' => $approve->id, 'action' => 'approved', 'actor_id' => $this->admin->id]);
+
+        \Livewire\Livewire::actingAs($this->admin)->test(\App\Livewire\Tasks\RejectTask::class, ['task' => $reject])
+            ->set('reason', 'Totals do not match the report.')->call('reject')->assertRedirect(route('tasks.all'));
+        $this->assertSame(\App\Enums\TaskStatus::Rejected, $reject->fresh()->status);
+
+        // the workflow still protects the data: not twice, not an unfinished task, and a reason is required
+        $pending = $this->taskFor($this->employeeEmp);
+        Sanctum::actingAs($this->admin);
+        $this->postJson("/api/tasks/{$approve->id}/approve")->assertUnprocessable();
+        $this->postJson("/api/tasks/{$pending->id}/approve")->assertUnprocessable();
+        $this->postJson("/api/tasks/{$pending->id}/reject", [])->assertUnprocessable();
     }
 
     public function test_regular_users_cannot_enter_admin_areas(): void

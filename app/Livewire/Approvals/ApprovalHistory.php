@@ -32,6 +32,22 @@ class ApprovalHistory extends Component
         return ['search', 'taskId', 'decision'];
     }
 
+    /** Super admin: every decision. HR: decisions on tasks of their department. Manager: the decisions they took themselves. */
+    private function limitToWhatThisUserMaySee($query, \App\Models\User $user): void
+    {
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        if ($user->isHr()) {
+            $query->whereHas('task', fn ($t) => $t->whereIn('tasks.employee_id', \App\Models\Employee::query()->select('id')->where('department_id', $user->confinedDepartmentId())));
+
+            return;
+        }
+
+        $query->where('actor_id', $user->id);
+    }
+
     private function query(): Builder
     {
         $user = auth()->user();
@@ -41,7 +57,7 @@ class ApprovalHistory extends Component
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
             ->whereHas('task')   // never show a decision whose task no longer exists (e.g. rows left behind by a MyISAM database)
-            ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
+            ->tap(fn ($q) => $this->limitToWhatThisUserMaySee($q, $user))
             ->when($this->ids($this->taskId), fn ($q, array $ids) => $q->whereIn('task_histories.task_id', $ids))
             ->when(array_values(array_intersect($this->enumValues($this->decision, TaskAction::class), ['approved', 'rejected'])), fn ($q, array $a) => $q->whereIn('action', $a))
             ->when($term !== '', fn (Builder $q) => $q->whereHas('task', fn (Builder $t) => Sql::whereContains($t, 'tasks.title', $term)));
@@ -95,7 +111,7 @@ class ApprovalHistory extends Component
 
         // options of the searchable "Task" filter: tasks that have a decision this user is allowed to see
         $taskIds = TaskHistory::query()->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
-            ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))->pluck('task_id')->unique();
+            ->tap(fn ($q) => $this->limitToWhatThisUserMaySee($q, $user))->pluck('task_id')->unique();
         $taskOptions = \App\Models\Task::with('employee.user:id,name')->whereIn('id', $taskIds)->latest('id')->get()
             ->mapWithKeys(fn ($t) => [$t->id => $t->title.' — '.$t->employee->user->name]);
 

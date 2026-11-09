@@ -90,9 +90,15 @@ class ConfirmAction extends Component
     {
         return match ($this->action) {
             'delete' => $this->listUrl(),
-            'approve' => route('team.tasks'),
+            'approve' => $this->afterDecisionUrl(),
             default => route('tasks.show', $task),
         };
+    }
+
+    /** A manager returns to the team list; the super admin (who has no team) to the list of all tasks. */
+    private function afterDecisionUrl(): string
+    {
+        return auth()->user()->isManager() ? route('team.tasks') : route('tasks.all');
     }
 
     private function listUrl(): string

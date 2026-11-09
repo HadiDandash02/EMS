@@ -111,6 +111,7 @@ class GlobalSearch extends Component
         }
 
         return Employee::query()
+            ->visibleTo($user)   // same department only (HR and managers)
             ->with(['user', 'department'])
             ->when($user->isManager() && ! $user->isHr(), fn (Builder $q) => $q->where('manager_id', $user->employee?->id ?? 0))   // managers: own team only
             ->where(function (Builder $q) use ($term) {

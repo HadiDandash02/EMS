@@ -13,7 +13,8 @@
         <p class="text-sm text-slate-500">
             @if ($scope === 'mine') {{ __('Everything assigned to you and its approval status.') }}
             @elseif ($scope === 'team') {{ __('Tasks submitted by the people you manage. Completed tasks are waiting for your decision.') }}
-            @else {{ __('Every task in the company. Use the filters to narrow down.') }}
+            @elseif (auth()->user()->isSuperAdmin()) {{ __('Every task in the company. Use the filters to narrow down.') }}
+            @else {{ __('Every task of your department. Use the filters to narrow down.') }}
             @endif
         </p>
         @if ($scope === 'mine' || ($scope === 'all' && auth()->user()->isSuperAdmin()))

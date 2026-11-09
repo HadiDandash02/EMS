@@ -33,7 +33,7 @@
         {{-- ============ COMPANY (HR + super admin) ============ --}}
         @if ($company)
             <section class="space-y-4">
-                <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">{{ __('Company overview') }}</h3>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">{{ $user->isSuperAdmin() ? __('Company overview') : __(':name department overview', ['name' => $user->employee?->department?->name]) }}</h3>
 
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <x-stat :label="__('Employees')" :value="$company['numbers']['employees']" :href="route('employees.index')" tone="sky">{!! $icon('users') !!}</x-stat>

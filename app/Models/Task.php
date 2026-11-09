@@ -64,19 +64,26 @@ class Task extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        if ($user->canSeeAll()) {
+        if ($user->isSuperAdmin()) {
             return $query;
         }
 
         $employeeId = $user->employee?->id;
+        $department = $user->confinedDepartmentId();
+
+        if ($user->isHr()) {
+            // HR: every task of THEIR department - and nothing from any other department
+            return $query->whereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $department));
+        }
 
         if ($user->role === UserRole::Manager) {
-            // own tasks + tasks of direct reports
-            return $query->where(function (Builder $q) use ($employeeId) {
+            // own tasks + tasks of direct reports who are in the manager's own department
+            return $query->where(function (Builder $q) use ($employeeId, $department) {
                 $q->where('tasks.employee_id', $employeeId)
                     ->orWhereIn('tasks.employee_id', Employee::query()
                         ->select('id')
-                        ->where('manager_id', $employeeId));
+                        ->where('manager_id', $employeeId)
+                        ->where('department_id', $department));
             });
         }
 
@@ -88,7 +95,8 @@ class Task extends Model
     {
         return $query->whereIn('tasks.employee_id', Employee::query()
             ->select('id')
-            ->where('manager_id', $manager->employee?->id ?? 0));
+            ->where('manager_id', $manager->employee?->id ?? 0)
+            ->where('department_id', $manager->confinedDepartmentId() ?? 0));   // a team never crosses the department border
     }
 
     /**

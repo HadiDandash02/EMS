@@ -77,11 +77,13 @@ class TaskAuthorizationTest extends TestCase
         $this->actingAs($this->manager)->get($this->p($this->manager, "/tasks/{$outside->id}"))->assertForbidden();
     }
 
-    public function test_hr_can_view_any_task(): void
+    public function test_hr_can_view_any_task_of_their_own_department_but_not_of_another(): void
     {
-        $task = $this->taskFor($this->outsiderEmp);
+        $mine = $this->taskFor($this->teammateEmp);
+        $other = $this->taskFor($this->outsiderEmp);
 
-        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$task->id}"))->assertOk();
+        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$mine->id}"))->assertOk();
+        $this->actingAs($this->hr)->get($this->p($this->hr, "/tasks/{$other->id}"))->assertForbidden();
     }
 
     public function test_role_protected_areas_reject_other_roles(): void

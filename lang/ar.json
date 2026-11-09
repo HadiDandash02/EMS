@@ -170,7 +170,6 @@
     "Not allowed.": "غير مسموح.",
     "Nothing here yet.": "لا يوجد شيء هنا بعد.",
     "Only completed tasks can be rejected (this task is :status).": "لا يمكن رفض إلا المهام المكتملة (حالة هذه المهمة: :status).",
-    "Only managers can approve or reject tasks.": "يمكن للمدراء فقط الموافقة على المهام أو رفضها.",
     "Only pending or cancelled tasks can be deleted (this task is :status).": "لا يمكن حذف إلا المهام قيد الانتظار أو الملغاة (حالة هذه المهمة: :status).",
     "Only pending tasks can be cancelled (this task is :status).": "لا يمكن إلغاء إلا المهام قيد الانتظار (حالة هذه المهمة: :status).",
     "Only pending tasks can be edited (this task is :status).": "لا يمكن تعديل إلا المهام قيد الانتظار (حالة هذه المهمة: :status).",
@@ -380,5 +379,10 @@
     "Your decisions": "قراراتك",
     "Pending, in progress or rejected": "قيد الانتظار أو قيد التنفيذ أو مرفوضة",
     "My tasks by status": "مهامي حسب الحالة",
-    "My tasks by priority": "مهامي حسب الأولوية"
+    "My tasks by priority": "مهامي حسب الأولوية",
+    ":name department overview": "نظرة عامة على قسم :name",
+    "This task belongs to another department.": "هذه المهمة تخص قسمًا آخر.",
+    "Every approval and rejection decision in your department.": "كل قرارات الاعتماد والرفض في قسمك.",
+    "Every task of your department. Use the filters to narrow down.": "كل مهام قسمك. استخدم عوامل التصفية للتضييق.",
+    "Only managers and the super admin can approve or reject tasks.": "يمكن للمدراء والمدير العام فقط الموافقة على المهام أو رفضها."
 }

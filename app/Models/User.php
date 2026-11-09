@@ -97,7 +97,21 @@ class User extends Authenticatable
         return $this->hasRole(UserRole::SuperAdmin);
     }
 
-    /** Company-wide read access: HR and the super admin. */
+    /**
+     * DEPARTMENT ISOLATION. Managers and HR only work inside their own department (people, tasks, decisions);
+     * nothing outside it is visible or actionable, and nobody outside it can reach their department either.
+     * The super admin is not confined (null). A user without an employee profile gets 0, which matches nothing.
+     */
+    public function confinedDepartmentId(): ?int
+    {
+        if ($this->isSuperAdmin()) {
+            return null;
+        }
+
+        return $this->employee?->department_id ?? 0;
+    }
+
+    /** Access to the company-wide SCREENS (all tasks, employees, approvals); what they show is still limited to the department. */
     public function canSeeAll(): bool
     {
         return $this->isHr() || $this->isSuperAdmin();

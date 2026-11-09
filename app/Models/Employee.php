@@ -51,4 +51,12 @@ class Employee extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    /** Employees the user may see: everyone for the super admin, otherwise only their own department. */
+    public function scopeVisibleTo(\Illuminate\Database\Eloquent\Builder $query, User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $department = $user->confinedDepartmentId();
+
+        return $department === null ? $query : $query->where('employees.department_id', $department);
+    }
 }

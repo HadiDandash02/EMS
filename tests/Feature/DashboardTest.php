@@ -56,15 +56,15 @@ class DashboardTest extends TestCase
         $r->assertSee('Team overview')->assertDontSee('Company overview');
     }
 
-    public function test_hr_sees_the_whole_company_but_no_team_block(): void
+    public function test_hr_sees_their_own_department_only_and_no_team_block(): void
     {
         $r = $this->actingAs($this->hr)->get('/hr/dashboard')->assertOk();
 
         $this->assertNull($r->viewData('team'));
         $this->assertNull($r->viewData('mine'));                                  // HR has no tasks of their own: no empty "My tasks" block
-        $this->assertSame(4, $r->viewData('company')['headline']['total']);
+        $this->assertSame(3, $r->viewData('company')['headline']['total']);   // not 4: the other department's task is invisible
         $this->assertNull($r->viewData('company')['roles']);                      // user statistics are for the super admin only
-        $r->assertSee('Company overview')->assertDontSee('Users by role');
+        $r->assertSee('Engineering department overview')->assertDontSee('Company overview')->assertDontSee('Users by role');
     }
 
     public function test_hr_gets_a_my_tasks_block_only_when_they_have_tasks_of_their_own(): void
@@ -74,7 +74,7 @@ class DashboardTest extends TestCase
         $r = $this->actingAs($this->hr)->get('/hr/dashboard')->assertOk();
 
         $this->assertSame(1, $r->viewData('mine')['headline']['total']);
-        $this->assertSame(5, $r->viewData('company')['headline']['total']);
+        $this->assertSame(4, $r->viewData('company')['headline']['total']);
     }
 
     public function test_the_super_admin_also_gets_user_statistics(): void
