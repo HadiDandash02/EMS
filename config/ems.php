@@ -19,8 +19,14 @@ return [
 
     /*
     | Interface languages (switcher in the top bar). Arabic is right-to-left.
-    | Translations: lang/ar.json (keys are the English texts).
+    | Translations: the `translations` table (keys are the English texts), edited on /admin/translations.
     */
+    // Machine translation service used by the "Auto-translate" button (any MyMemory-compatible address)
+    'translator' => [
+        'url' => env('TRANSLATION_API_URL', 'https://api.mymemory.translated.net/get'),
+        'email' => env('TRANSLATION_API_EMAIL'),   // optional: a bigger free daily limit
+    ],
+
     'locales' => [
         'en' => ['name' => 'English', 'short' => 'EN', 'dir' => 'ltr'],
         'ar' => ['name' => 'العربية', 'short' => 'AR', 'dir' => 'rtl'],

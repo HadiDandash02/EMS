@@ -14,6 +14,7 @@
     ];
     $admin = [
         ['route' => 'admin.users', 'label' => __('Users'), 'icon' => 'M15 19.13a4 4 0 00-7.95-.63M12 13a4 4 0 100-8 4 4 0 000 8zm8 6v-1a4 4 0 00-3-3.87M17 5.13a4 4 0 010 7.74', 'show' => $user->isSuperAdmin()],
+        ['route' => 'admin.translations', 'label' => __('Translations'), 'icon' => 'M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129', 'show' => $user->isSuperAdmin()],
         ['route' => 'admin.departments', 'label' => __('Departments'), 'icon' => 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01', 'show' => $user->isSuperAdmin()],
     ];
 
@@ -109,23 +110,13 @@
                     <svg x-show="dark" x-cloak class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
                 </button>
 
-                {{-- Language --}}
-                <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
-                    <button type="button" @click="open = !open" aria-haspopup="true" :aria-expanded="open" title="{{ __('Language') }}"
-                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
-                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3c2.5 2.4 3.9 5.6 3.9 9s-1.4 6.6-3.9 9c-2.5-2.4-3.9-5.6-3.9-9S9.5 5.4 12 3z"/></svg>
-                        <span>{{ config("ems.locales.{$locale}.short") }}</span>
-                        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="open" x-cloak x-transition class="select-scroll absolute end-0 mt-2 max-h-80 w-40 overflow-y-auto overscroll-contain rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-200">
-                        @foreach (config('ems.locales') as $code => $info)
-                            <a href="{{ route('language', $code) }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm {{ $locale === $code ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-slate-700 hover:bg-slate-50' }}">
-                                {{ $info['name'] }}
-                                @if ($locale === $code)<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>@endif
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
+                {{-- Language: one button, exactly like the dark / light switch. In English it offers Arabic; in Arabic it offers English. One click switches. --}}
+                @php $otherLocale = $locale === 'ar' ? 'en' : 'ar'; @endphp
+                <a href="{{ route('language', $otherLocale) }}" title="{{ __('Switch language') }}: {{ config("ems.locales.{$otherLocale}.name") }}" aria-label="{{ __('Switch language') }}: {{ config("ems.locales.{$otherLocale}.name") }}"
+                   class="flex h-9 items-center gap-1.5 rounded-lg bg-white px-2.5 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-indigo-600">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+                    <span>{{ config("ems.locales.{$otherLocale}.name") }}</span>
+                </a>
 
                 {{-- Today's date --}}
                 <span class="hidden items-center gap-2 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 md:inline-flex">

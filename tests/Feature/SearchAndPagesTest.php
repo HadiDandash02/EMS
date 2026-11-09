@@ -306,7 +306,7 @@ class SearchAndPagesTest extends TestCase
 
         $this->assertStringContainsString('Switch to dark mode', $html);
         // toggle comes right before the language button
-        $this->assertLessThan(strpos($html, 'title="Language"'), strpos($html, 'Switch to dark mode'));
+        $this->assertLessThan(strpos($html, 'Switch language'), strpos($html, 'Switch to dark mode'));
         $this->assertStringContainsString("localStorage.setItem('theme'", $html);
     }
 
