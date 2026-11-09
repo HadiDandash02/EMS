@@ -16,9 +16,7 @@ class Translation extends Model
     /** the languages that have a column */
     public const LOCALES = ['en', 'ar'];
 
-    protected $fillable = ['key', 'type', 'en', 'ar', 'machine'];
-
-    protected $casts = ['machine' => 'boolean'];
+    protected $fillable = ['key', 'type', 'en', 'ar'];
 
     protected static function booted(): void
     {

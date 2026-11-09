@@ -28,12 +28,6 @@ return [
     */
     'hr_sees_all_departments' => env('EMS_HR_SEES_ALL_DEPARTMENTS', false),
 
-    // Machine translation service used by the "Auto-translate" button (any MyMemory-compatible address)
-    'translator' => [
-        'url' => env('TRANSLATION_API_URL', 'https://api.mymemory.translated.net/get'),
-        'email' => env('TRANSLATION_API_EMAIL'),   // optional: a bigger free daily limit
-    ],
-
     'locales' => [
         'en' => ['name' => 'English', 'short' => 'EN', 'dir' => 'ltr'],
         'ar' => ['name' => 'العربية', 'short' => 'AR', 'dir' => 'rtl'],

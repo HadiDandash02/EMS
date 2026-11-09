@@ -455,5 +455,12 @@
     "texts left": "نصوص متبقية",
     "Stop": "إيقاف",
     "Stopped.": "تم الإيقاف.",
-    "Auto-translate ALL empty texts": "ترجمة كل النصوص الفارغة تلقائيًا"
+    "Auto-translate ALL empty texts": "ترجمة كل النصوص الفارغة تلقائيًا",
+    "Edit translation": "تعديل الترجمة",
+    "Delete translation": "حذف الترجمة",
+    "Translation": "الترجمة",
+    "Change the English and the Arabic text. The key is what the code looks up, so it cannot be changed.": "غيّر النص الإنجليزي والعربي. المفتاح هو ما يبحث عنه الكود، لذلك لا يمكن تغييره.",
+    "Permanently delete the translation of": "حذف ترجمة",
+    "This key is used in the code: the interface will show the English text until it is translated again.": "هذا المفتاح مستخدم في الكود: ستعرض الواجهة النص الإنجليزي حتى تتم ترجمته مجددًا.",
+    "Translation deleted.": "تم حذف الترجمة."
 }
