@@ -65,7 +65,8 @@
             <form method="POST" action="{{ url('/login') }}" novalidate data-validate class="mt-8 space-y-5"
                   x-data="{ left: {{ $lockedFor }}, get time() { return Math.floor(this.left / 60) + ':' + String(this.left % 60).padStart(2, '0'); },
                            init() { if (this.left > 0) { const t = setInterval(() => { this.left--; if (this.left <= 0) clearInterval(t); }, 1000); } } }">
-                <x-form-errors />
+                {{-- the "complete the required fields" banner is for MISSING fields; a wrong password or a lock has its own message below --}}
+                <x-form-errors :hide="$lockedFor > 0 || str_starts_with((string) $errors->first('login'), __('These credentials do not match our records.'))" />
                 <div x-show="left > 0" x-cloak role="status" class="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
                     <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
                     <span>{{ __('Sign-in is locked. You can try again in') }} <strong x-text="time"></strong></span>
@@ -80,7 +81,7 @@
                         <input id="login" name="login" type="text" value="{{ old('login') }}" placeholder="{{ __('Username or email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
                                class="block w-full rounded-lg border-0 py-2.5 ps-10 pe-3 text-sm font-medium text-slate-900 shadow-sm ring-1 ring-inset placeholder:font-normal placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 {{ $errors->has('login') ? 'ring-rose-400' : 'ring-slate-300' }}">
                     </div>
-                    @error('login')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+                    @error('login')<p class="mt-1 text-sm text-rose-600" x-show="left <= 0">{{ $message }}</p>@enderror
                 </div>
 
                 <x-password-input id="password" name="password" :label="__('Password')" placeholder="{{ __('Enter your password') }}" required :error="$errors->first('password')" />
