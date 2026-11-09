@@ -1,0 +1,29 @@
+<?php
+
+// [CHANGE-REQUEST #6: optimize a slow query] Measure first (count queries / EXPLAIN), then add the index.
+// TO APPLY: rename this file to 2026_12_01_000000_add_task_indexes.php (remove ".stub" and the leading underscore), then: php artisan migrate
+// (Never edit an old migration: always add a new one.)
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->index(['status', 'due_date']);          // list: filter by status, sort by due date
+        });
+
+        Schema::table('task_histories', function (Blueprint $table) {
+            $table->index(['action', 'created_at']);        // approval history: only approved/rejected, newest first
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('tasks', fn (Blueprint $table) => $table->dropIndex(['status', 'due_date']));
+        Schema::table('task_histories', fn (Blueprint $table) => $table->dropIndex(['action', 'created_at']));
+    }
+};

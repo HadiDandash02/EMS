@@ -128,6 +128,22 @@ class ApprovalWorkflowTest extends TestCase
         $this->workflow->approve($task, $this->manager);
     }
 
+    /* [CHANGE-REQUEST #1] UNCOMMENT these two tests (and delete test_hr_cannot_approve_tasks below)
+    public function test_hr_can_approve_a_task_of_their_own_department(): void
+    {
+        $task = $this->taskFor($this->employeeEmp, 'completed');
+        $this->workflow->approve($task, $this->hr);
+        $this->assertSame(TaskStatus::Approved, $task->fresh()->status);
+    }
+
+    public function test_hr_cannot_approve_in_another_department(): void
+    {
+        $task = $this->taskFor($this->outsiderEmp, 'completed');
+        $this->expectException(AuthorizationException::class);
+        $this->workflow->approve($task, $this->hr);
+    }
+    */
+
     public function test_hr_cannot_approve_tasks(): void
     {
         $task = $this->taskFor($this->employeeEmp, 'completed');

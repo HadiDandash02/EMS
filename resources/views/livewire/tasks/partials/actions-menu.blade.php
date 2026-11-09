@@ -14,6 +14,7 @@
     $canEdit = $me->can('update', $task) && ($task->status === TaskStatus::Pending || $isAdmin);
     $canStart = $me->can('start', $task) && in_array($task->status, [TaskStatus::Pending, TaskStatus::Rejected], true);
     $canComplete = $me->can('complete', $task) && in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true);
+    // [CHANGE-REQUEST #3] (4/5) use: $canCancel = $me->can('cancel', $task) && in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true);
     $canCancel = $me->can('cancel', $task) && $task->status === TaskStatus::Pending;
     $canReview = $task->status === TaskStatus::Completed && $me->can('approve', $task);
     $canDelete = $me->can('delete', $task) && ($isAdmin || in_array($task->status, [TaskStatus::Pending, TaskStatus::Cancelled], true));

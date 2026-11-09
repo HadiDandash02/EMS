@@ -239,6 +239,16 @@ class TaskCrudTest extends TestCase
         }
     }
 
+    /* [CHANGE-REQUEST #7: new automated test] UNCOMMENT - a cancelled task can never be started again
+    public function test_a_cancelled_task_cannot_be_started_again(): void
+    {
+        $task = $this->taskFor($this->employeeEmp, 'cancelled');
+
+        $this->expectException(\App\Exceptions\InvalidTaskTransitionException::class);
+        app(\App\Services\TaskWorkflowService::class)->start($task, $this->employee);
+    }
+    */
+
     public function test_filters_render_searchable_selects_and_the_date_picker(): void
     {
         $this->actingAs($this->hr)->get('/hr/all-tasks')->assertOk()

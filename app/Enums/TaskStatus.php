@@ -24,6 +24,8 @@ enum TaskStatus: string
     {
         return match ($this) {
             self::Pending => [self::InProgress, self::Completed, self::Cancelled],
+            // [CHANGE-REQUEST #3: an In Progress task may also be cancelled] (1/5) replace the next line with:
+            //   self::InProgress => [self::Completed, self::Cancelled],
             self::InProgress => [self::Completed],
             self::Completed => [self::Approved, self::Rejected],
             self::Rejected => [self::InProgress],

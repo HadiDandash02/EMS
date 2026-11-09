@@ -118,7 +118,10 @@ class Task extends Model
                 $q->whereIn('tasks.employee_id', Employee::query()->select('id')->whereIn('department_id', $v));
             })
             ->when($filters['date_from'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '>=', $v))
-            ->when($filters['date_to'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '<=', $v));
+            ->when($filters['date_to'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.created_at', '<=', $v))
+            // [CHANGE-REQUEST #2: new filter "due before"] (1/5) UNCOMMENT the next line and move the ';' from the line above to its end
+            // ->when($filters['due_before'] ?? null, fn (Builder $q, string $v) => $q->whereDate('tasks.due_date', '<=', $v))
+            ;
     }
 
     /** Where the breadcrumb "Tasks" leads for this user: own list, the manager's team list, or the company list. */

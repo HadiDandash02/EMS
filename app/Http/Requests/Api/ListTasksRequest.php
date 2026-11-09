@@ -25,6 +25,8 @@ class ListTasksRequest extends FormRequest
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+            // [CHANGE-REQUEST #2: new filter "due before"] (API) UNCOMMENT -> GET /api/tasks?due_before=2026-12-31
+            // 'due_before' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 }

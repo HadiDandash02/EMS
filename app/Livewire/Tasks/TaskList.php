@@ -56,6 +56,10 @@ class TaskList extends Component
     #[Url(except: '')]
     public string $dateTo = '';
 
+    // [CHANGE-REQUEST #2: new filter "due before"] (2/5) UNCOMMENT the property
+    // #[Url(except: '')]
+    // public string $dueBefore = '';
+
     public function mount(string $scope = 'mine'): void
     {
         $user = auth()->user();
@@ -72,6 +76,7 @@ class TaskList extends Component
 
     protected function filterProperties(): array
     {
+        // [CHANGE-REQUEST #2] (3/5) add 'dueBefore' to this list:  ..., 'dateFrom', 'dateTo', 'dueBefore']
         return ['search', 'taskId', 'status', 'priority', 'employeeId', 'departmentId', 'dateFrom', 'dateTo'];
     }
 
@@ -106,6 +111,8 @@ class TaskList extends Component
                 'department_id' => $this->scope === 'all' ? $this->ids($this->departmentId) : [],
                 'date_from' => $this->validDate($this->dateFrom),
                 'date_to' => $this->validDate($this->dateTo),
+                // [CHANGE-REQUEST #2] (4/5) UNCOMMENT:
+                // 'due_before' => $this->validDate($this->dueBefore),
             ]);
 
         return $this->sortTasks($query);

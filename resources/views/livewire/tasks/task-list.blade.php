@@ -39,6 +39,9 @@
         @endif
         <x-date-input id="from" :label="__('Created from')" wire:model="dateFrom" compact />
         <x-date-input id="to" :label="__('Created to')" wire:model="dateTo" compact />
+        {{-- [CHANGE-REQUEST #2: new filter "due before"] (5/5) UNCOMMENT (also add $dueBefore to the collect([...]) of :active above), then run: php artisan translations:scan and translate "Due before"
+        <x-date-input id="due" :label="__('Due before')" wire:model="dueBefore" compact />
+        --}}
     </x-filter-bar>
 
     <x-data-table id="tasks-{{ $scope }}" :columns="$columns">

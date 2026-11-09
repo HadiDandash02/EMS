@@ -156,4 +156,17 @@ class TaskSearchFilterTest extends TestCase
         $list->call('clearFilters')->assertSet('taskId', []);
         $this->assertEqualsCanonicalizing(['Mine alpha', 'Mine delta'], $this->rows($list));
     }
+
+    /* [CHANGE-REQUEST #2: new filter "due before"] UNCOMMENT this test
+    public function test_hr_can_filter_by_due_before(): void
+    {
+        Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Early', 'due_date' => now()->addDays(2)]);
+        Task::factory()->forEmployee($this->employeeEmp)->create(['title' => 'Late', 'due_date' => now()->addDays(20)]);
+
+        $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all'])
+            ->set('dueBefore', now()->addDays(5)->toDateString());
+
+        $this->assertSame(['Early'], $this->rows($list));
+    }
+    */
 }
