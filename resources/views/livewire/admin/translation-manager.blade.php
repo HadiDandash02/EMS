@@ -7,10 +7,29 @@
             <span wire:loading.remove wire:target="scanCode">{{ __('Scan the code for new texts') }}</span>
             <span wire:loading wire:target="scanCode">{{ __('Please wait…') }}</span>
         </x-button>
-        <x-button type="button" variant="primary" icon="check" wire:click="translateMissing" wire:loading.attr="disabled" wire:target="translateMissing">
-            <span wire:loading.remove wire:target="translateMissing">{{ __('Auto-translate empty texts') }}</span>
-            <span wire:loading wire:target="translateMissing">{{ __('Translating…') }}</span>
-        </x-button>
+        {{-- one click translates ALL the empty texts: the server handles a batch, this loop asks again until nothing is left --}}
+        <div x-data="{ running: false, left: {{ $emptyCount }}, failed: false,
+                       async run() {
+                           this.running = true; this.failed = false;
+                           while (this.running) {
+                               const left = await $wire.translateMissing();
+                               if (left < 0) { this.failed = true; break; }
+                               this.left = left;
+                               if (left === 0) break;
+                           }
+                           this.running = false;
+                           $dispatch('notify', this.failed
+                               ? { type: 'error', message: @js(__('The translation service did not answer. Try again later.')) }
+                               : { type: 'success', message: this.left === 0 ? @js(__('Every text is already translated.')) : @js(__('Stopped.')) });
+                       } }"
+             class="flex items-center gap-2">
+            <span x-show="running" x-cloak class="text-sm font-medium text-indigo-600"><span x-text="left"></span> {{ __('texts left') }}</span>
+            <x-button type="button" variant="secondary" size="sm" x-show="running" x-cloak x-on:click="running = false">{{ __('Stop') }}</x-button>
+            <x-button type="button" variant="primary" icon="check" x-bind:disabled="running" x-on:click="run()">
+                <span x-show="! running">{{ __('Auto-translate ALL empty texts') }} ({{ $emptyCount }})</span>
+                <span x-show="running" x-cloak>{{ __('Translating…') }}</span>
+            </x-button>
+        </div>
     </x-slot:actions>
 
     @if ($adding)

@@ -24,7 +24,7 @@
      x-show="shown" x-cloak
      :data-hide="hidden.join(' ')">
 
-    {{-- Results card: hidden until Search is pressed (shown = Livewire "searched"); the button then collapses/expands the table (open) --}}
+    {{-- Results card: shown by default (shown = Livewire "searched"); its button collapses/expands the table (open) --}}
     <div class="flex items-center justify-between gap-3 px-4 py-3" :class="open ? 'border-b border-slate-100' : ''">
         <div class="flex items-center gap-2.5">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">

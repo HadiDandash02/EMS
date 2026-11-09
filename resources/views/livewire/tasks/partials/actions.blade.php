@@ -20,7 +20,7 @@
     @endcan
 
     @can('complete', $task)
-        @if (in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true))
+        @if ($task->status === TaskStatus::InProgress)
             <x-button :href="route('tasks.confirm', [$task, 'complete'])" variant="primary" size="sm" icon="check">{{ __('Complete') }}</x-button>
         @endif
     @endcan

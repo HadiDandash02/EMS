@@ -104,12 +104,17 @@ class DatabaseSeeder extends Seeder
 
             match ($i) {
                 1 => $workflow->start($task, $employee),
-                2 => $workflow->complete($task, $employee),            // waiting for Ahmad's decision
+                2 => (function () use ($workflow, $task, $employee) {
+                    $workflow->start($task, $employee);
+                    $workflow->complete($task, $employee);       // waiting for Ahmad's decision
+                })(),
                 3 => (function () use ($workflow, $task, $employee, $manager) {
+                    $workflow->start($task, $employee);
                     $workflow->complete($task, $employee);
                     $workflow->approve($task, $manager);
                 })(),
                 4 => (function () use ($workflow, $task, $employee, $manager) {
+                    $workflow->start($task, $employee);
                     $workflow->complete($task, $employee);
                     $workflow->reject($task, $manager, 'Please include the test results before resubmitting.');
                 })(),

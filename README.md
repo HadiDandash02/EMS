@@ -191,7 +191,7 @@ Run the fast server with `serve.bat` (or `serve.bat 8123` for another port).
 
 * **One standard look, one place to change it.** Buttons, cards, page width/spacing, dark mode and brand colours are all defined in [`resources/css/app.css`](resources/css/app.css) (classes `.btn-*`, `.card*`, `.page*`, the `[data-theme='dark']` block); the reusable pieces are `<x-page>`, `<x-card>`, `<x-info-list>` and `<x-button>` in `resources/views/components/`.
 * **Every page is full width** with the same skeleton (breadcrumbs, title, cards, side summary). There is **no Back button** anywhere - the breadcrumb leads back.
-* **Filters first, table after Search.** Every list shows its filter panel first; the Results card appears only after **Search** (or when filters arrive in the URL), and then has its own Collapse / Expand button. **Clear** hides it again. Logic: `HasFilterBar` (`$searched`, `applyFilters()`).
+* **All the data is shown by default.** Every list shows its filter panel and, right below it, the Results table with ALL the data: nothing has to be searched first. The filters only narrow it down, **Clear** brings everything back, and the Results card has its own Collapse / Expand button, search-in-table, rows per page, column chooser and CSV export.
 * The old free-text "Search title" box on task lists is now a **searchable "Task" select** that lists exactly the tasks the user may see (own / the team's / all).
 
 ## 1. Project setup
@@ -319,13 +319,13 @@ tasks.reviewed_by ──► users
                     ┌──────────────► CANCELLED  (final)
                     │ (pending only)
  PENDING ──► IN_PROGRESS ──► COMPLETED ──► APPROVED  (final)
-    │                            ▲   │
-    └────────────────────────────┘   └──► REJECTED ──► IN_PROGRESS  (rework)
+    │                                │
+    └──► CANCELLED (pending only)    └──► REJECTED ──► IN_PROGRESS  (rework)
 ```
 
 | From | Allowed to | Who |
 |---|---|---|
-| PENDING | IN_PROGRESS, COMPLETED, CANCELLED | owner |
+| PENDING | IN_PROGRESS, CANCELLED | owner |
 | IN_PROGRESS | COMPLETED | owner |
 | COMPLETED | APPROVED, REJECTED | the owner's manager (not the owner, not HR) |
 | REJECTED | IN_PROGRESS ("rework"), then COMPLETED again | owner |
@@ -334,7 +334,7 @@ tasks.reviewed_by ──► users
 **Decisions**
 * An approved task is **final**; it can never go back to pending. A rejected task is *not* final – the
   employee reworks it and resubmits, and the history keeps every round.
-* A pending task may be completed directly (small tasks) – the "in progress" step is optional.
+* A task **must be started before it can be completed** (Pending → In progress → Completed); completing a pending task is refused (UI: no Complete button; API: 422). A rejected task is reworked the same way (Rework → In progress → Complete).
 * Only **pending** tasks can be edited or cancelled (per the requirements). The super admin may correct the details of a task in any status.
 * **Delete:** an owner may delete a task only while it is PENDING or CANCELLED (nobody worked on or reviewed it yet); the super admin may delete any task. Deletion is logged and removes the task's history with it.
 * Rejection **requires** a reason (min. 5 chars). Enforced in the form, the API *and* the service.

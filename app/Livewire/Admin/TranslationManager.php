@@ -56,7 +56,6 @@ class TranslationManager extends Component
     public function mount(): void
     {
         Gate::authorize('manage-users');
-        $this->searched = true;      // a catalogue is useful at once: show the table without pressing Search
     }
 
     protected function filterProperties(): array
@@ -119,17 +118,19 @@ class TranslationManager extends Component
         }
     }
 
-    /** Machine-translates the next batch of empty Arabic texts and saves them marked as "machine". */
-    public function translateMissing(MachineTranslator $translator): void
+    /**
+     * Machine-translates the next batch of empty Arabic texts (marked "machine") and returns how many are STILL empty,
+     * or -1 when the translation service did not answer. The page calls it again and again until it returns 0, so one
+     * click translates EVERY empty text of the catalogue - not only the rows of the current page.
+     */
+    public function translateMissing(MachineTranslator $translator): int
     {
         Gate::authorize('manage-users');
 
         $rows = Translation::untranslated('ar')->limit(self::BATCH)->get();
 
         if ($rows->isEmpty()) {
-            $this->dispatch('notify', type: 'success', message: __('Every text is already translated.'));
-
-            return;
+            return 0;
         }
 
         $done = 0;
@@ -141,9 +142,11 @@ class TranslationManager extends Component
             }
         }
 
-        $this->dispatch('notify', type: $done > 0 ? 'success' : 'error', message: $done > 0
-            ? __(':done of :total texts were translated automatically. Please review them (marked "machine").', ['done' => $done, 'total' => $rows->count()])
-            : __('The translation service did not answer. Try again later.'));
+        if ($done === 0) {
+            return -1;   // the service is down (or refused every text): stop instead of looping forever
+        }
+
+        return Translation::untranslated('ar')->count();
     }
 
     /** Adds the keys used in the code that are not in the table yet. */
@@ -237,7 +240,7 @@ class TranslationManager extends Component
             $this->edits[$row->id] ??= ['en' => (string) $row->en, 'ar' => (string) $row->ar];
         }
 
-        return view('livewire.admin.translation-manager', ['rows' => $rows])
+        return view('livewire.admin.translation-manager', ['rows' => $rows, 'emptyCount' => Translation::untranslated('ar')->count()])
             ->layout('components.layouts.app', ['title' => 'Translations']);
     }
 }

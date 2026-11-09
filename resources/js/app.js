@@ -27,3 +27,20 @@ document.addEventListener('livewire:init', () => {
 // Charts (dashboard): Chart.js is a separate file that is downloaded only when a page really shows a chart.
 let chartLib;
 window.loadChart = () => (chartLib ??= import('chart.js/auto').then((m) => m.default));
+
+// Light / dark theme that survives soft navigation (wire:navigate).
+// The inline <head> script sets <html data-theme> only on a FULL page load; when Livewire swaps in the next page it
+// does not run it again and the new <html> element has no data-theme, so the page fell back to light. We therefore
+// re-apply the saved theme immediately whenever the attribute disappears (a MutationObserver runs before the browser
+// paints, so there is no flash) and again after every navigation.
+const applyTheme = () => {
+    try {
+        const saved = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (document.documentElement.dataset.theme !== saved) {
+            document.documentElement.dataset.theme = saved;
+        }
+    } catch (e) { /* storage blocked: keep whatever is set */ }
+};
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+document.addEventListener('livewire:navigated', applyTheme);
+document.addEventListener('livewire:navigate', applyTheme);

@@ -57,9 +57,10 @@ class DesignSystemTest extends TestCase
 
         $list = Livewire::actingAs($this->employee)->test(TaskList::class, ['scope' => 'mine']);
 
-        $list->assertSet('searched', false)->assertSee('x-show="shown"', false);
+        $list->assertSet('searched', true)->assertSee('x-show="shown"', false);          // the data is shown without any filtering
+        $this->assertCount(1, $list->viewData('tasks')->items());
         $list->call('applyFilters')->assertSet('searched', true);
-        $list->call('clearFilters')->assertSet('searched', false);
+        $list->call('clearFilters')->assertSet('searched', true);                          // Clear brings the whole list back
     }
 
     public function test_arriving_with_filters_in_the_url_opens_the_table(): void
@@ -98,6 +99,15 @@ class DesignSystemTest extends TestCase
         }
 
         $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
-        $list->assertSet('searched', false)->set('status', 'PENDING')->assertSet('searched', true);
+        $list->assertSet('searched', true)->set('status', 'PENDING')->assertSet('searched', true);
+    }
+    public function test_the_saved_theme_is_reapplied_after_soft_navigation(): void
+    {
+        // wire:navigate swaps the page without re-running the inline <head> script: without this the dark mode dropped on every click
+        $js = file_get_contents(resource_path('js/app.js'));
+
+        $this->assertStringContainsString('livewire:navigated', $js);
+        $this->assertStringContainsString('MutationObserver', $js);
+        $this->assertStringContainsString("localStorage.getItem('theme')", $js);
     }
 }
