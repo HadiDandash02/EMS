@@ -72,6 +72,10 @@ class Task extends Model
         $department = $user->confinedDepartmentId();
 
         if ($user->isHr()) {
+            if ($department === null) {
+                return $query;   // company-wide HR (EMS_HR_SEES_ALL_DEPARTMENTS=true)
+            }
+
             // HR: every task of THEIR department - and nothing from any other department
             return $query->whereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $department));
         }

@@ -104,8 +104,8 @@ class User extends Authenticatable
      */
     public function confinedDepartmentId(): ?int
     {
-        if ($this->isSuperAdmin()) {
-            return null;
+        if ($this->isSuperAdmin() || ($this->isHr() && config('ems.hr_sees_all_departments'))) {
+            return null;   // not confined (HR only when the company-wide switch is on)
         }
 
         return $this->employee?->department_id ?? 0;

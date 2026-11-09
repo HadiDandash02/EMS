@@ -143,6 +143,10 @@ class TaskPolicy
             return false;
         }
 
+        if ($user->confinedDepartmentId() === null) {
+            return true;   // company-wide HR
+        }
+
         $task->loadMissing('employee');
 
         return $task->employee->department_id === $user->employee->department_id;
