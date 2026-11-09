@@ -71,27 +71,24 @@ class Task extends Model
         $employeeId = $user->employee?->id;
         $department = $user->confinedDepartmentId();
 
-        if ($user->isHr()) {
-            if ($department === null) {
-                return $query;   // company-wide HR (EMS_HR_SEES_ALL_DEPARTMENTS=true)
+        if ($user->isHr() && $department === null) {
+            return $query;   // company-wide HR (EMS_HR_SEES_ALL_DEPARTMENTS=true)
+        }
+
+        // The powers of ALL the user's roles are combined (OR): own tasks, + the team (manager), + the department (HR)
+        return $query->where(function (Builder $q) use ($user, $employeeId, $department) {
+            $q->where('tasks.employee_id', $employeeId);
+
+            if ($user->hasRole(UserRole::Manager)) {
+                // tasks of direct reports who are in the manager's own department
+                $q->orWhereIn('tasks.employee_id', Employee::query()->select('id')->where('manager_id', $employeeId)->where('department_id', $department));
             }
 
-            // HR: every task of THEIR department - and nothing from any other department
-            return $query->whereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $department));
-        }
-
-        if ($user->role === UserRole::Manager) {
-            // own tasks + tasks of direct reports who are in the manager's own department
-            return $query->where(function (Builder $q) use ($employeeId, $department) {
-                $q->where('tasks.employee_id', $employeeId)
-                    ->orWhereIn('tasks.employee_id', Employee::query()
-                        ->select('id')
-                        ->where('manager_id', $employeeId)
-                        ->where('department_id', $department));
-            });
-        }
-
-        return $query->where('tasks.employee_id', $employeeId);
+            if ($user->isHr()) {
+                // every task of THEIR department - and nothing from any other department
+                $q->orWhereIn('tasks.employee_id', Employee::query()->select('id')->where('department_id', $department));
+            }
+        });
     }
 
     /** Tasks that belong to the employees directly managed by the given user. */

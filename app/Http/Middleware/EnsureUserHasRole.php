@@ -21,7 +21,7 @@ class EnsureUserHasRole
 
         // The super admin may enter every area (read access; the policy still blocks approving).
         abort_unless(
-            $user && ($user->isSuperAdmin() || $allowed->contains($user->role)),
+            $user && ($user->isSuperAdmin() || $allowed->contains(fn ($role) => $role && $user->hasRole($role))),
             403,
             __('You do not have access to this area.')
         );

@@ -89,7 +89,7 @@ class EmployeeList extends Component
             __('Full name') => fn ($e) => $e->user->name,
             __('Email') => fn ($e) => $e->user->email,
             __('Job title') => fn ($e) => $e->job_title,
-            __('Role') => fn ($e) => $e->user->role->label(),
+            __('Role') => fn ($e) => $e->user->roleLabels(),
             __('Department') => fn ($e) => $e->department->name,
             __('Manager') => fn ($e) => $e->manager?->user->name,
             __('Tasks') => fn ($e) => $e->tasks_count,

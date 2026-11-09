@@ -59,7 +59,7 @@ class UserManager extends Component
                 $q->orWhereHas('employee', fn (Builder $e) => Sql::whereContains($e, 'employees.employee_number', $term));
             }))
             ->when($this->ids($this->userId), fn (Builder $q, array $ids) => $q->whereIn('users.id', $ids))
-            ->when($this->enumValues($this->roleFilter, UserRole::class), fn (Builder $q, array $roles) => $q->whereIn('role', $roles))
+            ->when($this->enumValues($this->roleFilter, UserRole::class), fn (Builder $q, array $roles) => $q->where(fn ($w) => collect($roles)->each(fn ($r) => $w->orWhere(fn ($x) => $x->withRole($r)))))
             ->when($this->ids($this->departmentFilter), fn (Builder $q, array $ids) => $q->whereHas('employee', fn (Builder $e) => $e->whereIn('department_id', $ids)));
 
         [$field, $dir] = $this->activeSort();
@@ -99,7 +99,7 @@ class UserManager extends Component
             __('Username') => fn ($u) => $u->username,
             __('Email') => fn ($u) => $u->email,
             __('Phone') => fn ($u) => $u->phone,
-            __('Role') => fn ($u) => $u->role->label(),
+            __('Role') => fn ($u) => $u->roleLabels(),
             __('Department') => fn ($u) => $u->employee?->department->name,
             __('Manager') => fn ($u) => $u->employee?->manager?->user->name,
             __('Employee number') => fn ($u) => $u->employee?->employee_number,

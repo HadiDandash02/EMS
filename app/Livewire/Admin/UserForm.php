@@ -31,7 +31,8 @@ class UserForm extends Component
 
     public string $phone = '';
 
-    public string $role = 'employee';
+    /** The roles of the account. The FIRST one is the main role (its panel opens at sign-in); the others are extra roles. */
+    public array $roles = ['employee'];
 
     public string $department_id = '';
 
@@ -62,7 +63,7 @@ class UserForm extends Component
         $this->username = (string) $user->username;
         $this->email = $user->email;
         $this->phone = (string) $user->phone;
-        $this->role = $user->role->value;
+        $this->roles = $user->roles()->map->value->all();
 
         if ($employee = $user->employee) {
             $this->department_id = (string) $employee->department_id;
@@ -80,14 +81,17 @@ class UserForm extends Component
         $this->username = strtolower(trim($this->username));
         $this->email = strtolower(trim($this->email));
         $this->employee_number = strtoupper(trim($this->employee_number));
+        $this->roles = array_values(array_unique(array_map('strval', $this->roles)));
 
         $editing = $this->userId ? User::with('employee')->findOrFail($this->userId) : null;
         // On EDIT this comes from the stored account - never from the submitted role - so a
         // tampered request cannot promote a regular user to super admin.
-        $isAdminAccount = $editing ? $editing->isSuperAdmin() : $this->role === UserRole::SuperAdmin->value;
+        $isAdminAccount = $editing ? $editing->isSuperAdmin() : in_array(UserRole::SuperAdmin->value, $this->roles, true);
 
         $this->validate($this->rules($editing, $isAdminAccount), [
             'username.regex' => __('Use 3-30 letters, numbers, dots or underscores.'),
+            'roles.required' => __('Choose at least one role.'),
+            'roles.min' => __('Choose at least one role.'),
             'department_id.required' => __('Choose a department.'),
             'job_title.required' => __('Enter a job title.'),
             'employee_number.required' => __('Enter the employee number.'),
@@ -108,10 +112,12 @@ class UserForm extends Component
             $user->fill(['name' => $this->name, 'username' => $this->username, 'email' => $this->email, 'phone' => $this->phone ?: null]);
 
             if (! $editing) {
-                $user->role = UserRole::from($this->role);          // role is never mass assigned
+                $user->role = UserRole::from($this->roles[0]);          // roles are never mass assigned
+                $user->extra_roles = array_slice($this->roles, 1) ?: null;
                 $user->email_verified_at = now();
             } elseif (! $isAdminAccount) {
-                $user->role = UserRole::from($this->role);
+                $user->role = UserRole::from($this->roles[0]);
+                $user->extra_roles = array_slice($this->roles, 1) ?: null;
             }
 
             if ($this->password !== '') {      // blank on edit = keep the current password
@@ -149,11 +155,13 @@ class UserForm extends Component
             'username' => ['required', 'regex:/^[a-z0-9_.]{3,30}$/', Rule::unique('users', 'username')->ignore($editing?->id)],
             'email' => ['required', 'email', 'max:191', Rule::unique('users', 'email')->ignore($editing?->id)],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]*$/'],
-            'role' => $isAdminAccount && $editing ? ['required', Rule::in([UserRole::SuperAdmin->value])] : ['required', Rule::in($allowedRoles)],
+            // several roles at once; the super admin is never combined with another role
+            'roles' => ['required', 'array', 'min:1', fn ($attribute, $value, $fail) => count($value) > 1 && in_array(UserRole::SuperAdmin->value, $value, true) ? $fail(__('The super admin role cannot be combined with other roles.')) : null],
+            'roles.*' => $isAdminAccount && $editing ? [Rule::in([UserRole::SuperAdmin->value])] : [Rule::in($allowedRoles)],
             'department_id' => $isAdminAccount ? ['nullable'] : ['required', 'exists:departments,id'],
             // the manager must really be a manager AND work in the department chosen for this person
             'manager_id' => $isAdminAccount ? ['nullable'] : ['nullable', Rule::exists('employees', 'id')->where(
-                fn ($q) => $q->whereIn('user_id', User::query()->where('role', UserRole::Manager)->select('id'))->where('department_id', (int) $this->department_id)
+                fn ($q) => $q->whereIn('user_id', User::query()->withRole(UserRole::Manager)->select('id'))->where('department_id', (int) $this->department_id)
             )],
             'job_title' => $isAdminAccount ? ['nullable'] : ['required', 'string', 'max:100'],
             'employee_number' => $isAdminAccount ? ['nullable'] : ['required', 'string', 'max:20', 'regex:/^[A-Za-z0-9\-]+$/', Rule::unique('employees', 'employee_number')->ignore($employeeId)],
@@ -165,13 +173,14 @@ class UserForm extends Component
 
     private function assertRoleChangeIsSafe(User $editing): void
     {
-        if ($editing->isSuperAdmin() || $editing->role->value === $this->role) {
+        if ($editing->isSuperAdmin()) {
             return;
         }
 
-        if ($editing->role === UserRole::Manager && $editing->employee?->directReports()->exists()) {
+        // taking the manager role away from someone who still has a team is refused
+        if ($editing->hasRole(UserRole::Manager) && ! in_array(UserRole::Manager->value, $this->roles, true) && $editing->employee?->directReports()->exists()) {
             throw ValidationException::withMessages([
-                'role' => __('This manager still has people reporting to them. Reassign their team first.'),
+                'roles' => __('This manager still has people reporting to them. Reassign their team first.'),
             ]);
         }
     }
@@ -192,7 +201,7 @@ class UserForm extends Component
         }
 
         return Employee::with('user')->where('department_id', (int) $this->department_id)
-            ->whereHas('user', fn ($q) => $q->where('role', UserRole::Manager))
+            ->whereHas('user', fn ($q) => $q->withRole(UserRole::Manager))
             ->when($this->userId, fn ($q) => $q->where('user_id', '!=', $this->userId))
             ->get()->sortBy('user.name');
     }
@@ -219,7 +228,7 @@ class UserForm extends Component
             'taskCount' => $subject?->employee?->tasks()->count() ?? 0,
             'departments' => Department::orderBy('name')->get(),
             'managers' => $this->managersOfDepartment(),
-            'roles' => UserRole::cases(),
+            'roleCases' => UserRole::cases(),
         ])->layout('components.layouts.app', ['title' => $this->userId ? 'Edit user' : 'New user']);
     }
 }

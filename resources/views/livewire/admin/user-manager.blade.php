@@ -44,7 +44,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td data-col="role" class="px-4 py-3"><x-role-badge :role="$u->role" /></td>
+                                <td data-col="role" class="px-4 py-3"><x-role-badges :user="$u" /></td>
                                 <td data-col="department" class="px-4 py-3 text-slate-600">{{ $u->employee?->department->name ?? '—' }}</td>
                                 <td data-col="manager" class="px-4 py-3 text-slate-600">{{ $u->employee?->manager?->user->name ?? '—' }}</td>
                                 <td data-col="created" class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $u->created_at->format('d/m/Y') }}</td>

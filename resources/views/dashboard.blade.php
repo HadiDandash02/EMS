@@ -23,7 +23,7 @@
                     <p class="text-sm text-indigo-100">{{ now()->translatedFormat('l, d/m/Y') }}</p>
                     <h2 class="text-2xl font-semibold">{{ __('Hello,') }} {{ $user->name }}</h2>
                     <p class="text-sm text-indigo-100">
-                        {{ $user->role->label() }}@if ($user->employee) · {{ $user->employee->job_title }} · {{ $user->employee->department->name }}@endif
+                        {{ $user->roleLabels() }}@if ($user->employee) · {{ $user->employee->job_title }} · {{ $user->employee->department->name }}@endif
                     </p>
                 </div>
                 <a href="{{ route('profile') }}" wire:navigate class="ms-auto rounded-lg bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur transition hover:bg-white/25">{{ __('My profile') }}</a>

@@ -18,7 +18,7 @@
                     @endif
                     <h2 class="mt-3 text-lg font-semibold text-slate-900">{{ $user->name }}</h2>
                     <p class="text-sm text-slate-500">&#64;{{ $user->username }}</p>
-                    <div class="mt-2"><x-role-badge :role="$user->role" /></div>
+                    <div class="mt-2 flex flex-wrap justify-center gap-1"><x-role-badges :user="$user" /></div>
 
                     <dl class="mt-5 divide-y divide-slate-100 border-t border-slate-100 text-sm">
                         <div class="flex justify-between gap-4 py-2.5"><dt class="text-slate-500">{{ __('Email') }}</dt><dd class="truncate font-medium text-slate-800">{{ $user->email }}</dd></div>

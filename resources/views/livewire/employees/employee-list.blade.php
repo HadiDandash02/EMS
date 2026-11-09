@@ -36,7 +36,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td data-col="role" class="px-4 py-3"><x-role-badge :role="$e->user->role" /></td>
+                                <td data-col="role" class="px-4 py-3"><x-role-badges :user="$e->user" /></td>
                                 <td data-col="department" class="px-4 py-3 text-slate-600">{{ $e->department->name }}</td>
                                 <td data-col="manager" class="px-4 py-3 text-slate-600">{{ $e->manager?->user->name ?? '—' }}</td>
                                 <td data-col="tasks" class="px-4 py-3 text-end">
