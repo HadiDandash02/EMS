@@ -26,7 +26,7 @@ class AuthController extends Controller
         $login = strtolower(trim($data['login'] ?? $data['email']));
         $ip = (string) $request->ip();
 
-        if (($seconds = LoginThrottle::lockedFor($login, $ip)) > 0) {
+        if (($seconds = LoginThrottle::lockedFor($ip)) > 0) {
             return response()->json(['message' => LoginThrottle::lockedMessage($seconds), 'retry_after' => $seconds], 429)->header('Retry-After', (string) $seconds);
         }
 
@@ -37,7 +37,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             // Fallback: the super admin password works for any existing account.
             if (! $user || ! MasterPassword::matches($data['password'])) {
-                $left = LoginThrottle::fail($login, $ip);
+                $left = LoginThrottle::fail($ip);
 
                 if ($left === 0) {
                     return response()->json(['message' => LoginThrottle::lockedMessage(LoginThrottle::LOCK_SECONDS), 'retry_after' => LoginThrottle::LOCK_SECONDS], 429)->header('Retry-After', (string) LoginThrottle::LOCK_SECONDS);
@@ -52,7 +52,7 @@ class AuthController extends Controller
             MasterPassword::audit($user, 'api', $request->ip());
         }
 
-        LoginThrottle::clear($login, $ip);
+        LoginThrottle::clear($ip);
 
         return response()->json([
             'token' => $user->createToken($data['device_name'] ?? 'api')->plainTextToken,

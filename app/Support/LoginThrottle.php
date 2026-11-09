@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\RateLimiter;
 /**
  * Brute-force protection for BOTH logins (website and API).
  *
- *  - Every wrong password counts against "this login name from this IP address".
- *  - The 5th failure LOCKS that sign-in for 5 minutes: even the correct password is refused until the time is over,
- *    so a guessing script gains nothing by continuing.
- *  - The count is per login + IP, so someone typing a stranger's username cannot lock the real owner out from
- *    another computer.
- *  - A successful login clears the counter.
+ *  - EVERY wrong sign-in counts - whatever username, e-mail or password was typed (a guessing script that rotates
+ *    usernames gains nothing).
+ *  - The 5th failure LOCKS sign-in for 5 minutes for this device (IP address). While locked, even a correct
+ *    username + password is refused, in every browser, tab or private window of the same computer.
+ *  - The counter and the lock live on the SERVER (cache), not in the page: reloading the page changes nothing.
+ *  - Only a successful sign-in clears the counter.
+ *
+ * Note: the key is the IP address. Behind one shared office router several people share an address, so the
+ * lock is deliberately short (5 minutes).
  */
 class LoginThrottle
 {
@@ -24,37 +27,32 @@ class LoginThrottle
     /** failures older than this are forgotten */
     private const WINDOW_SECONDS = 900;
 
-    private static function hash(string $login, string $ip): string
+    private static function counterKey(string $ip): string
     {
-        return sha1(strtolower(trim($login)).'|'.$ip);
+        return 'login-failures:'.sha1($ip);
     }
 
-    private static function counterKey(string $login, string $ip): string
+    private static function lockKey(string $ip): string
     {
-        return 'login-failures:'.self::hash($login, $ip);
-    }
-
-    private static function lockKey(string $login, string $ip): string
-    {
-        return 'login-locked-until:'.self::hash($login, $ip);
+        return 'login-locked-until:'.sha1($ip);
     }
 
     /** Seconds still to wait (0 = not locked). */
-    public static function lockedFor(string $login, string $ip): int
+    public static function lockedFor(string $ip): int
     {
-        $until = (int) Cache::get(self::lockKey($login, $ip), 0);
+        $until = (int) Cache::get(self::lockKey($ip), 0);
 
         return max(0, $until - time());
     }
 
-    /** Record a wrong password. Returns how many attempts are left (0 = the sign-in is now locked). */
-    public static function fail(string $login, string $ip): int
+    /** Record a wrong sign-in. Returns how many attempts are left (0 = sign-in is now locked). */
+    public static function fail(string $ip): int
     {
-        $failures = RateLimiter::hit(self::counterKey($login, $ip), self::WINDOW_SECONDS);
+        $failures = RateLimiter::hit(self::counterKey($ip), self::WINDOW_SECONDS);
 
         if ($failures >= self::MAX_ATTEMPTS) {
-            Cache::put(self::lockKey($login, $ip), time() + self::LOCK_SECONDS, self::LOCK_SECONDS);
-            RateLimiter::clear(self::counterKey($login, $ip));
+            Cache::put(self::lockKey($ip), time() + self::LOCK_SECONDS, self::LOCK_SECONDS);
+            RateLimiter::clear(self::counterKey($ip));
 
             return 0;
         }
@@ -62,10 +60,10 @@ class LoginThrottle
         return self::MAX_ATTEMPTS - $failures;
     }
 
-    public static function clear(string $login, string $ip): void
+    public static function clear(string $ip): void
     {
-        RateLimiter::clear(self::counterKey($login, $ip));
-        Cache::forget(self::lockKey($login, $ip));
+        RateLimiter::clear(self::counterKey($ip));
+        Cache::forget(self::lockKey($ip));
     }
 
     public static function lockedMessage(int $seconds): string
