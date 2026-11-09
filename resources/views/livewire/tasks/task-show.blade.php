@@ -22,7 +22,7 @@
                 <ol class="space-y-5 border-s border-slate-200 ps-6">
                     @foreach ($task->histories as $h)
                         <li class="relative" wire:key="h-{{ $h->id }}">
-                            <span class="absolute -start-[31px] mt-1 h-3 w-3 rounded-full ring-4 ring-white {{ match($h->action->value) { 'approved' => 'bg-emerald-500', 'rejected' => 'bg-rose-500', 'cancelled' => 'bg-zinc-400', 'completed' => 'bg-amber-500', default => 'bg-indigo-400' } }}"></span>
+                            <span class="absolute -start-[31px] mt-1 h-3 w-3 rounded-full ring-4 ring-white {{ match($h->action->value) { 'approved' => 'bg-emerald-500', 'rejected' => 'bg-rose-500', 'cancelled' => 'bg-violet-400', 'completed' => 'bg-amber-500', default => 'bg-indigo-400' } }}"></span>
                             <p class="text-sm text-slate-800">
                                 <span class="font-medium">{{ $h->action->label() }}</span>
                                 {{ __('by') }} {{ $h->actor?->name ?? __('unknown user') }}

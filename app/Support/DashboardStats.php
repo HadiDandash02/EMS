@@ -170,7 +170,7 @@ class DashboardStats
 
     public const STATUS_COLORS = [
         'PENDING' => '#94a3b8', 'IN_PROGRESS' => '#3b82f6', 'COMPLETED' => '#f59e0b',
-        'APPROVED' => '#10b981', 'REJECTED' => '#f43f5e', 'CANCELLED' => '#a1a1aa',
+        'APPROVED' => '#10b981', 'REJECTED' => '#f43f5e', 'CANCELLED' => '#8b5cf6',
     ];
 
     public const PRIORITY_COLORS = ['low' => '#94a3b8', 'medium' => '#f59e0b', 'high' => '#f43f5e'];
