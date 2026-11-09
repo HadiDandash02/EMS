@@ -411,6 +411,20 @@ employee:{id,name,department}, review:{reviewed_by,reviewed_at,rejection_reason}
 
 ---
 
+### Test the API with Postman
+
+A ready-made collection is in [`postman/`](postman/):
+
+1. In Postman: **Import** -> `postman/TaskFlow.postman_collection.json` and `postman/TaskFlow.postman_environment.json`.
+2. Choose the environment **TaskFlow - local**, set `baseUrl` (default `http://127.0.0.1:8000/api`) and fill the three passwords (they are the `EMS_PASSWORD_*` values of your `.env`).
+3. Send the requests from top to bottom, or open the collection and press **Run**. Every request has tests (green PASS marks); tokens and task IDs are saved automatically.
+
+The folders follow the brief: login for each role, task list (paginated) / create / validate (422) / show / update / start / complete, security checks (401, 403, ID tampering, 404), manager approve / reject (reason required, no double approval) and an HR read-only check. The last folder (login protection) must be run on its own because five wrong sign-ins lock sign-in for 5 minutes.
+
+Command line: `npx newman run postman/TaskFlow.postman_collection.json -e postman/TaskFlow.postman_environment.json --env-var employee_password=... --env-var manager_password=... --env-var hr_password=... --folder "1. Authentication (Sanctum bearer tokens)"` (or without `--folder` to run folders 1-5).
+
+---
+
 ## 8. Testing
 
 Tests run against in-memory SQLite (fast, isolated) – no MySQL needed.
