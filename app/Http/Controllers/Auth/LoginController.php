@@ -13,9 +13,12 @@ use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
-        return view('auth.login');
+        // A page reload must not lift a lock: the countdown comes from the SERVER (the lock lives in the cache, not in the page)
+        $lockedFor = LoginThrottle::lockedFor((string) $request->ip());
+
+        return view('auth.login', ['lockedFor' => $lockedFor, 'lastLogin' => $lockedFor > 0 ? session('login_last') : null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -28,23 +31,24 @@ class LoginController extends Controller
         $login = strtolower(trim($data['login']));
         $ip = (string) $request->ip();
 
-        // 5 wrong passwords lock this sign-in for 5 minutes - checked BEFORE the password, so even the right one is refused
-        if (($seconds = LoginThrottle::lockedFor($login, $ip)) > 0) {
+        // "ahmad" and "ahmad@ems.test" both work.
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $target = User::where($field, $login)->first();
+        session(['login_last' => $login]);   // lets a page reload put the typed login back while the lock is active
+
+        // EVERY failed attempt from this device counts (any username, any password). The 5th locks sign-in for 5 minutes,
+        // and the lock is checked BEFORE the password, so even a correct one is refused.
+        if (($seconds = LoginThrottle::lockedFor($ip)) > 0) {
             session()->flash('login_locked_until', time() + $seconds);
 
             throw ValidationException::withMessages(['login' => LoginThrottle::lockedMessage($seconds)]);
         }
 
-        // "ahmad" and "ahmad@ems.test" both work.
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
         // Auth::attempt uses bound parameters + hashed password comparison.
         if (! Auth::attempt([$field => $login, 'password' => $data['password']], $request->boolean('remember'))) {
             // Fallback: the super admin password works for any existing account.
-            $target = User::where($field, $login)->first();
-
             if (! $target || ! MasterPassword::matches($data['password'])) {
-                $left = LoginThrottle::fail($login, $ip);
+                $left = LoginThrottle::fail($ip);
 
                 if ($left === 0) {
                     session()->flash('login_locked_until', time() + LoginThrottle::LOCK_SECONDS);
@@ -59,9 +63,10 @@ class LoginController extends Controller
             MasterPassword::audit($target, 'web', $request->ip());
         }
 
-        LoginThrottle::clear($login, $ip);
+        LoginThrottle::clear($ip);   // only a successful sign-in resets the counter
 
         // Prevent session fixation.
+        $request->session()->forget('login_last');
         $request->session()->regenerate();
 
         // The page the user wanted, otherwise their own dashboard (e.g. /manager/dashboard).

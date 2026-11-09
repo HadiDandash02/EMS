@@ -61,7 +61,7 @@
                 </div>
             @endif
 
-            @php $lockedFor = max(0, (int) session('login_locked_until', 0) - time()); @endphp
+            @php $lockedFor = max((int) ($lockedFor ?? 0), max(0, (int) session('login_locked_until', 0) - time())); @endphp   {{-- from the server, so a reload keeps the lock --}}
             <form method="POST" action="{{ url('/login') }}" novalidate data-validate class="mt-8 space-y-5"
                   x-data="{ left: {{ $lockedFor }}, get time() { return Math.floor(this.left / 60) + ':' + String(this.left % 60).padStart(2, '0'); },
                            init() { if (this.left > 0) { const t = setInterval(() => { this.left--; if (this.left <= 0) clearInterval(t); }, 1000); } } }">
@@ -78,7 +78,7 @@
                         <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 text-slate-400">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.1a7.5 7.5 0 0115 0"/></svg>
                         </span>
-                        <input id="login" name="login" type="text" value="{{ old('login') }}" placeholder="{{ __('Username or email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
+                        <input id="login" name="login" type="text" value="{{ old('login', $lastLogin ?? '') }}" placeholder="{{ __('Username or email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
                                class="block w-full rounded-lg border-0 py-2.5 ps-10 pe-3 text-sm font-medium text-slate-900 shadow-sm ring-1 ring-inset placeholder:font-normal placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 {{ $errors->has('login') ? 'ring-rose-400' : 'ring-slate-300' }}">
                     </div>
                     @error('login')<p class="mt-1 text-sm text-rose-600" x-show="left <= 0">{{ $message }}</p>@enderror
