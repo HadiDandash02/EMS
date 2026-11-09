@@ -56,7 +56,7 @@ class RejectTask extends Component
 
         session()->flash('success', __('Task rejected.'));
 
-        return $this->redirect(route('team.tasks'), navigate: true);
+        return $this->redirect(auth()->user()->isManager() ? route('team.tasks') : route('tasks.all'), navigate: true);
     }
 
     public function render()

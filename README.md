@@ -254,7 +254,7 @@ Hash a password for the master setting with `php artisan ems:hash-password`.
 Enter **any user's username or email + the super admin's password** on the login page (or `POST /api/login`) to be signed in as that user.
 Only a bcrypt **hash** is configured (`EMS_MASTER_PASSWORD_HASH`); every use is written to the application log
 (`Master password login`, with target user, channel and IP). Leave the variable empty to disable the feature.
-The super admin account itself can view all tasks, employees and approval history but **cannot approve or reject**.
+The super admin holds the manager **and** HR powers for **every department and user**: he can view everything and also **approve or reject** any completed task (a rejection still needs a reason, and the status workflow still applies: only completed tasks, never twice). Managers and HR are confined to their own department.
 
 ---
 
@@ -338,6 +338,7 @@ tasks.reviewed_by ──► users
 * **Delete:** an owner may delete a task only while it is PENDING or CANCELLED (nobody worked on or reviewed it yet); the super admin may delete any task. Deletion is logged and removes the task's history with it.
 * Rejection **requires** a reason (min. 5 chars). Enforced in the form, the API *and* the service.
 * Managers cannot review their own tasks; they cannot review tasks outside their team; HR is read-only.
+* The **super admin may approve and reject any task** (manager power) and sees everything (HR power) in all departments.
 * **Department isolation:** managers and HR only work inside their own department - they cannot see or act on any other department, and nobody from another department can reach theirs (this includes the HR department). The super admin is not confined and can create managers and HR users in any department.
 * **Transaction decision:** every transition runs in `DB::transaction()` with `lockForUpdate()` on the task row.
   The status update and the history insert must succeed or fail together (no approved task without an audit

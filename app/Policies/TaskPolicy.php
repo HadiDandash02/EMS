@@ -86,8 +86,14 @@ class TaskPolicy
 
     private function review(User $user, Task $task): Response
     {
+        // The super admin holds the manager and HR powers for EVERY department and user: he may approve or reject any
+        // task. (The status workflow still applies: only COMPLETED tasks, never twice, a reason is required to reject.)
+        if ($user->isSuperAdmin()) {
+            return Response::allow();
+        }
+
         if ($user->role !== UserRole::Manager) {
-            return Response::deny(__('Only managers can approve or reject tasks.'));
+            return Response::deny(__('Only managers and the super admin can approve or reject tasks.'));
         }
 
         if ($task->isOwnedBy($user)) {
