@@ -134,6 +134,7 @@ class TaskCrudTest extends TestCase
         $other = $this->taskFor($this->employeeEmp, 'completed');
         $this->confirm($this->otherManager, $other, 'approve')->assertForbidden();
         $this->confirm($this->employee, $other, 'approve')->assertForbidden();
+        // [CHANGE-REQUEST #1] when HR may approve: delete the next line (this task is in HR's own department now)
         $this->confirm($this->hr, $other, 'approve')->assertForbidden();
     }
 

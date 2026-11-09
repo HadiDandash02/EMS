@@ -204,6 +204,7 @@ class ApprovalWorkflowTest extends TestCase
         $this->assertSame(TaskStatus::Approved, $task->fresh()->status);
     }
 
+    // [CHANGE-REQUEST #3] when In Progress tasks may be cancelled: change this old test (an in-progress task is no longer refused)
     public function test_only_pending_tasks_can_be_cancelled(): void
     {
         $task = $this->taskFor($this->employeeEmp, 'inProgress');
