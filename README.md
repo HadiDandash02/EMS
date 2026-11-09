@@ -4,6 +4,7 @@ A Laravel application where employees create and complete tasks, managers approv
 completed work, and HR gets a searchable view of their whole department – with a complete audit trail of every
 action. Managers and HR only ever work inside their own department.
 
+**Project:** Junior Laravel Developer – Phase 2 practical assessment
 **Stack:** PHP 8.2 · Laravel 12 · MySQL · Livewire 3 · Tailwind CSS 4 · Laravel Sanctum · PHPUnit
 
 ---
@@ -39,8 +40,8 @@ Section numbers follow the brief.
 | 12 | Automated tests (all 10 scenarios listed in the brief + at least one Unit test) | ✅ | section 8 (`php artisan test`) |
 | 13 | Git: feature branch, logical commits, merged through branches, Pull Request | ✅ / ⏳ | `feature/task-management` + topic branches. **`main` is only updated when the owner decides**; open the PR `feature/task-management → main` on GitHub |
 | 15 | README: setup, DB, architecture, relationships, authorization, validation, business rules, API, testing, AI usage, known limitations | ✅ | this file |
-| 16 | Submission: repo, PR, ERD, README, tests, API docs, migrations/seeders/factories, **screen recording** | ⏳ | everything except the recording is in the repo (see section 12) |
-| 17 | Screen recording 10–15 min | ⏳ | guide in section 12 |
+| 16 | Submission: repo, PR, ERD, README, tests, API docs, migrations/seeders/factories, **screen recording** | ✅ | all in the repo; the recordings are in [`recordings/`](recordings/) (see section 12) |
+| 17 | Screen recording 10–15 min | ✅ | [`recordings/TaskFlow-demo.mp4`](recordings/TaskFlow-demo.mp4) – the full walkthrough (about 13 minutes); the API is also covered by the Postman collection in [`postman/`](postman/) |
 | 18 | Final change requests (authorization rule, new filter, status transition, new API field, new test, business rule…) | ✅ ready | the code is built for this: see "Where to change things" in section 12 |
 | 19 | Debugging assessment (authorization, N+1, validation, transition, API response, transaction) | ✅ ready | tests exist for each area; see section 12 |
 | 20 | Understand, explain, maintain — I remain responsible for the code | ✅ | section 9 (AI usage) |
@@ -411,6 +412,20 @@ employee:{id,name,department}, review:{reviewed_by,reviewed_at,rejection_reason}
 
 ---
 
+### Test the API with Postman
+
+A ready-made collection is in [`postman/`](postman/):
+
+1. In Postman: **Import** -> `postman/TaskFlow.postman_collection.json` and `postman/TaskFlow.postman_environment.json`.
+2. Choose the environment **TaskFlow - local**, set `baseUrl` (default `http://127.0.0.1:8000/api`) and fill the three passwords (they are the `EMS_PASSWORD_*` values of your `.env`).
+3. Send the requests from top to bottom, or open the collection and press **Run**. Every request has tests (green PASS marks); tokens and task IDs are saved automatically.
+
+The folders follow the brief: login for each role, task list (paginated) / create / validate (422) / show / update / start / complete, security checks (401, 403, ID tampering, 404), manager approve / reject (reason required, no double approval) and an HR read-only check. The last folder (login protection) must be run on its own because five wrong sign-ins lock sign-in for 5 minutes.
+
+Command line: `npx newman run postman/TaskFlow.postman_collection.json -e postman/TaskFlow.postman_environment.json --env-var employee_password=... --env-var manager_password=... --env-var hr_password=... --folder "1. Authentication (Sanctum bearer tokens)"` (or without `--folder` to run folders 1-5).
+
+---
+
 ## 8. Testing
 
 Tests run against in-memory SQLite (fast, isolated) – no MySQL needed.
@@ -467,6 +482,14 @@ missing Laravel 12 `authorize()` helper that the tests caught). I can explain ev
 
 ## 12. Screen recording guide & change-request readiness
 
+### The recordings (in this repository)
+
+| File | What it shows |
+|---|---|
+| [`recordings/TaskFlow-demo.mp4`](recordings/TaskFlow-demo.mp4) | Full walkthrough (about 13 minutes, synthetic voice): login, employee creates and completes a task, the dashboards with charts, manager approves / rejects, unauthorised access blocked (403), HR search and filters (own department only), dark mode, the super admin approving and creating users (instant validation, department-scoped managers), the REST API, the automated tests, login protection (5 wrong attempts lock sign-in for 5 minutes) and an explanation of `TaskWorkflowService` |
+
+On GitHub, click a file and press the play button (or **Download**) to watch it.
+
 ### Recording script (≈ 12 minutes) — maps to section 17 of the brief
 1. **Login / authentication** – sign in with a username, then with an email; show the password eye; wrong password error.
 2. **Employee creates a task** (Abbas) – validation errors first, then a valid task; **views their tasks**, edits a pending one, cancels/deletes one.
@@ -499,4 +522,4 @@ Logs: `storage/logs/laravel.log`.
 
 ### Submission checklist
 Git repository ✅ · Pull Request ⏳ (open on GitHub) · ERD ✅ `docs/ERD.md` · README ✅ · Automated tests ✅ ·
-API documentation ✅ (section 7) · Migrations/seeders/factories ✅ · Screen recording ⏳.
+API documentation ✅ (section 7) · Migrations/seeders/factories ✅ · Screen recording ✅ ([`recordings/`](recordings/)).
