@@ -95,6 +95,7 @@ class TaskWorkflowService
             }
 
             Log::info('Task deleted', ['task_id' => $fresh->id, 'title' => $fresh->title, 'status' => $fresh->status->value, 'by_user_id' => $actor->id]);
+            $fresh->histories()->delete();   // explicit: do not rely on the database foreign key to cascade
             $fresh->delete();
         });
     }
