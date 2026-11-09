@@ -146,6 +146,7 @@
     --color-fuchsia-50: #3a1342; --color-fuchsia-200: #6b2678; --color-fuchsia-700: #f0abfc;
     --color-teal-50: #0b3030;    --color-teal-200: #14605e;    --color-teal-700: #5eead4;
     --color-zinc-100: #27272a;   --color-zinc-200: #3f3f46;    --color-zinc-500: #a1a1aa;
+    --color-violet-50: #271f4d;  --color-violet-200: #4b3a8a;  --color-violet-700: #c4b5fd;   /* Cancelled badge */
 }
 /* "white" cannot be redefined (text-white must stay white), so surfaces are overridden explicitly */
 [data-theme='dark'] .bg-white,

@@ -103,4 +103,14 @@ class DashboardTest extends TestCase
         $list->assertSet('status', []);                                            // no hidden "Completed" default
         $this->assertCount(3, $list->viewData('tasks')->items());                  // every status of the team is listed
     }
+    public function test_every_status_has_its_own_colour_in_the_charts_and_the_badges(): void
+    {
+        $chart = \App\Support\DashboardStats::STATUS_COLORS;
+        $this->assertCount(count(\App\Enums\TaskStatus::cases()), array_unique($chart), 'two statuses share a chart colour');
+        $this->assertNotSame($chart['PENDING'], $chart['CANCELLED']);
+
+        $badges = array_map(fn ($s) => $s->badgeClasses(), \App\Enums\TaskStatus::cases());
+        $this->assertCount(count($badges), array_unique($badges), 'two statuses share a badge colour');
+        $this->assertNotSame(\App\Enums\TaskStatus::Pending->badgeClasses(), \App\Enums\TaskStatus::Cancelled->badgeClasses());
+    }
 }

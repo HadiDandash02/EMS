@@ -61,7 +61,7 @@ enum TaskStatus: string
             self::Completed => 'bg-amber-50 text-amber-700 ring-amber-200',
             self::Approved => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
             self::Rejected => 'bg-rose-50 text-rose-700 ring-rose-200',
-            self::Cancelled => 'bg-zinc-100 text-zinc-500 ring-zinc-200',
+            self::Cancelled => 'bg-violet-50 text-violet-700 ring-violet-200',
         };
     }
 
