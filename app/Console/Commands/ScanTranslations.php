@@ -13,7 +13,7 @@ use RecursiveIteratorIterator;
  */
 class ScanTranslations extends Command
 {
-    protected $signature = 'translations:scan {locale=ar}';
+    protected $signature = 'translations:scan';
 
     protected $description = 'Add the texts used in the code that are not in the translations table yet';
 
@@ -41,13 +41,12 @@ class ScanTranslations extends Command
 
     public function handle(): int
     {
-        $locale = (string) $this->argument('locale');
-        $existing = Translation::where('locale', $locale)->where('group', '*')->pluck('key_hash')->flip();
+        $existing = Translation::pluck('key_hash')->flip();
         $added = 0;
 
         foreach (self::keysInCode() as $key => $file) {
             if (! $existing->has(sha1($key))) {
-                Translation::create(['locale' => $locale, 'group' => '*', 'key' => $key, 'value' => null]);
+                Translation::create(['key' => $key, 'type' => 'code', 'en' => $key, 'ar' => null]);
                 $this->line("  + {$key}   ({$file})");
                 $added++;
             }

@@ -311,6 +311,8 @@ tasks.reviewed_by ──► users
 
 ---
 
+**Database integrity on XAMPP.** Older XAMPP MySQL versions create tables as MyISAM, which silently ignores foreign keys. `config/database.php` now asks for InnoDB, and the migration `2026_11_12_100000_enforce_foreign_keys_on_innodb` repairs an existing database (converts the tables, removes the orphan rows the cascades would have removed and creates the 7 foreign keys; it does nothing on a correct database or on SQLite).
+
 ## 4. Business rules – task status workflow
 
 ```

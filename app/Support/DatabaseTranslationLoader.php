@@ -30,22 +30,27 @@ class DatabaseTranslationLoader implements Loader
         return $fromFiles;
     }
 
-    /** @return array<string, string> English text => translation, only for texts that are translated */
+    /** @return array<string, string> key => text of that language, only for texts that are filled in */
     public static function forLocale(string $locale): array
     {
+        if (! in_array($locale, Translation::LOCALES, true)) {
+            return [];
+        }
+
         try {
             return Cache::rememberForever(self::cacheKey($locale), fn () => Translation::query()
-                ->where('locale', $locale)->where('group', '*')->whereNotNull('value')->where('value', '!=', '')
-                ->pluck('value', 'key')->all());
+                ->translated($locale)->pluck($locale, 'key')->all());
         } catch (\Throwable) {
             return [];   // the table does not exist yet (before the first migration): behave like "no translations"
         }
     }
 
-    public static function forget(string $locale): void
+    public static function forgetAll(): void
     {
         try {
-            Cache::forget(self::cacheKey($locale));
+            foreach (Translation::LOCALES as $locale) {
+                Cache::forget(self::cacheKey($locale));
+            }
         } catch (\Throwable) {
             // cache not available: nothing to clear
         }

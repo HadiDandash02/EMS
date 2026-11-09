@@ -17,15 +17,13 @@ class AutoTranslate extends Command
     {
         $locale = (string) $this->argument('locale');
 
-        $rows = Translation::where('locale', $locale)->where('group', '*')
-            ->where(fn ($q) => $q->whereNull('value')->orWhere('value', ''))
-            ->limit((int) $this->option('limit'))->get();
+        $rows = Translation::untranslated($locale)->limit((int) $this->option('limit'))->get();
 
         $done = 0;
 
         foreach ($rows as $row) {
-            if ($text = $translator->translate($row->key, $locale)) {
-                $row->update(['value' => $text, 'machine' => true]);
+            if ($text = $translator->translate((string) ($row->en ?: $row->key), $locale)) {
+                $row->update([$locale => $text, 'machine' => true]);
                 $this->line("  {$row->key}  ->  {$text}");
                 $done++;
             }
