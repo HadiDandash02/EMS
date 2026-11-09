@@ -42,7 +42,7 @@ class MultiSelectFiltersTest extends TestCase
     {
         $pending = Task::factory()->forEmployee($this->employeeEmp)->pending()->create(['title' => 'P one', 'priority' => 'low']);
         $done = Task::factory()->forEmployee($this->teammateEmp)->completed()->create(['title' => 'C two', 'priority' => 'high']);
-        $other = Task::factory()->forEmployee($this->outsiderEmp)->inProgress()->create(['title' => 'I three', 'priority' => 'medium']);
+        $other = Task::factory()->forEmployee($this->managerEmp)->inProgress()->create(['title' => 'I three', 'priority' => 'medium']);
 
         $rows = fn ($list) => $list->viewData('tasks')->pluck('title')->sort()->values()->all();
         $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
@@ -53,7 +53,7 @@ class MultiSelectFiltersTest extends TestCase
         $list->set('status', [])->set('priority', ['low', 'medium']);
         $this->assertSame(['I three', 'P one'], $rows($list));
 
-        $list->set('priority', [])->set('employeeId', [(string) $this->employeeEmp->id, (string) $this->outsiderEmp->id]);
+        $list->set('priority', [])->set('employeeId', [(string) $this->employeeEmp->id, (string) $this->managerEmp->id]);
         $this->assertSame(['I three', 'P one'], $rows($list));
 
         $list->set('employeeId', [])->set('taskId', [(string) $done->id, (string) $other->id]);
@@ -89,9 +89,17 @@ class MultiSelectFiltersTest extends TestCase
 
     public function test_employees_can_be_filtered_by_several_departments(): void
     {
+        // asking for two departments still only returns the HR user's own department
         $list = Livewire::actingAs($this->hr)->test(EmployeeList::class)
             ->set('departmentId', [(string) $this->dept->id, (string) $this->outsiderEmp->department_id]);
 
-        $this->assertSame(\App\Models\Employee::count(), $list->viewData('employees')->total());
+        $this->assertSame(\App\Models\Employee::where('department_id', $this->dept->id)->count(), $list->viewData('employees')->total());
+
+        // the super admin is not confined: both departments are returned
+        $admin = new \App\Models\User(['name' => 'Root', 'username' => 'root', 'email' => 'root@x.test', 'password' => 'Secret123!']);
+        $admin->role = \App\Enums\UserRole::SuperAdmin;
+        $admin->save();
+        $all = Livewire::actingAs($admin)->test(EmployeeList::class)->set('departmentId', [(string) $this->dept->id, (string) $this->outsiderEmp->department_id]);
+        $this->assertGreaterThan(\App\Models\Employee::where('department_id', $this->dept->id)->count(), $all->viewData('employees')->total());
     }
 }

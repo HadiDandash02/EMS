@@ -173,8 +173,8 @@ class TaskList extends Component
         $user = auth()->user();
 
         $employees = match ($this->scope) {
-            'all' => Employee::with('user')->get()->sortBy('user.name'),
-            'team' => Employee::with('user')->where('manager_id', $user->employee->id)->get()->sortBy('user.name'),
+            'all' => Employee::visibleTo($user)->with('user')->get()->sortBy('user.name'),
+            'team' => Employee::visibleTo($user)->with('user')->where('manager_id', $user->employee->id)->get()->sortBy('user.name'),
             default => collect(),
         };
 
@@ -186,7 +186,7 @@ class TaskList extends Component
             'taskOptions' => $taskOptions,
             'tasks' => $this->query()->paginate($this->rowsPerPage()),
             'employees' => $employees,
-            'departments' => $this->scope === 'all' ? Department::orderBy('name')->get() : collect(),
+            'departments' => $this->scope === 'all' ? Department::orderBy('name')->when($user->confinedDepartmentId() !== null, fn ($q) => $q->whereKey($user->confinedDepartmentId()))->get() : collect(),
             'statuses' => TaskStatus::cases(),
             'priorities' => TaskPriority::cases(),
         ])->layout('components.layouts.app', ['title' => $this->title()]);

@@ -42,7 +42,8 @@ class ConsistentFiltersTest extends TestCase
         $list = Livewire::actingAs($this->hr)->test(EmployeeList::class);
 
         $options = $list->viewData('employeeOptions');
-        $this->assertCount(\App\Models\Employee::count(), $options);
+        $this->assertCount(\App\Models\Employee::where('department_id', $this->dept->id)->count(), $options);   // HR: own department only
+        $this->assertNotContains($this->outsiderEmp->user->name.' · '.$this->outsiderEmp->employee_number, $options->all());
 
         $list->set('employeeId', (string) $this->managerEmp->id)->assertSet('searched', true);
         $this->assertSame([$this->managerEmp->id], $list->viewData('employees')->pluck('id')->all());

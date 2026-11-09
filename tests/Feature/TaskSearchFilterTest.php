@@ -30,7 +30,8 @@ class TaskSearchFilterTest extends TestCase
     public function test_hr_can_filter_by_title_status_employee_and_department(): void
     {
         $budget = Task::factory()->forEmployee($this->employeeEmp)->completed()->create(['title' => 'Budget review']);
-        $audit = Task::factory()->forEmployee($this->outsiderEmp)->pending()->create(['title' => 'Audit prep']);
+        $audit = Task::factory()->forEmployee($this->teammateEmp)->pending()->create(['title' => 'Audit prep']);
+        Task::factory()->forEmployee($this->outsiderEmp)->pending()->create(['title' => 'Other department task']);   // never visible to this HR user
 
         $list = Livewire::actingAs($this->hr)->test(TaskList::class, ['scope' => 'all']);
 
@@ -39,7 +40,8 @@ class TaskSearchFilterTest extends TestCase
         $this->assertSame(['Budget review'], $this->rows($list->set('search', 'budget')));
         $this->assertSame(['Audit prep'], $this->rows($list->set('search', '')->set('status', 'PENDING')));
         $this->assertSame(['Budget review'], $this->rows($list->set('status', '')->set('employeeId', (string) $this->employeeEmp->id)));
-        $this->assertSame(['Audit prep'], $this->rows($list->set('employeeId', '')->set('departmentId', (string) $this->outsiderEmp->department_id)));
+        $this->assertEqualsCanonicalizing(['Budget review', 'Audit prep'], $this->rows($list->set('employeeId', '')->set('departmentId', (string) $this->dept->id)));
+        $this->assertSame([], $this->rows($list->set('departmentId', (string) $this->outsiderEmp->department_id)));   // another department: nothing
     }
 
     public function test_hr_can_filter_by_date_range(): void
@@ -131,10 +133,11 @@ class TaskSearchFilterTest extends TestCase
         $this->assertStringContainsString('Teammate bravo', $team);
         $this->assertStringNotContainsString('charlie', $team);
 
-        $all = $options($this->hr, 'all');                                // HR sees everything, with the employee name
-        foreach (['Mine alpha', 'Teammate bravo', 'Outsider charlie', $this->outsiderEmp->user->name] as $needle) {
+        $all = $options($this->hr, 'all');                                // HR: the whole department, with the employee name
+        foreach (['Mine alpha', 'Teammate bravo', $this->teammateEmp->user->name] as $needle) {
             $this->assertStringContainsString($needle, $all);
         }
+        $this->assertStringNotContainsString('charlie', $all);            // another department's task is not offered
     }
 
     public function test_picking_a_task_shows_only_that_task_and_a_tampered_id_shows_nothing(): void

@@ -115,8 +115,10 @@ class TaskApiTest extends TestCase
         $this->taskFor($this->outsiderEmp);
         Sanctum::actingAs($this->hr);
 
-        $this->getJson('/api/tasks')->assertJsonPath('meta.total', 2);
+        // HR sees every task of THEIR department, and nothing from another department
+        $this->getJson('/api/tasks')->assertJsonPath('meta.total', 1);
         $this->getJson('/api/tasks?status=COMPLETED')->assertJsonPath('meta.total', 1);
+        $this->getJson('/api/tasks?department_id='.$this->outsiderEmp->department_id)->assertJsonPath('meta.total', 0);   // cannot widen the scope with a filter
     }
 
     public function test_api_responses_do_not_expose_sensitive_fields(): void

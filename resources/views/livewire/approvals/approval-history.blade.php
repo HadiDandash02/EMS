@@ -2,7 +2,7 @@
     $columns = ['employee' => __('Employee'), 'by' => __('Decided by'), 'reason' => __('Reason'), 'date' => __('Date')];
 @endphp
 <div class="space-y-5">
-    <p class="text-sm text-slate-500">{{ auth()->user()->canSeeAll() ? __('Every approval and rejection decision in the company.') : __('The approval and rejection decisions you have made.') }}</p>
+    <p class="text-sm text-slate-500">{{ auth()->user()->isSuperAdmin() ? __('Every approval and rejection decision in the company.') : (auth()->user()->isHr() ? __('Every approval and rejection decision in your department.') : __('The approval and rejection decisions you have made.')) }}</p>
 
     <x-filter-bar hide-search :total="$records->total()" noun="decision" :active="collect([$taskId, $decision])->filter()->count()">
         <x-searchable-select id="ap-task" :label="__('Task')" multiple wire:model.live="taskId" :placeholder="__('All tasks')" :all-label="__('All tasks')" :options="$taskOptions" />

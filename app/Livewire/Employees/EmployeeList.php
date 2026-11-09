@@ -38,6 +38,7 @@ class EmployeeList extends Component
         $term = trim($this->search);
 
         $query = Employee::query()
+            ->visibleTo(auth()->user())   // HR: their department only
             ->with(['user', 'department', 'manager.user'])
             ->withCount('tasks')
             ->when($term !== '', fn (Builder $q) => $q->where(function (Builder $q) use ($term) {
@@ -99,9 +100,9 @@ class EmployeeList extends Component
     {
         return view('livewire.employees.employee-list', [
             'employees' => $this->query()->paginate($this->rowsPerPage()),
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Department::orderBy('name')->when(auth()->user()->confinedDepartmentId() !== null, fn ($q) => $q->whereKey(auth()->user()->confinedDepartmentId()))->get(),
             // options of the searchable "Employee" filter
-            'employeeOptions' => Employee::with('user:id,name')->get()->sortBy('user.name')
+            'employeeOptions' => Employee::visibleTo(auth()->user())->with('user:id,name')->get()->sortBy('user.name')
                 ->mapWithKeys(fn (Employee $e) => [$e->id => $e->user->name.' · '.$e->employee_number]),
         ])->layout('components.layouts.app', ['title' => 'Employees']);
     }

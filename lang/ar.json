@@ -380,5 +380,9 @@
     "Your decisions": "قراراتك",
     "Pending, in progress or rejected": "قيد الانتظار أو قيد التنفيذ أو مرفوضة",
     "My tasks by status": "مهامي حسب الحالة",
-    "My tasks by priority": "مهامي حسب الأولوية"
+    "My tasks by priority": "مهامي حسب الأولوية",
+    ":name department overview": "نظرة عامة على قسم :name",
+    "This task belongs to another department.": "هذه المهمة تخص قسمًا آخر.",
+    "Every approval and rejection decision in your department.": "كل قرارات الاعتماد والرفض في قسمك.",
+    "Every task of your department. Use the filters to narrow down.": "كل مهام قسمك. استخدم عوامل التصفية للتضييق."
 }
