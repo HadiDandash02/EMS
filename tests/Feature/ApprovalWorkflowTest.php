@@ -36,7 +36,7 @@ class ApprovalWorkflowTest extends TestCase
         Livewire::actingAs($this->manager)
             ->test(ConfirmAction::class, ['task' => $task, 'action' => 'approve'])
             ->call('confirm')
-            ->assertRedirect(route('tasks.show', $task));
+            ->assertRedirect(route('team.tasks'));   // after a decision the manager goes straight back to the team list
 
         $this->assertSame('Task approved.', session('success'));
 

@@ -22,3 +22,7 @@ document.addEventListener('livewire:init', () => {
         });
     });
 });
+
+// Charts (dashboard): Chart.js is a separate file that is downloaded only when a page really shows a chart.
+let chartLib;
+window.loadChart = () => (chartLib ??= import('chart.js/auto').then((m) => m.default));
