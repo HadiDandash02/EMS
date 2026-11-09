@@ -101,7 +101,7 @@
                 {{-- Light / dark mode --}}
                 <button type="button"
                         x-data="{ dark: document.documentElement.dataset.theme === 'dark' }"
-                        @click="dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}"
+                        @click="dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {} window.dispatchEvent(new Event('theme-changed'))"
                         :aria-label="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))"
                         :title="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))"
                         class="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-indigo-600">

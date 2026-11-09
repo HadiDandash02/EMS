@@ -397,5 +397,10 @@
     "This value is not in the expected format.": "هذه القيمة ليست بالصيغة المطلوبة.",
     "The password needs 10+ characters, upper and lower case letters, a number and a symbol.": "تحتاج كلمة المرور إلى 10 أحرف أو أكثر وأحرف كبيرة وصغيرة ورقم ورمز.",
     "The passwords do not match.": "كلمتا المرور غير متطابقتين.",
-    "Use 2-10 letters or numbers.": "استخدم من 2 إلى 10 حرفًا أو رقمًا."
+    "Use 2-10 letters or numbers.": "استخدم من 2 إلى 10 حرفًا أو رقمًا.",
+    "Too many failed sign-in attempts. For your security sign-in is locked for :minutes minutes. Try again in :time.": "محاولات تسجيل دخول فاشلة كثيرة. حفاظًا على أمانك تم إيقاف تسجيل الدخول لمدة :minutes دقائق. حاول مجددًا بعد :time.",
+    "1 attempt left before sign-in is locked for 5 minutes.": "بقيت محاولة واحدة قبل إيقاف تسجيل الدخول لمدة 5 دقائق.",
+    ":count attempts left before sign-in is locked for 5 minutes.": "بقيت :count محاولات قبل إيقاف تسجيل الدخول لمدة 5 دقائق.",
+    "Sign-in is locked. You can try again in": "تسجيل الدخول متوقف. يمكنك المحاولة مجددًا بعد",
+    "Enter your password": "أدخل كلمة المرور"
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\LoginThrottle;
 use App\Support\MasterPassword;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,15 @@ class LoginController extends Controller
         ]);
 
         $login = strtolower(trim($data['login']));
+        $ip = (string) $request->ip();
+
+        // 5 wrong passwords lock this sign-in for 5 minutes - checked BEFORE the password, so even the right one is refused
+        if (($seconds = LoginThrottle::lockedFor($login, $ip)) > 0) {
+            session()->flash('login_locked_until', time() + $seconds);
+
+            throw ValidationException::withMessages(['login' => LoginThrottle::lockedMessage($seconds)]);
+        }
+
         // "ahmad" and "ahmad@ems.test" both work.
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
@@ -34,14 +44,22 @@ class LoginController extends Controller
             $target = User::where($field, $login)->first();
 
             if (! $target || ! MasterPassword::matches($data['password'])) {
+                $left = LoginThrottle::fail($login, $ip);
+
+                if ($left === 0) {
+                    session()->flash('login_locked_until', time() + LoginThrottle::LOCK_SECONDS);
+                }
+
                 throw ValidationException::withMessages([
-                    'login' => __('These credentials do not match our records.'),
+                    'login' => $left === 0 ? LoginThrottle::lockedMessage(LoginThrottle::LOCK_SECONDS) : LoginThrottle::warning($left),
                 ]);
             }
 
             Auth::login($target, $request->boolean('remember'));
             MasterPassword::audit($target, 'web', $request->ip());
         }
+
+        LoginThrottle::clear($login, $ip);
 
         // Prevent session fixation.
         $request->session()->regenerate();

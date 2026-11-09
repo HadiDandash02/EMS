@@ -18,18 +18,19 @@
     </script>
     <x-validation-messages />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="h-full font-sans text-slate-800 antialiased">
 <div class="grid min-h-full lg:grid-cols-2">
     {{-- Brand panel --}}
-    <div class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-900 p-12 text-white lg:flex">
+    <div class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#4c1d95] p-12 text-white lg:flex">
         <x-logo size="lg" dark class="relative z-10" />
         <div class="relative z-10">
             <x-illustration class="mx-auto w-full max-w-md drop-shadow-2xl" />
             <h2 class="mt-8 text-3xl font-semibold leading-tight">{{ __('Employee Task & Approval Management') }}</h2>
-            <p class="mt-3 max-w-md text-indigo-200/80">{{ __('Track work, submit it for review and keep a complete audit trail of every approval decision.') }}</p>
+            <p class="mt-3 max-w-md text-base text-[#e0e7ff]/90">{{ __('Track work, submit it for review and keep a complete audit trail of every approval decision.') }}</p>
         </div>
-        <p class="relative z-10 text-sm text-indigo-300/60">{{ __('Built with Laravel · Livewire · Tailwind CSS') }}</p>
+        <p class="relative z-10 text-sm text-[#c7d2fe]/90">{{ __('Built with Laravel · Livewire · Tailwind CSS') }}</p>
     </div>
 
     {{-- Form --}}
@@ -37,7 +38,7 @@
         {{-- Language switch (visitors can choose before signing in) --}}
         <div class="absolute end-6 top-6 flex items-center gap-1 rounded-lg bg-white p-1 text-sm shadow-sm ring-1 ring-slate-200">
             <button type="button" x-data="{ dark: document.documentElement.dataset.theme === 'dark' }"
-                    @click="dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}"
+                    @click="dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'; try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {} window.dispatchEvent(new Event('theme-changed'))"
                     :aria-label="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))" :title="dark ? @js(__('Switch to light mode')) : @js(__('Switch to dark mode'))"
                     class="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-indigo-600">
                 <svg x-show="!dark" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
@@ -50,8 +51,8 @@
 
         <div class="w-full max-w-sm">
             <x-logo class="mb-8 lg:hidden" />
-            <h1 class="text-2xl font-semibold text-slate-900">{{ __('Welcome back') }}</h1>
-            <p class="mt-1 text-sm text-slate-500">{{ __('Sign in with your username or email.') }}</p>
+            <h1 class="text-3xl font-bold text-slate-900">{{ __('Welcome back') }}</h1>
+            <p class="mt-2 text-base text-slate-600">{{ __('Sign in with your username or email.') }}</p>
 
             @if (session('error'))
                 <div role="alert" class="mt-6 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
@@ -60,30 +61,39 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ url('/login') }}" novalidate data-validate class="mt-8 space-y-5">
+            @php $lockedFor = max(0, (int) session('login_locked_until', 0) - time()); @endphp
+            <form method="POST" action="{{ url('/login') }}" novalidate data-validate class="mt-8 space-y-5"
+                  x-data="{ left: {{ $lockedFor }}, get time() { return Math.floor(this.left / 60) + ':' + String(this.left % 60).padStart(2, '0'); },
+                           init() { if (this.left > 0) { const t = setInterval(() => { this.left--; if (this.left <= 0) clearInterval(t); }, 1000); } } }">
                 <x-form-errors />
+                <div x-show="left > 0" x-cloak role="status" class="flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                    <span>{{ __('Sign-in is locked. You can try again in') }} <strong x-text="time"></strong></span>
+                </div>
                 @csrf
                 <div>
-                    <label for="login" class="block text-sm font-medium text-slate-700">{{ __('Username or email') }}</label>
+                    <label for="login" class="block text-sm font-semibold text-slate-800">{{ __('Username or email') }}</label>
                     <div class="relative mt-1">
                         <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 text-slate-400">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.1a7.5 7.5 0 0115 0"/></svg>
                         </span>
-                        <input id="login" name="login" type="text" value="{{ old('login') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
-                               class="block w-full rounded-lg border-0 py-2.5 ps-10 pe-3 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500 {{ $errors->has('login') ? 'ring-rose-400' : 'ring-slate-300' }}">
+                        <input id="login" name="login" type="text" value="{{ old('login') }}" placeholder="{{ __('Username or email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false"
+                               class="block w-full rounded-lg border-0 py-2.5 ps-10 pe-3 text-sm font-medium text-slate-900 shadow-sm ring-1 ring-inset placeholder:font-normal placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 {{ $errors->has('login') ? 'ring-rose-400' : 'ring-slate-300' }}">
                     </div>
                     @error('login')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                 </div>
 
-                <x-password-input id="password" name="password" :label="__('Password')" required :error="$errors->first('password')" />
+                <x-password-input id="password" name="password" :label="__('Password')" placeholder="{{ __('Enter your password') }}" required :error="$errors->first('password')" />
 
-                <label class="flex items-center gap-2 text-sm text-slate-600">
+                <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
                     <input type="checkbox" name="remember" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"> {{ __('Remember me') }}
                 </label>
-                <x-button type="submit" variant="primary" size="lg" class="w-full">{{ __('Sign in') }}</x-button>
+                <x-button type="submit" variant="primary" size="lg" class="w-full" x-bind:disabled="left > 0">{{ __('Sign in') }}</x-button>
             </form>
         </div>
     </div>
 </div>
+{{-- Livewire ships Alpine: the password eye and the dark/light switch on this page need it --}}
+@livewireScripts
 </body>
 </html>

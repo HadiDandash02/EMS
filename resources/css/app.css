@@ -146,11 +146,17 @@
     --color-fuchsia-50: #3a1342; --color-fuchsia-200: #6b2678; --color-fuchsia-700: #f0abfc;
     --color-teal-50: #0b3030;    --color-teal-200: #14605e;    --color-teal-700: #5eead4;
     --color-zinc-100: #27272a;   --color-zinc-200: #3f3f46;    --color-zinc-500: #a1a1aa;
-    --color-violet-50: #271f4d;  --color-violet-200: #4b3a8a;  --color-violet-700: #c4b5fd;   /* Cancelled badge */
+    --color-violet-50: #271f4d;  --color-violet-200: #4b3a8a;  --color-violet-700: #c4b5fd;   /* Cancelled badge, KPI icons */
+    --color-sky-50: #0c2a3d;     --color-sky-600: #38bdf8;     --color-amber-600: #fbbf24;    /* KPI icons */
 }
 /* "white" cannot be redefined (text-white must stay white), so surfaces are overridden explicitly */
 [data-theme='dark'] .bg-white,
 [data-theme='dark'] .odd\:bg-white:nth-child(odd) { background-color: #111b33; }
+/* classes built with @apply (.card, .card-head) do not carry a .bg-white class, so they need their own dark colours */
+[data-theme='dark'] .card { background-color: #111b33; }
+[data-theme='dark'] .card-head { --tw-gradient-from: #1d2247; --tw-gradient-via: #111b33; --tw-gradient-to: #111b33; }
+[data-theme='dark'] .card-head-danger { --tw-gradient-from: #3b1322; }
+[data-theme='dark'] .card-foot { background-color: #0e1830; }
 [data-theme='dark'] .bg-white\/85 { background-color: rgb(11 17 32 / 0.85); }
 [data-theme='dark'] .via-white, [data-theme='dark'] .to-white { --tw-gradient-via: #111b33; --tw-gradient-to: #111b33; }
 [data-theme='dark'] .ring-white { --tw-ring-color: #111b33; }

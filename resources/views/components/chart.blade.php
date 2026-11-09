@@ -6,11 +6,16 @@
 --}}
 @php $hasData = array_sum($values) > 0; @endphp
 @if (! $hasData)
-    <div class="flex {{ $height }} items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-400">{{ $empty ?? __('No data yet') }}</div>
+    <div class="flex {{ $height }} items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">{{ $empty ?? __('No data yet') }}</div>
 @else
     <div class="relative {{ $height }}" wire:ignore
          x-data="{
-             async init() {
+             chart: null,
+             init() {
+                 this.build();
+                 window.addEventListener('theme-changed', () => { this.chart?.destroy(); this.build(); });   // colours depend on the theme
+             },
+             async build() {
                  const Chart = await window.loadChart();
                  const type = @js($type), horizontal = @js((bool) $horizontal), colors = @js($colors);
                  const dark = document.documentElement.dataset.theme === 'dark';
@@ -22,7 +27,7 @@
                      borderColor: type === 'line' ? brand : (circular ? (dark ? '#111b33' : '#ffffff') : undefined),
                      borderWidth: circular ? 2 : (type === 'line' ? 2 : 0), borderRadius: type === 'bar' ? 6 : 0,
                      fill: type === 'line', tension: .35, pointRadius: type === 'line' ? 0 : undefined, pointHoverRadius: 4, maxBarThickness: 38 };
-                 new Chart(this.$refs.c, {
+                 this.chart = new Chart(this.$refs.c, {
                      type, data: { labels: @js($labels), datasets: [dataset] },
                      options: { responsive: true, maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x', cutout: type === 'doughnut' ? '62%' : undefined,
                          plugins: { legend: { display: circular, position: 'bottom', labels: { color: text, usePointStyle: true, boxWidth: 8, padding: 14 } } },
