@@ -57,6 +57,8 @@ class ConfirmAction extends Component
         return match ($action) {
             'complete' => in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true),
             'approve' => $task->status === TaskStatus::Completed,
+            // [CHANGE-REQUEST #3] (5/5) use: 'cancel' => in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true),
+            //   and in tests/Unit/TaskStatusTest.php move 'in progress -> cancelled' from the forbidden list to the allowed list
             'cancel' => $task->status === TaskStatus::Pending,
             'delete' => auth()->user()->isSuperAdmin() || in_array($task->status, [TaskStatus::Pending, TaskStatus::Cancelled], true),
         };

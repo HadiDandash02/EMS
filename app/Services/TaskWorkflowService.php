@@ -120,6 +120,8 @@ class TaskWorkflowService
     {
         return $this->locked($task, $actor, 'cancel', function (Task $t) use ($actor) {
             // Business rule: only PENDING tasks may be cancelled.
+            // [CHANGE-REQUEST #3] (2/5) replace the next line with:
+            //   if (! in_array($t->status, [TaskStatus::Pending, TaskStatus::InProgress], true)) {
             if ($t->status !== TaskStatus::Pending) {
                 throw new InvalidTaskTransitionException(__('Only pending tasks can be cancelled (this task is :status).', ['status' => $t->status->label()]));
             }
@@ -142,6 +144,7 @@ class TaskWorkflowService
         $reason = trim((string) $reason);
 
         // Business rule: a rejection MUST be explained. Enforced here too, not only in the form.
+        // [CHANGE-REQUEST #8: rejection reason at least 10 characters] (1/3) use: if (mb_strlen($reason) < 10) {   (also change the message text and run translations:scan)
         if (mb_strlen($reason) < 5) {
             throw ValidationException::withMessages([
                 'reason' => __('A rejection reason of at least 5 characters is required.'),

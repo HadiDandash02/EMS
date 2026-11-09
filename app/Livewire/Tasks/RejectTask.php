@@ -33,6 +33,7 @@ class RejectTask extends Component
 
     protected function rules(): array
     {
+        // [CHANGE-REQUEST #8] (3/3) use 'min:10' (and minlength="10" in resources/views/livewire/tasks/reject-task.blade.php); update test_rejection_requires_a_reason
         return ['reason' => ['required', 'string', 'min:5', 'max:1000']];
     }
 

@@ -35,6 +35,7 @@
     @endif
 
     @can('cancel', $task)
+        {{-- [CHANGE-REQUEST #3] (3/5) use: @if (in_array($task->status, [TaskStatus::Pending, TaskStatus::InProgress], true)) --}}
         @if ($task->status === TaskStatus::Pending)
             <x-button :href="route('tasks.confirm', [$task, 'cancel'])" variant="warning" size="sm" icon="ban">{{ __('Cancel task') }}</x-button>
         @endif

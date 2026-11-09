@@ -134,6 +134,7 @@ class TaskCrudTest extends TestCase
         $other = $this->taskFor($this->employeeEmp, 'completed');
         $this->confirm($this->otherManager, $other, 'approve')->assertForbidden();
         $this->confirm($this->employee, $other, 'approve')->assertForbidden();
+        // [CHANGE-REQUEST #1] when HR may approve: delete the next line (this task is in HR's own department now)
         $this->confirm($this->hr, $other, 'approve')->assertForbidden();
     }
 
@@ -238,6 +239,16 @@ class TaskCrudTest extends TestCase
             $this->assertDoesNotMatchRegularExpression('/\b(lorem|ipsum|quia|voluptas|dolor|sit amet|consequatur|et|quo)\b/i', $title);
         }
     }
+
+    /* [CHANGE-REQUEST #7: new automated test] UNCOMMENT - a cancelled task can never be started again
+    public function test_a_cancelled_task_cannot_be_started_again(): void
+    {
+        $task = $this->taskFor($this->employeeEmp, 'cancelled');
+
+        $this->expectException(\App\Exceptions\InvalidTaskTransitionException::class);
+        app(\App\Services\TaskWorkflowService::class)->start($task, $this->employee);
+    }
+    */
 
     public function test_filters_render_searchable_selects_and_the_date_picker(): void
     {

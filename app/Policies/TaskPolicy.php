@@ -92,6 +92,18 @@ class TaskPolicy
             return Response::allow();
         }
 
+        // [CHANGE-REQUEST #1: HR can approve and reject - own department] UNCOMMENT this block (and delete the old test
+        //   test_hr_cannot_approve_tasks in ApprovalWorkflowTest; the new tests are commented there).
+        // if ($user->isHr()) {
+        //     if ($task->isOwnedBy($user)) {
+        //         return Response::deny(__('You cannot review your own task.'));
+        //     }
+        //
+        //     return $this->inAnotherDepartment($user, $task)
+        //         ? Response::deny(__('This task belongs to another department.'))
+        //         : Response::allow();      // for ANY department: return Response::allow(); and also widen User::confinedDepartmentId()
+        // }
+
         if ($user->role !== UserRole::Manager) {
             return Response::deny(__('Only managers and the super admin can approve or reject tasks.'));
         }

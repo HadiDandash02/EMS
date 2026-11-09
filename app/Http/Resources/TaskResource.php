@@ -25,6 +25,9 @@ class TaskResource extends JsonResource
             'priority' => ['value' => $this->priority->value, 'label' => $this->priority->label()],
             'status' => ['value' => $this->status->value, 'label' => $this->status->label()],
             'due_date' => $this->due_date?->toDateString(),
+            // [CHANGE-REQUEST #4: new API field "is_overdue"] UNCOMMENT (test idea: tests/Feature/Api/TaskApiTest.php -> assertJsonPath('data.is_overdue', true) for a task with a past due date)
+            // 'is_overdue' => $this->due_date !== null && $this->due_date->isPast()
+            //     && in_array($this->status, [TaskStatus::Pending, TaskStatus::InProgress, TaskStatus::Rejected], true),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
