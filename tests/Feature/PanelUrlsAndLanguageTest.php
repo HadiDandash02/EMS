@@ -162,7 +162,7 @@ class PanelUrlsAndLanguageTest extends TestCase
     public function test_every_translation_key_used_in_the_code_exists_in_the_arabic_file(): void
     {
         // the translations live in the database now (imported by the migration, edited on /admin/translations)
-        $arabic = \App\Models\Translation::where('locale', 'ar')->where('group', '*')->where('value', '!=', '')->pluck('value', 'key')->all();
+        $arabic = \App\Models\Translation::translated('ar')->pluck('ar', 'key')->all();
         $missing = [];
 
         foreach ([base_path('app'), base_path('resources/views')] as $dir) {
