@@ -20,11 +20,11 @@
      }"
      @password-reset.window="pw = ''"
      @password-generated.window="pw = $event.detail; $refs.input.value = $event.detail; show = true">
-    <label for="{{ $id }}" class="block text-sm font-medium text-slate-700">{{ $label }}</label>
+    <label for="{{ $id }}" class="block text-sm font-semibold text-slate-800">{{ $label }}</label>
     <div class="relative mt-1">
-        <input id="{{ $id }}" name="{{ $name }}" x-ref="input" :type="show ? 'text' : 'password'" autocomplete="{{ $autocomplete }}"
+        <input id="{{ $id }}" name="{{ $name }}" x-ref="input" type="password" :type="show ? 'text' : 'password'" autocomplete="{{ $autocomplete }}"
                @if ($meter) @input="pw = $event.target.value" @endif
-               {{ $attributes->class(['block w-full rounded-lg border-0 py-2.5 ps-3 pe-11 text-sm shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500', $error ? 'ring-rose-400' : 'ring-slate-300']) }}>
+               {{ $attributes->class(['block w-full rounded-lg border-0 py-2.5 ps-3 pe-11 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-indigo-500', $error ? 'ring-rose-400' : 'ring-slate-300']) }}>
         <button type="button" @click="show = !show" tabindex="-1"
                 class="absolute inset-y-0 end-0 flex items-center rounded-e-lg px-3 text-slate-400 hover:text-slate-600 focus:outline-none"
                 :aria-label="show ? @js(__('Hide password')) : @js(__('Show password'))" :title="show ? @js(__('Hide password')) : @js(__('Show password'))">
