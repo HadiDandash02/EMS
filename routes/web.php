@@ -82,6 +82,8 @@ Route::middleware('auth')->prefix('{panel}')->where(['panel' => $prefixes])->gro
         Route::get('/users/{user}/edit', UserForm::class)->whereNumber('user')->name('admin.users.edit');
         Route::get('/users/{user}/delete', DeleteUser::class)->whereNumber('user')->name('admin.users.delete');
 
+        Route::get('/translations', \App\Livewire\Admin\TranslationManager::class)->name('admin.translations');
+
         Route::get('/departments', DepartmentManager::class)->name('admin.departments');
         Route::get('/departments/create', DepartmentForm::class)->name('admin.departments.create');
         Route::get('/departments/{department}/edit', DepartmentForm::class)->whereNumber('department')->name('admin.departments.edit');

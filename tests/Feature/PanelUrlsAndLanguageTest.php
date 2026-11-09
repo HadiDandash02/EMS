@@ -132,10 +132,12 @@ class PanelUrlsAndLanguageTest extends TestCase
 
     public function test_visitors_can_switch_the_language_on_the_login_page(): void
     {
-        $this->get('/login')->assertSee('English')->assertSee('العربية');
+        // ONE button, like the dark/light switch: in English it offers Arabic ...
+        $this->get('/login')->assertSee('العربية')->assertSee('/language/ar', false)->assertDontSee('/language/en', false);
 
         $this->get('/language/ar');
-        $this->get('/login')->assertSee('dir="rtl"', false)->assertSee('تسجيل الدخول');
+        // ... and in Arabic it offers English, and the page is right-to-left
+        $this->get('/login')->assertSee('dir="rtl"', false)->assertSee('تسجيل الدخول')->assertSee('English')->assertSee('/language/en', false)->assertDontSee('/language/ar', false);
     }
 
     public function test_status_badges_and_dates_follow_the_language(): void
@@ -159,7 +161,8 @@ class PanelUrlsAndLanguageTest extends TestCase
 
     public function test_every_translation_key_used_in_the_code_exists_in_the_arabic_file(): void
     {
-        $arabic = json_decode(file_get_contents(base_path('lang/ar.json')), true, 512, JSON_THROW_ON_ERROR);
+        // the translations live in the database now (imported by the migration, edited on /admin/translations)
+        $arabic = \App\Models\Translation::where('locale', 'ar')->where('group', '*')->where('value', '!=', '')->pluck('value', 'key')->all();
         $missing = [];
 
         foreach ([base_path('app'), base_path('resources/views')] as $dir) {
@@ -177,7 +180,7 @@ class PanelUrlsAndLanguageTest extends TestCase
             }
         }
 
-        $this->assertSame([], $missing, 'Add these to lang/ar.json: '.json_encode($missing, JSON_UNESCAPED_UNICODE));
+        $this->assertSame([], $missing, 'Add these on /admin/translations (or run php artisan translations:scan): '.json_encode($missing, JSON_UNESCAPED_UNICODE));
     }
 
     // ---- header: search, language, date, profile ----------------------------------------------
@@ -186,7 +189,7 @@ class PanelUrlsAndLanguageTest extends TestCase
     {
         $this->actingAs($this->manager)->get('/manager/dashboard')->assertOk()
             ->assertSee('Search tasks, people, pages…')                       // search
-            ->assertSee('English')->assertSee('العربية')                    // language switcher
+            ->assertSee('/language/ar', false)->assertSee('العربية')        // language switch: one button that offers the OTHER language
             ->assertSee(now()->translatedFormat('l, d M Y'))                // date chip
             ->assertSee('My account &amp; password', false)                 // profile menu submenu
             ->assertSee('Log out')
@@ -243,5 +246,20 @@ class PanelUrlsAndLanguageTest extends TestCase
 
         $this->post('/login', ['login' => $this->manager->username, 'password' => 'Master-Pass-123!'])
             ->assertRedirect('/manager/dashboard');
+    }
+    public function test_the_language_is_one_button_in_the_header_not_a_dropdown_and_one_click_switches_it(): void
+    {
+        $html = $this->actingAs($this->employee)->get('/employee/dashboard')->assertOk()->getContent();
+
+        $this->assertStringContainsString('href="'.route('language', 'ar').'"', $html);      // offers the other language
+        $this->assertStringNotContainsString('href="'.route('language', 'en').'"', $html);   // not both: no dropdown list
+
+        $this->actingAs($this->employee)->get('/language/ar')->assertRedirect();
+        $arabic = $this->get('/employee/dashboard')->assertOk()->getContent();
+        $this->assertStringContainsString('dir="rtl"', $arabic);
+        $this->assertStringContainsString('href="'.route('language', 'en').'"', $arabic);
+
+        $this->get('/language/en');                                                           // one click back
+        $this->get('/employee/dashboard')->assertSee('dir="ltr"', false);
     }
 }

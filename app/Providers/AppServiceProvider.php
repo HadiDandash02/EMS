@@ -17,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // __('English text') reads its translation from the database (table `translations`), not from lang/ar.json
+        $this->app->extend('translation.loader', fn ($files) => new \App\Support\DatabaseTranslationLoader($files));
     }
 
     /**

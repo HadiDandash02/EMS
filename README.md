@@ -85,10 +85,9 @@ date chip and "⋮" row menus).
 user may open are offered) · **language switcher** (English / العربية) · **today's date** chip · **profile menu**
 (name, `@username`, e-mail, *My account & password* → *My profile* / *Change password*, *Log out*).
 
-**Languages.** English and Arabic. The choice is remembered in the session (`GET /language/{en|ar}`, also on the login page).
+**Languages.** English and Arabic, switched with **one button** in the top bar (and on the login page), exactly like the dark/light switch: in English it shows "العربية" and one click changes the whole interface to Arabic; in Arabic it shows "English" and one click goes back. The choice is remembered in the session (`GET /language/{en|ar}`).
 Arabic switches the whole interface to **right-to-left** (logical Tailwind classes `ps-`/`pe-`/`start-`/`end-`), translates labels,
-statuses, validation messages, inline messages and day/month names. Texts live in `lang/ar.json` (keys are the English texts) and
-`lang/ar/validation.php`; a test fails if a `__('...')` key is missing from the Arabic file.
+statuses, validation messages, inline messages and day/month names. **The interface texts are stored in the database** (table `translations`: locale, the English text as key, the Arabic value, a flag for machine translations). A custom Laravel translation loader (`App\Support\DatabaseTranslationLoader`) makes `__('English text')` read from that table (cached, cleared on every save). The super admin edits them on **Admin → Translations** (`/admin/translations`): search, edit + Save, **Suggest** (a machine suggestion for one text), **Auto-translate empty texts** (machine translation of the next 15 empty texts, marked "Machine" for review; service address configurable with `TRANSLATION_API_URL`) and **Scan the code for new texts**. CLI: `php artisan translations:scan` and `php artisan translations:auto`. The first import comes from `database/data/translations-ar.json` (run by the migration). Validation messages stay in `lang/ar/validation.php`. A test fails if a `__('...')` text used in the code has no Arabic translation in the table.
 
 **Tables.** Row actions are in a **"⋮" menu** (View details · Edit · Start/Rework · Complete · Cancel task · Approve · Reject ·
 Delete) that only lists what the signed-in user may do; every action is re-checked on the server. Filters have a **Search** and a
