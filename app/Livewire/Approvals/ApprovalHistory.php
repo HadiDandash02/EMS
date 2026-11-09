@@ -40,6 +40,7 @@ class ApprovalHistory extends Component
         $query = TaskHistory::query()
             ->with(['task.employee.user', 'task.employee.department', 'actor'])
             ->whereIn('action', [TaskAction::Approved, TaskAction::Rejected])
+            ->whereHas('task')   // never show a decision whose task no longer exists (e.g. rows left behind by a MyISAM database)
             ->when(! $user->canSeeAll(), fn ($q) => $q->where('actor_id', $user->id))
             ->when($this->ids($this->taskId), fn ($q, array $ids) => $q->whereIn('task_histories.task_id', $ids))
             ->when(array_values(array_intersect($this->enumValues($this->decision, TaskAction::class), ['approved', 'rejected'])), fn ($q, array $a) => $q->whereIn('action', $a))
